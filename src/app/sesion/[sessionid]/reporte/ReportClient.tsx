@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -37,6 +37,10 @@ import {
   Camera,
   Image as ImageIcon,
   Eye,
+  Share2,
+  ExternalLink,
+  Copy,
+  Globe,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import {
@@ -72,6 +76,8 @@ interface Props {
     createdAt: Date | string;
     imageUrl?: string | null;
   }>;
+  shareToken?: string;
+  isPublicView?: boolean;
 }
 
 export default function ReportClient({
@@ -79,6 +85,8 @@ export default function ReportClient({
   consolidated,
   summary,
   novelties,
+  shareToken,
+  isPublicView = false,
 }: Props) {
   const [session, setSession] = useState(initialSession);
   const [itemsList, setItemsList] = useState<ConsolidatedItem[]>(consolidated);
@@ -88,6 +96,28 @@ export default function ReportClient({
   const [quarantineFilter, setQuarantineFilter] = useState<'all' | 'quarantine' | 'expired' | 'valid'>('all');
   const [isClosing, setIsClosing] = useState(false);
   const [closeSuccessMsg, setCloseSuccessMsg] = useState<string | null>(null);
+
+  // Estado para Link Público en Línea y Modal de PDF Interactivo
+  const [publicShareUrl, setPublicShareUrl] = useState<string>('');
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && shareToken) {
+      setPublicShareUrl(`${window.location.origin}/compartir/${session.id}?key=${shareToken}`);
+    }
+  }, [session.id, shareToken]);
+
+  const handleCopyShareLink = async () => {
+    if (!publicShareUrl) return;
+    try {
+      await navigator.clipboard.writeText(publicShareUrl);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 3000);
+    } catch {
+      alert('Copia manual: ' + publicShareUrl);
+    }
+  };
 
   // Modales de Imágenes y Etiquetas
   const [activeLabelItem, setActiveLabelItem] = useState<ConsolidatedItem | null>(null);
@@ -465,16 +495,16 @@ export default function ReportClient({
       {/* ============================================================== */}
       {reportView !== 'quick_a6' && (
         <div className="print-only mb-6 border-b-2 border-slate-900 pb-4">
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-start gap-4">
             <div>
               <h1 className="text-xl font-bold uppercase tracking-wider text-black">
                 ACTA OFICIAL DE AUDITORÍA Y CONCILIACIÓN DE INVENTARIO
               </h1>
               <p className="text-xs text-slate-600 mt-1">
-                StockSync Pro — Sistema de Control y Trazabilidad Farmacéutica
+                StockSync Pro — Sistema de Control y Trazabilidad Farmacéutica (Respaldo Supabase)
               </p>
             </div>
-            <div className="text-right text-xs">
+            <div className="text-right text-xs shrink-0">
               <div>Fecha: {new Date().toLocaleDateString('es-ES')}</div>
               <div>Hora: {new Date().toLocaleTimeString('es-ES')}</div>
             </div>
@@ -496,24 +526,77 @@ export default function ReportClient({
               </div>
             )}
           </div>
+
+          {/* LINK INTERACTIVO Y QR INCRUSTADO EN EL PDF */}
+          {publicShareUrl && (
+            <div className="mt-3 p-3 rounded-xl border-2 border-cyan-700 bg-cyan-50/60 flex items-center justify-between gap-4">
+              <div className="space-y-1 text-left">
+                <div className="text-[10px] font-black uppercase tracking-wider text-cyan-900">
+                  🌐 VERSIÓN INTERACTIVA EN LÍNEA (VERCEL + SUPABASE CLOUD)
+                </div>
+                <p className="text-[10px] text-slate-700">
+                  Haz clic en el siguiente enlace dentro del PDF o escanea el código QR para abrir la versión detallada e interactiva en vivo:
+                </p>
+                <a
+                  href={publicShareUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block font-mono text-[10px] font-bold text-blue-700 underline break-all"
+                >
+                  {publicShareUrl}
+                </a>
+              </div>
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(publicShareUrl)}`}
+                alt="QR Informe en Línea"
+                className="w-16 h-16 border border-slate-300 rounded p-0.5 bg-white shrink-0"
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* BANNER SUPERIOR DE MODO PÚBLICO / ESTÁTICO EN LÍNEA */}
+      {isPublicView && (
+        <div className="no-print bg-gradient-to-r from-cyan-950/80 via-[#121212] to-indigo-950/80 border border-cyan-500/40 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shrink-0">
+              <Globe className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm font-black text-white">
+                  Informe Oficial Interactivo en Línea (Solo Lectura)
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  Verificado por Supabase
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 mt-0.5">
+                Puedes filtrar productos, consultar faltantes/sobrantes, ver fotografías de evidencia, cambiar a vista A6 o descargar el Excel.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
       {/* ============================================================== */}
       {/* ENCABEZADO INTERACTIVO DE PANTALLA */}
       {/* ============================================================== */}
-      <div className="no-print bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
+      <div className="no-print bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-8 shadow-xl">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <Link
-                href="/reportes"
-                className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors"
-                title="Volver al Centro de Reportes"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Link>
-              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              {!isPublicView && (
+                <Link
+                  href="/reportes"
+                  className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors"
+                  title="Volver al Centro de Reportes"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Link>
+              )}
+              <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight">
                 Reporte de Conciliación
               </h1>
               <span
@@ -547,15 +630,26 @@ export default function ReportClient({
             </div>
           </div>
 
-          {/* BOTONES DE ACCIÓN: IMPRIMIR, EXPORTAR EXCEL, CERRAR SESIÓN */}
+          {/* BOTONES DE ACCIÓN: COMPARTIR LINK/PDF, IMPRIMIR, EXPORTAR EXCEL, CERRAR SESIÓN */}
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full lg:w-auto">
+            {publicShareUrl && (
+              <button
+                type="button"
+                onClick={() => setIsShareModalOpen(true)}
+                className="col-span-2 sm:col-span-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-cyan-600/25"
+              >
+                <Share2 className="w-4 h-4 shrink-0" />
+                <span className="truncate">PDF con Link en Línea</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handlePrint}
               className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 transition-all cursor-pointer shadow-sm"
             >
               <Printer className="w-4 h-4 text-cyan-400 shrink-0" />
-              <span className="truncate">Imprimir</span>
+              <span className="truncate">Imprimir / PDF</span>
             </button>
 
             <button
@@ -576,7 +670,7 @@ export default function ReportClient({
               <span className="truncate">Excel Completo</span>
             </button>
 
-            {session.status !== 'closed' && (
+            {!isPublicView && session.status !== 'closed' && (
               <button
                 type="button"
                 onClick={handleCloseSession}
@@ -928,27 +1022,29 @@ export default function ReportClient({
                                 />
                               ) : null}
 
-                              <label
-                                className={`p-1.5 rounded-lg border cursor-pointer transition-colors ${
-                                  uploadingItemId === item.id
-                                    ? 'bg-cyan-600 text-white animate-spin border-cyan-500'
-                                    : 'bg-slate-800 hover:bg-slate-700 text-cyan-400 border-slate-700'
-                                }`}
-                                title="Tomar foto con cámara móvil o subir imagen desde PC"
-                              >
-                                <Camera className="w-3.5 h-3.5" />
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  capture="environment"
-                                  className="hidden"
-                                  disabled={uploadingItemId === item.id}
-                                  onChange={(e) => {
-                                    const f = e.target.files?.[0];
-                                    if (f) handleUploadItemImage(item.id, f);
-                                  }}
-                                />
-                              </label>
+                              {!isPublicView && (
+                                <label
+                                  className={`p-1.5 rounded-lg border cursor-pointer transition-colors ${
+                                    uploadingItemId === item.id
+                                      ? 'bg-cyan-600 text-white animate-spin border-cyan-500'
+                                      : 'bg-slate-800 hover:bg-slate-700 text-cyan-400 border-slate-700'
+                                  }`}
+                                  title="Tomar foto con cámara móvil o subir imagen desde PC"
+                                >
+                                  <Camera className="w-3.5 h-3.5" />
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    className="hidden"
+                                    disabled={uploadingItemId === item.id}
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0];
+                                      if (f) handleUploadItemImage(item.id, f);
+                                    }}
+                                  />
+                                </label>
+                              )}
 
                               <button
                                 type="button"
@@ -1178,6 +1274,30 @@ export default function ReportClient({
                   <p className="text-slate-500">Recibido Conforme</p>
                 </div>
               </div>
+
+              {/* Link Interactivo en Hoja 1 A6 */}
+              {publicShareUrl && (
+                <div className="pt-3 border-t border-dashed border-slate-300 flex items-center justify-between gap-2 text-left">
+                  <div className="space-y-0.5 min-w-0">
+                    <span className="text-[8px] font-bold uppercase text-cyan-800 block">
+                      🔗 Informe Detallado en Línea:
+                    </span>
+                    <a
+                      href={publicShareUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[8px] font-mono text-blue-700 underline block truncate"
+                    >
+                      Abrir versión interactiva completa
+                    </a>
+                  </div>
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=64x64&data=${encodeURIComponent(publicShareUrl)}`}
+                    alt="QR"
+                    className="w-11 h-11 border border-slate-200 rounded p-0.5 shrink-0"
+                  />
+                </div>
+              )}
             </div>
 
             {/* ------------------------------------------------------------- */}
@@ -1279,6 +1399,30 @@ export default function ReportClient({
                   <p className="text-slate-500">Recibido Conforme</p>
                 </div>
               </div>
+
+              {/* Link Interactivo en Hoja 2 A6 */}
+              {publicShareUrl && (
+                <div className="pt-3 border-t border-dashed border-slate-300 flex items-center justify-between gap-2 text-left">
+                  <div className="space-y-0.5 min-w-0">
+                    <span className="text-[8px] font-bold uppercase text-emerald-800 block">
+                      🔗 Informe Detallado en Línea:
+                    </span>
+                    <a
+                      href={publicShareUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[8px] font-mono text-blue-700 underline block truncate"
+                    >
+                      Abrir versión interactiva completa
+                    </a>
+                  </div>
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=64x64&data=${encodeURIComponent(publicShareUrl)}`}
+                    alt="QR"
+                    className="w-11 h-11 border border-slate-200 rounded p-0.5 shrink-0"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1734,6 +1878,112 @@ export default function ReportClient({
                 alt={viewImageModal.title}
                 className="w-full h-auto object-contain max-h-[75vh]"
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* MODAL: GENERAR PDF CON LINK INTERACTIVO Y COMPARTIR EN LÍNEA   */}
+      {/* ============================================================== */}
+      {isShareModalOpen && publicShareUrl && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 no-print">
+          <div className="bg-[#121212] border border-[#2c2c2c] rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#262626] pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+                  <Share2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base">
+                    Informe en Línea & PDF Interactivo
+                  </h3>
+                  <span className="text-[11px] text-slate-400">
+                    Esqueleto de datos en Supabase • Visuales en Vercel
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsShareModalOpen(false)}
+                className="text-slate-400 hover:text-white p-1.5 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[#1a1a1a] border border-[#2c2c2c] flex flex-col sm:flex-row items-center gap-4">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(publicShareUrl)}`}
+                alt="QR del Informe"
+                className="w-28 h-28 rounded-xl border-2 border-white p-1 bg-white shrink-0 shadow-md"
+              />
+              <div className="space-y-2 text-xs text-slate-300">
+                <div className="font-bold text-white flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <span>Acceso Directo sin Contraseña (Solo Lectura)</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Cualquier persona que reciba el PDF o este enlace podrá consultar la versión detallada del informe de forma estática/interactiva sin poder modificar ni alterar ningún dato.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                Enlace Público Verificado
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={publicShareUrl}
+                  className="flex-1 px-3 py-2.5 bg-[#0a0a0a] border border-[#2c2c2c] rounded-xl text-cyan-300 font-mono text-[11px] focus:outline-none select-all"
+                />
+                <button
+                  type="button"
+                  onClick={handleCopyShareLink}
+                  className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold border border-slate-700 flex items-center gap-1.5 shrink-0 cursor-pointer transition-colors"
+                >
+                  {copiedLink ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span className="text-emerald-300">Copiado</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 text-cyan-400" />
+                      <span>Copiar</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+              <a
+                href={publicShareUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-3 px-4 rounded-xl bg-[#1e1e1e] hover:bg-[#282828] text-slate-200 border border-[#2e2e2e] font-bold text-xs flex items-center justify-center gap-2 transition-all"
+              >
+                <ExternalLink className="w-4 h-4 text-cyan-400" />
+                <span>Probar Link en Pestaña</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsShareModalOpen(false);
+                  setTimeout(() => {
+                    window.print();
+                  }, 250);
+                }}
+                className="py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30 cursor-pointer transition-all"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Generar PDF con Link</span>
+              </button>
             </div>
           </div>
         </div>

@@ -24,8 +24,18 @@ function verifyTokenInProxy(token: string): { id: string; username: string; role
   }
 }
 
+function verifyPublicShareInProxy(sessionId: string, key: string | null): boolean {
+  if (!sessionId || !key) return false;
+  const expected = crypto
+    .createHmac('sha256', SESSION_SECRET)
+    .update(`public_report_v1:${sessionId}`)
+    .digest('base64url')
+    .slice(0, 24);
+  return key === expected;
+}
+
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
 
   // Ignorar archivos estáticos o internos de Next.js
   if (
@@ -34,6 +44,17 @@ export function proxy(request: NextRequest) {
     pathname === '/favicon.ico'
   ) {
     return NextResponse.next();
+  }
+
+  // Permitir acceso público de solo lectura a informes compartidos con token criptográfico válido (/compartir/[sessionid]?key=...)
+  if (pathname.startsWith('/compartir/')) {
+    const parts = pathname.split('/').filter(Boolean);
+    const sessionId = parts[1] || '';
+    const key = searchParams.get('key');
+    if (verifyPublicShareInProxy(sessionId, key)) {
+      return NextResponse.next();
+    }
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   const token = request.cookies.get(COOKIE_NAME)?.value;

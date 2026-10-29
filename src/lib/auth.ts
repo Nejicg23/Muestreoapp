@@ -34,6 +34,22 @@ export function signSessionPayload(payload: UserSession): string {
   return `${data}.${signature}`;
 }
 
+// Genera un token criptográfico público de solo lectura para compartir un informe en línea
+export function generatePublicReportToken(sessionId: string): string {
+  return crypto
+    .createHmac('sha256', SESSION_SECRET)
+    .update(`public_report_v1:${sessionId}`)
+    .digest('base64url')
+    .slice(0, 24);
+}
+
+// Verifica el token público de un informe compartido
+export function verifyPublicReportToken(sessionId: string, token?: string | null): boolean {
+  if (!sessionId || !token) return false;
+  const expected = generatePublicReportToken(sessionId);
+  return token === expected;
+}
+
 export function verifySessionToken(token: string): UserSession | null {
   try {
     const [data, signature] = token.split('.');

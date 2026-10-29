@@ -1,5 +1,5 @@
 import { getSessionDetails } from '@/app/actions/sync';
-import { requireAuth } from '@/lib/auth';
+import { requireAuth, generatePublicReportToken } from '@/lib/auth';
 import ReportClient from './ReportClient';
 import Link from 'next/link';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
@@ -36,6 +36,7 @@ export default async function ReportePage({
   }
 
   const { session, consolidated, summary, novelties } = result.data;
+  const shareToken = generatePublicReportToken(sessionid);
 
   return (
     <ReportClient
@@ -43,6 +44,8 @@ export default async function ReportePage({
       consolidated={consolidated}
       summary={summary}
       novelties={novelties}
+      shareToken={shareToken}
+      isPublicView={false}
     />
   );
 }
