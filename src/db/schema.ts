@@ -137,6 +137,8 @@ export const appUsers = pgTable('app_users', {
     salt: varchar('salt', { length: 64 }).notNull(),
     role: varchar('role', { length: 30 }).default('operator').notNull(), // 'admin' | 'auditor' | 'operator'
     isActive: boolean('is_active').default(true).notNull(),
+    failedAttempts: integer('failed_attempts').default(0).notNull(),
+    lockedUntil: timestamp('locked_until', { withTimezone: true }),
     lastLogin: timestamp('last_login', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });

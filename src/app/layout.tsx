@@ -51,45 +51,49 @@ export default async function RootLayout({
             </Link>
 
             <nav className="flex items-center gap-1.5 sm:gap-3">
-              <Link
-                href="/"
-                className="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors flex items-center gap-1.5"
-              >
-                <ClipboardList className="w-4 h-4 text-cyan-400" />
-                <span className="hidden sm:inline">Sesiones</span>
-              </Link>
+              {user && (
+                <>
+                  <Link
+                    href="/"
+                    className="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors flex items-center gap-1.5"
+                  >
+                    <ClipboardList className="w-4 h-4 text-cyan-400" />
+                    <span className="hidden sm:inline">Sesiones</span>
+                  </Link>
 
-              <Link
-                href="/inventario-rapido"
-                className="px-3 py-2 rounded-lg text-xs sm:text-sm font-bold text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-colors flex items-center gap-1.5"
-              >
-                <Smartphone className="w-4 h-4 text-amber-400" />
-                <span className="hidden sm:inline">Inv. Rápido</span>
-              </Link>
+                  <Link
+                    href="/inventario-rapido"
+                    className="px-3 py-2 rounded-lg text-xs sm:text-sm font-bold text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-colors flex items-center gap-1.5"
+                  >
+                    <Smartphone className="w-4 h-4 text-amber-400" />
+                    <span className="hidden sm:inline">Inv. Rápido</span>
+                  </Link>
 
-              <Link
-                href="/reportes"
-                className="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors flex items-center gap-1.5"
-              >
-                <FileText className="w-4 h-4 text-cyan-400" />
-                <span className="hidden sm:inline">Reportes</span>
-              </Link>
+                  <Link
+                    href="/reportes"
+                    className="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors flex items-center gap-1.5"
+                  >
+                    <FileText className="w-4 h-4 text-cyan-400" />
+                    <span className="hidden sm:inline">Reportes</span>
+                  </Link>
 
-              <Link
-                href="/importar"
-                className="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors flex items-center gap-1.5"
-              >
-                <FileSpreadsheet className="w-4 h-4 text-cyan-400" />
-                <span className="hidden sm:inline">Importar</span>
-              </Link>
+                  <Link
+                    href="/importar"
+                    className="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors flex items-center gap-1.5"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-cyan-400" />
+                    <span className="hidden sm:inline">Importar</span>
+                  </Link>
 
-              <Link
-                href="/servidores"
-                className="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors flex items-center gap-1.5"
-              >
-                <Server className="w-4 h-4 text-emerald-400" />
-                <span className="hidden md:inline">Servidores</span>
-              </Link>
+                  <Link
+                    href="/servidores"
+                    className="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors flex items-center gap-1.5"
+                  >
+                    <Server className="w-4 h-4 text-emerald-400" />
+                    <span className="hidden md:inline">Servidores</span>
+                  </Link>
+                </>
+              )}
 
               {/* Botón Admin Panel (visible sólo para usuarios admin) */}
               {user?.role === 'admin' && (
@@ -125,13 +129,10 @@ export default async function RootLayout({
                     </form>
                   </div>
                 ) : (
-                  <Link
-                    href="/login"
-                    className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
-                  >
-                    <LogIn className="w-3.5 h-3.5" />
-                    <span>Ingresar</span>
-                  </Link>
+                  <span className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 text-xs font-semibold flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Acceso Protegido</span>
+                  </span>
                 )}
               </div>
             </nav>
@@ -149,60 +150,54 @@ export default async function RootLayout({
           </div>
         </footer>
 
-        {/* BARRA DE NAVEGACIÓN MÓVIL INFERIOR */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 border-t border-slate-800 backdrop-blur-xl px-2 py-2 flex items-center justify-around no-print shadow-2xl">
-          <Link
-            href="/"
-            className="flex flex-col items-center gap-1 text-[10px] text-slate-400 hover:text-white px-2 py-1"
-          >
-            <ClipboardList className="w-4 h-4 text-cyan-400" />
-            <span>Sesiones</span>
-          </Link>
-
-          <Link
-            href="/inventario-rapido"
-            className="flex flex-col items-center gap-1 text-[10px] text-amber-300 font-bold px-3 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 shadow-sm"
-          >
-            <Smartphone className="w-4 h-4 text-amber-400" />
-            <span>Rápido</span>
-          </Link>
-
-          <Link
-            href="/reportes"
-            className="flex flex-col items-center gap-1 text-[10px] text-slate-400 hover:text-white px-2 py-1"
-          >
-            <FileText className="w-4 h-4 text-cyan-400" />
-            <span>Reportes</span>
-          </Link>
-
-          {user?.role === 'admin' ? (
+        {/* BARRA DE NAVEGACIÓN MÓVIL INFERIOR (SÓLO SI ESTÁ AUTENTICADO) */}
+        {user && (
+          <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 border-t border-slate-800 backdrop-blur-xl px-2 py-2 flex items-center justify-around no-print shadow-2xl">
             <Link
-              href="/admin"
-              className="flex flex-col items-center gap-1 text-[10px] text-amber-400 hover:text-white px-2 py-1"
+              href="/"
+              className="flex flex-col items-center gap-1 text-[10px] text-slate-400 hover:text-white px-2 py-1"
             >
-              <Shield className="w-4 h-4 text-amber-400" />
-              <span>Admin</span>
+              <ClipboardList className="w-4 h-4 text-cyan-400" />
+              <span>Sesiones</span>
             </Link>
-          ) : user ? (
-            <form action={logoutAction} className="flex flex-col items-center">
-              <button
-                type="submit"
-                className="flex flex-col items-center gap-1 text-[10px] text-slate-400 hover:text-rose-400 px-2 py-1 cursor-pointer"
+
+            <Link
+              href="/inventario-rapido"
+              className="flex flex-col items-center gap-1 text-[10px] text-amber-300 font-bold px-3 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 shadow-sm"
+            >
+              <Smartphone className="w-4 h-4 text-amber-400" />
+              <span>Rápido</span>
+            </Link>
+
+            <Link
+              href="/reportes"
+              className="flex flex-col items-center gap-1 text-[10px] text-slate-400 hover:text-white px-2 py-1"
+            >
+              <FileText className="w-4 h-4 text-cyan-400" />
+              <span>Reportes</span>
+            </Link>
+
+            {user.role === 'admin' ? (
+              <Link
+                href="/admin"
+                className="flex flex-col items-center gap-1 text-[10px] text-amber-400 hover:text-white px-2 py-1"
               >
-                <LogOut className="w-4 h-4" />
-                <span>Salir</span>
-              </button>
-            </form>
-          ) : (
-            <Link
-              href="/login"
-              className="flex flex-col items-center gap-1 text-[10px] text-cyan-400 hover:text-white px-2 py-1"
-            >
-              <LogIn className="w-4 h-4" />
-              <span>Login</span>
-            </Link>
-          )}
-        </nav>
+                <Shield className="w-4 h-4 text-amber-400" />
+                <span>Admin</span>
+              </Link>
+            ) : (
+              <form action={logoutAction} className="flex flex-col items-center">
+                <button
+                  type="submit"
+                  className="flex flex-col items-center gap-1 text-[10px] text-slate-400 hover:text-rose-400 px-2 py-1 cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Salir</span>
+                </button>
+              </form>
+            )}
+          </nav>
+        )}
       </body>
     </html>
   );

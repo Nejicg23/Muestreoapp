@@ -1,4 +1,5 @@
 import { getSessionDetails } from '@/app/actions/sync';
+import { requireAuth } from '@/lib/auth';
 import ReportClient from './ReportClient';
 import Link from 'next/link';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
@@ -10,6 +11,7 @@ export default async function ReportePage({
 }: {
   params: Promise<{ sessionid: string }>;
 }) {
+  await requireAuth();
   const { sessionid } = await params;
   const result = await getSessionDetails(sessionid);
 

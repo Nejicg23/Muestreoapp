@@ -1,6 +1,7 @@
 import { db } from '@/db';
 import { inventorySessions, inventoryItems, inventoryCounts } from '@/db/schema';
 import { desc, sql } from 'drizzle-orm';
+import { requireAuth } from '@/lib/auth';
 import ReportesIndexClient from './ReportesIndexClient';
 
 export const dynamic = 'force-dynamic';
@@ -11,6 +12,7 @@ export const metadata = {
 };
 
 export default async function ReportesPage() {
+  await requireAuth();
   const sessions = await db
     .select({
       id: inventorySessions.id,

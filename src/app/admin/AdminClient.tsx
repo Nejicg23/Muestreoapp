@@ -28,7 +28,13 @@ import {
   Sparkles,
   Trash2,
 } from 'lucide-react';
-import { createNewUserAction, toggleUserStatusAction, logoutAction } from '@/app/actions/auth';
+import {
+  createNewUserAction,
+  toggleUserStatusAction,
+  changeUserPasswordAction,
+  unlockUserAccountAction,
+  logoutAction,
+} from '@/app/actions/auth';
 import { executeTotalSystemWipeAction } from '@/app/actions/admin';
 
 interface AdminData {
@@ -44,6 +50,8 @@ interface AdminData {
     fullName: string;
     role: string;
     isActive: boolean;
+    failedAttempts?: number;
+    lockedUntil?: string | Date | null;
     lastLogin: string | Date | null;
     createdAt: string | Date;
   }>;
@@ -125,6 +133,17 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
   const [isSubmittingUser, setIsSubmittingUser] = useState(false);
   const [userModalError, setUserModalError] = useState<string | null>(null);
 
+  // Modal Cambiar Contraseña
+  const [passwordTargetUser, setPasswordTargetUser] = useState<{
+    id: string;
+    username: string;
+    fullName: string;
+  } | null>(null);
+  const [customNewPassword, setCustomNewPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [passwordModalError, setPasswordModalError] = useState<string | null>(null);
+  const [securityBannerMsg, setSecurityBannerMsg] = useState<string | null>(null);
+
   const handleExecuteWipe = async (e: React.FormEvent) => {
     e.preventDefault();
     setWipeError(null);
@@ -185,7 +204,7 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
         setData((prev) => ({
           ...prev,
           users: prev.users.map((u) =>
-            u.id === userId ? { ...u, isActive: updatedStatus } : u
+            u.id === userId ? { ...u, isActive: updatedStatus, failedAttempts: 0, lockedUntil: null } : u
           ),
         }));
       } else {
@@ -193,6 +212,59 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
       }
     } catch (err: any) {
       alert(err.message || 'Error de comunicación');
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordTargetUser) return;
+    setIsUpdatingPassword(true);
+    setPasswordModalError(null);
+
+    try {
+      const res = await changeUserPasswordAction(passwordTargetUser.id, customNewPassword);
+      if (res.success) {
+        setData((prev) => ({
+          ...prev,
+          users: prev.users.map((u) =>
+            u.id === passwordTargetUser.id
+              ? { ...u, failedAttempts: 0, lockedUntil: null }
+              : u
+          ),
+        }));
+        setSecurityBannerMsg(
+          `✅ Contraseña actualizada y protección restablecida para @${passwordTargetUser.username}`
+        );
+        setPasswordTargetUser(null);
+        setCustomNewPassword('');
+        setTimeout(() => setSecurityBannerMsg(null), 5000);
+      } else {
+        setPasswordModalError(res.error || 'No se pudo actualizar la contraseña');
+      }
+    } catch (err: any) {
+      setPasswordModalError(err.message || 'Error de comunicación con el servidor');
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
+  const handleUnlockUser = async (userId: string, username: string) => {
+    try {
+      const res = await unlockUserAccountAction(userId);
+      if (res.success) {
+        setData((prev) => ({
+          ...prev,
+          users: prev.users.map((u) =>
+            u.id === userId ? { ...u, failedAttempts: 0, lockedUntil: null } : u
+          ),
+        }));
+        setSecurityBannerMsg(`🔓 Cuenta @${username} desbloqueada exitosamente.`);
+        setTimeout(() => setSecurityBannerMsg(null), 5000);
+      } else {
+        alert(res.error || 'No se pudo desbloquear la cuenta');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error de red');
     }
   };
 
@@ -413,19 +485,34 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
       {/* CONTENIDO TAB 1: GESTIÓN DE USUARIOS */}
       {activeTab === 'users' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-bold text-white">Usuarios y Permisos del Sistema</h2>
-              <p className="text-xs text-slate-400">Control de acceso por roles: Administrador, Auditor u Operador.</p>
+              <h2 className="text-lg font-bold text-white">Usuarios, Contraseñas y Seguridad Anti-Fuerza Bruta</h2>
+              <p className="text-xs text-slate-400">
+                Cambia las contraseñas por defecto, gestiona roles y desbloquea cuentas bloqueadas tras 5 intentos fallidos.
+              </p>
             </div>
             <button
               onClick={() => setIsCreateUserOpen(true)}
-              className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-cyan-600/20 cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-cyan-600/20 cursor-pointer self-start sm:self-auto"
             >
               <Plus className="w-4 h-4" />
               <span>Nuevo Usuario</span>
             </button>
           </div>
+
+          {securityBannerMsg && (
+            <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center justify-between">
+              <span>{securityBannerMsg}</span>
+              <button
+                type="button"
+                onClick={() => setSecurityBannerMsg(null)}
+                className="text-emerald-400 hover:text-white ml-4"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
@@ -434,72 +521,126 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
                   <tr>
                     <th className="px-5 py-3.5">Usuario / Nombre</th>
                     <th className="px-5 py-3.5">Rol de Acceso</th>
-                    <th className="px-5 py-3.5">Estado</th>
+                    <th className="px-5 py-3.5">Estado / Seguridad</th>
                     <th className="px-5 py-3.5">Último Login</th>
-                    <th className="px-5 py-3.5 text-right">Acciones</th>
+                    <th className="px-5 py-3.5 text-right">Acciones de Seguridad</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 font-sans">
-                  {data.users.map((user) => (
-                    <tr key={user.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="px-5 py-3.5">
-                        <div className="font-bold text-white text-sm">{user.fullName}</div>
-                        <div className="text-slate-400 font-mono text-[11px]">@{user.username}</div>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border ${
-                            user.role === 'admin'
-                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                              : user.role === 'auditor'
-                              ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
-                              : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                          }`}
-                        >
-                          {user.role === 'admin' && '👑 Administrador'}
-                          {user.role === 'auditor' && '🔍 Auditor'}
-                          {user.role === 'operator' && '📦 Operador'}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        {user.isActive ? (
-                          <span className="inline-flex items-center gap-1.5 text-emerald-400 font-semibold text-[11px]">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                            Activo
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 text-rose-400 font-semibold text-[11px]">
-                            <span className="w-2 h-2 rounded-full bg-rose-400"></span>
-                            Inactivo
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-5 py-3.5 text-slate-400 font-mono text-[11px]">
-                        {user.lastLogin
-                          ? new Date(user.lastLogin).toLocaleString('es-ES', {
-                              dateStyle: 'short',
-                              timeStyle: 'short',
-                            })
-                          : 'Nunca'}
-                      </td>
-                      <td className="px-5 py-3.5 text-right">
-                        {user.id !== data.currentUser.id ? (
-                          <button
-                            onClick={() => handleToggleUser(user.id)}
-                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border cursor-pointer ${
-                              user.isActive
-                                ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border-rose-500/30'
-                                : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                  {data.users.map((user) => {
+                    const isLocked =
+                      Boolean(user.lockedUntil) &&
+                      new Date(user.lockedUntil!).getTime() > Date.now();
+                    const failedCount = user.failedAttempts || 0;
+
+                    return (
+                      <tr key={user.id} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="px-5 py-3.5">
+                          <div className="font-bold text-white text-sm flex items-center gap-2">
+                            <span>{user.fullName}</span>
+                            {user.id === data.currentUser.id && (
+                              <span className="px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 text-[10px] font-bold">
+                                Tú
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-slate-400 font-mono text-[11px]">@{user.username}</div>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                              user.role === 'admin'
+                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                                : user.role === 'auditor'
+                                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+                                : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                             }`}
                           >
-                            {user.isActive ? 'Desactivar' : 'Activar'}
-                          </button>
-                        ) : (
-                          <span className="text-[10px] text-slate-400 italic">Sesión actual</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                            {user.role === 'admin' && '👑 Administrador'}
+                            {user.role === 'auditor' && '🔍 Auditor'}
+                            {user.role === 'operator' && '📦 Operador'}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <div className="flex flex-col gap-1">
+                            {isLocked ? (
+                              <span className="inline-flex items-center gap-1.5 text-rose-400 font-bold text-[11px]">
+                                <Lock className="w-3.5 h-3.5 text-rose-400" />
+                                Bloqueado (Fuerza Bruta)
+                              </span>
+                            ) : user.isActive ? (
+                              <span className="inline-flex items-center gap-1.5 text-emerald-400 font-semibold text-[11px]">
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                Activo
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 text-rose-400 font-semibold text-[11px]">
+                                <span className="w-2 h-2 rounded-full bg-rose-400"></span>
+                                Inactivo
+                              </span>
+                            )}
+                            {failedCount > 0 && !isLocked && (
+                              <span className="text-[10px] text-amber-400 font-mono">
+                                ⚠️ {failedCount}/5 intentos fallidos
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5 text-slate-400 font-mono text-[11px]">
+                          {user.lastLogin
+                            ? new Date(user.lastLogin).toLocaleString('es-ES', {
+                                dateStyle: 'short',
+                                timeStyle: 'short',
+                              })
+                            : 'Nunca'}
+                        </td>
+                        <td className="px-5 py-3.5 text-right">
+                          <div className="flex items-center justify-end gap-2 flex-wrap">
+                            {(isLocked || failedCount > 0) && (
+                              <button
+                                type="button"
+                                onClick={() => handleUnlockUser(user.id, user.username)}
+                                className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-all cursor-pointer"
+                              >
+                                🔓 Desbloquear
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPasswordTargetUser({
+                                  id: user.id,
+                                  username: user.username,
+                                  fullName: user.fullName,
+                                });
+                                setCustomNewPassword('');
+                                setPasswordModalError(null);
+                              }}
+                              className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 transition-all flex items-center gap-1 cursor-pointer"
+                            >
+                              <Lock className="w-3 h-3" />
+                              <span>Cambiar Clave</span>
+                            </button>
+
+                            {user.id !== data.currentUser.id && (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleUser(user.id)}
+                                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border cursor-pointer ${
+                                  user.isActive
+                                    ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border-rose-500/30'
+                                    : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                                }`}
+                              >
+                                {user.isActive ? 'Desactivar' : 'Activar'}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -1055,6 +1196,79 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
                 className="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all shadow-md shadow-cyan-600/30 disabled:opacity-50 cursor-pointer"
               >
                 {isSubmittingUser ? 'Guardando...' : 'Crear Usuario'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {passwordTargetUser && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <form
+            onSubmit={handleChangePassword}
+            className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4"
+          >
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2 text-white font-bold text-base">
+                <Lock className="w-5 h-5 text-cyan-400" />
+                <span>Cambiar Contraseña de Seguridad</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPasswordTargetUser(null)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+              <div className="text-slate-400">Actualizando credenciales para:</div>
+              <div className="font-bold text-white text-sm mt-0.5">
+                {passwordTargetUser.fullName}{' '}
+                <span className="text-cyan-400 font-mono">(@{passwordTargetUser.username})</span>
+              </div>
+            </div>
+
+            {passwordModalError && (
+              <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs">
+                {passwordModalError}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Nueva Contraseña Segura
+              </label>
+              <input
+                type="password"
+                value={customNewPassword}
+                onChange={(e) => setCustomNewPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                minLength={6}
+                required
+                autoFocus
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:ring-2 focus:ring-cyan-500 focus:outline-none font-mono"
+              />
+              <p className="text-[11px] text-slate-400 mt-1.5">
+                Se encriptará con PBKDF2-SHA512 (10,000 iteraciones) y reiniciará cualquier bloqueo por intentos fallidos.
+              </p>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPasswordTargetUser(null)}
+                className="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isUpdatingPassword}
+                className="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all shadow-md shadow-cyan-600/30 disabled:opacity-50 cursor-pointer"
+              >
+                {isUpdatingPassword ? 'Encriptando...' : 'Guardar Nueva Contraseña'}
               </button>
             </div>
           </form>

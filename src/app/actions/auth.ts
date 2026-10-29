@@ -7,6 +7,8 @@ import {
   listAllUsers,
   createNewUser,
   toggleUserActive,
+  updateUserPassword,
+  unlockUserAccount,
   ensureUsersTableInitialized,
   UserSession,
 } from '@/lib/auth';
@@ -21,7 +23,7 @@ import {
 } from '@/db/schema';
 import { sql, desc, eq } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
-import { getLegalModifications } from '@/lib/audit';
+import { getLegalModifications, logLegalModification } from '@/lib/audit';
 
 export type LoginResponse =
   | { success: true; user: UserSession; error?: never }
@@ -70,6 +72,55 @@ export async function toggleUserStatusAction(userId: string): Promise<{ success:
     return { success: false, error: 'Acceso no autorizado. Se requieren permisos de administrador.' };
   }
   return await toggleUserActive(userId);
+}
+
+export async function changeUserPasswordAction(
+  userId: string,
+  newPassword: string
+): Promise<{ success: true; username: string } | { success: false; error: string }> {
+  const current = await getCurrentUser();
+  if (!current || current.role !== 'admin') {
+    return { success: false, error: 'Acceso no autorizado. Se requieren permisos de administrador.' };
+  }
+
+  const res = await updateUserPassword(userId, newPassword);
+  if (res.success) {
+    await logLegalModification({
+      userId: `${current.fullName} (@${current.username})`,
+      userRole: current.role,
+      actionType: 'recount_adjustment',
+      entityType: 'system',
+      entityId: userId,
+      itemSku: `@${res.username}`,
+      itemDescription: `Cambio de contraseña y reinicio de bloqueo para usuario @${res.username}`,
+      reason: 'Actualización de credenciales de seguridad desde Panel de Administración',
+    });
+  }
+  return res;
+}
+
+export async function unlockUserAccountAction(
+  userId: string
+): Promise<{ success: true; username: string } | { success: false; error: string }> {
+  const current = await getCurrentUser();
+  if (!current || current.role !== 'admin') {
+    return { success: false, error: 'Acceso no autorizado. Se requieren permisos de administrador.' };
+  }
+
+  const res = await unlockUserAccount(userId);
+  if (res.success) {
+    await logLegalModification({
+      userId: `${current.fullName} (@${current.username})`,
+      userRole: current.role,
+      actionType: 'recount_adjustment',
+      entityType: 'system',
+      entityId: userId,
+      itemSku: `@${res.username}`,
+      itemDescription: `Desbloqueo manual de seguridad para cuenta @${res.username}`,
+      reason: 'Desbloqueo autorizado por el Administrador',
+    });
+  }
+  return res;
 }
 
 export async function getAdminDashboardData() {

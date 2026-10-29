@@ -1,9 +1,11 @@
 import { getInventorySessions } from '@/app/actions/sync';
+import { requireAuth } from '@/lib/auth';
 import HomeClient from './HomeClient';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
+  await requireAuth();
   const result = await getInventorySessions();
   const sessions = result.success && result.data ? result.data : [];
 

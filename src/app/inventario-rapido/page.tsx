@@ -1,7 +1,7 @@
 import { db } from '@/db';
 import { inventorySessions, inventoryItems } from '@/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth';
 import QuickInventoryClient from './QuickInventoryClient';
 
 export const dynamic = 'force-dynamic';
@@ -17,7 +17,7 @@ interface PageProps {
 
 export default async function InventarioRapidoPage({ searchParams }: PageProps) {
   const { sessionId } = (await searchParams) || {};
-  const currentUser = await getCurrentUser();
+  const currentUser = await requireAuth();
 
   // Obtener sesiones existentes con recuento de ítems
   const sessions = await db

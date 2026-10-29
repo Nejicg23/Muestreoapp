@@ -2,6 +2,7 @@
 
 import { db } from '@/db';
 import { inventorySessions, inventoryItems } from '@/db/schema';
+import { getCurrentUser } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
 
 export interface ImportItemInput {
@@ -24,6 +25,11 @@ export async function importInventoryItems(payload: {
   items: ImportItemInput[];
 }) {
   try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) {
+      return { success: false, error: 'Acceso denegado. Debes iniciar sesión para importar datos.' };
+    }
+
     let targetSessionId = payload.sessionId;
 
     // 1. Crear nueva sesión si se solicitó o no hay ID

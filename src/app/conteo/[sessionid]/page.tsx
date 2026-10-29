@@ -1,5 +1,5 @@
 import { getSessionDetails, seedSampleSessionData } from '@/app/actions/sync';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth';
 import CountingClient from './CountingClient';
 import Link from 'next/link';
 import { ArrowLeft, PlusCircle, AlertCircle } from 'lucide-react';
@@ -12,6 +12,7 @@ export default async function ConteoPage({
 }: {
   params: Promise<{ sessionid: string }>;
 }) {
+  const currentUser = await requireAuth();
   const { sessionid } = await params;
   const result = await getSessionDetails(sessionid);
 
@@ -78,8 +79,6 @@ export default async function ConteoPage({
       </div>
     );
   }
-
-  const currentUser = await getCurrentUser();
 
   return (
     <CountingClient
