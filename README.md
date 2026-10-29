@@ -1,6 +1,6 @@
 # 📦 Sistema Empresarial de Gestión de Inventarios, Auditoría y Trazabilidad
 
-Aplicación web progresiva (PWA-ready) de alto rendimiento desarrollada con **Next.js 16 (App Router)**, **React 19**, **Drizzle ORM**, **PostgreSQL / Supabase** y **Tailwind CSS**. Diseñada para resolver con precisión matemática y legal la toma de inventarios físicos, auditoría de stock, reconteos, detección de fechas de vencimiento/cuarentena, captura fotográfica de evidencias e impresión de etiquetas y reportes ejecutivos.
+Aplicación web progresiva (PWA-ready) de alto rendimiento desarrollada con **Next.js 16 (App Router)**, **React 19**, **Drizzle ORM**, **PostgreSQL / Supabase** y **Tailwind CSS 4**. Diseñada con estética **Material Design 3 OLED Black** y arquitectura **Mobile-First** para resolver con precisión matemática y legal la toma de inventarios físicos, conteo inverso con visto bueno (`✓`), reconteos, detección de fechas de vencimiento/cuarentena, captura fotográfica de evidencias e impresión de etiquetas y reportes PDF interactivos con enlace público en línea.
 
 ---
 
@@ -13,53 +13,54 @@ Aplicación web progresiva (PWA-ready) de alto rendimiento desarrollada con **Ne
 
 ---
 
-## ✨ Módulos y Capacidades del Sistema
+## ✨ Módulos y Nuevas Implementaciones del Sistema
 
-### 1. Control de Acceso y Roles Estrictos
-- **Administrador:** Acceso y control total del sistema. Capacidad de borrado total para inicializar nuevas bases de datos, gestión de usuarios, visualización de auditoría inmutable de cambios y cierre oficial de sesiones.
-- **Auditor:** Autorizado para realizar y autorizar **reconteos**, así como ajustar o modificar valores monetarios y factores de empaque durante la sesión.
-- **Operador:** Encargado del escaneo y conteo físico en piso, registro de fracciones/unidades y reporte de novedades (solicitud de revisión de cruces, mercancía en mal estado o producto próximo a vencer).
+### 1. Blindaje de Seguridad, Login Maestro y Protección Anti-Fuerza Bruta
+- **Proxy de Seguridad Global (`src/proxy.ts`):** Todas las rutas operativas y administrativas están protegidas a nivel de servidor. Ningún visitante no autenticado puede visualizar menús ni acceder a módulos internos sin iniciar sesión.
+- **Protección Anti-Fuerza Bruta Persistente:** Control en base de datos (`failed_attempts` y `locked_until` en PostgreSQL) que bloquea automáticamente la cuenta durante **15 minutos** tras 5 intentos fallidos consecutivos.
+- **Sesiones Criptográficas (`HMAC-SHA256`):** Cookies `HttpOnly`, `Secure` y `SameSite=Lax` firmadas con llave maestra (`AUTH_SECRET`) y contraseñas cifradas con `scrypt` + salt aleatorio de 16 bytes.
+- **Control de Roles Estrictos:**
+  - **Administrador:** Control total del sistema, cambio de contraseñas, desbloqueo de cuentas, reseteo de sesiones y auditoría inmutable.
+  - **Auditor:** Autorizado para ejecutar y aprobar **reconteos**, ajustar valores monetarios y factores de empaque.
+  - **Operador:** Encargado del conteo físico en piso, conteo rápido/inverso, registro de fechas de caducidad, fotos y novedades.
 
-### 2. Importación Flexible de Bases de Datos
-- Algoritmo de mapeo inteligente para hojas de cálculo Excel (`.xlsx`, `.xls`) y archivos `.csv`.
-- Detección prioritaria de columnas:
-  1. `id` / `sku` / `código` (Identificador único del producto)
-  2. `stk-sis` / `stock` (Stock teórico reportado por el ERP)
-  3. `producto` / `descripción` (Nombre o detalle de la referencia)
-  4. `valor` (Valor monetario del producto o de la caja completa)
-- Cálculo automático de costos unitarios cuando el archivo especifica costo total por caja (`costBasis = 'pack'`), derivando el valor unitario con alta precisión para valorizar faltantes y sobrantes.
-- Detección de factor de empaque: si el producto no tiene habilitada la venta fraccionada, el sistema bloquea automáticamente la entrada de fracciones en las pantallas de conteo.
+### 2. Conteo Rápido Móvil con Modalidad de Conteo Inverso (`✓`) y Estándar
+El módulo `/inventario-rapido` cuenta con dos flujos de trabajo adaptados a la operación real en bodega:
 
-### 3. Conteo Rápido Móvil
-Flujo optimizado para dispositivos móviles en 3 pasos:
-1. **Selección de ítems:** Búsqueda en tiempo real sobre la base de datos para seleccionar 5, 10 o la cantidad requerida de productos a auditar.
-2. **Asignación de Stock de Sistema y Costo:** Validación o ingreso manual de stock teórico y asignación de valor monetario si el producto no contaba con precio registrado.
-3. **Conteo Físico y Fechas:**
-   - Registro de cajas completas (`u`) y fracciones (`f`).
-   - Fecha y hora de auditoría configurable.
-   - Selector de fecha de caducidad con atajos de horizonte rápido: `+3M`, `+6M`, `+1A`, `+2A`.
-   - **Alerta de Cuarentena Automática:** Productos con vencimiento inferior a 90 días son marcados visualmente con etiqueta amarilla indicando traslado a custodia o cuarentena.
+#### ⚡ A. Modo Conteo Inverso (Buscar y Contar Físico ➔ Comparar con Sistema Externo y Visto `✓`)
+1. **Paso 1 — Buscar Ítem y Registrar Conteo Físico al Instante:**
+   - El operador busca el producto que va a contar, pulsa **"Contar este Ítem"** y registra en el acto sus **Cajas Físicas (`u`)** y **Fracciones Físicas (`f`)** (además de lote, fecha de vencimiento con atajos `+3M`, `+6M`, `+1A`, `+2A` o fotografía opcional).
+   - Al pulsar **"Guardar Conteo e Ir por el Siguiente Producto"**, el ítem queda registrado y el buscador se limpia automáticamente para buscar el siguiente producto.
+   - **El operador decide cuándo terminar:** Cuando finaliza de contar los productos deseados, pulsa **"Terminar de Registrar Conteos ➔ Pasar al Conteo del Sistema Externo"**.
+2. **Paso 2 — Comparación con Sistema Externo y Check / Visto (`✓`):**
+   - Se listan **únicamente los ítems que el operador contó** en el Paso 1.
+   - Si la cantidad física coincide con lo reflejado en el sistema externo, el operador marca el botón **Check / Visto (`✓ Concuerda con el Sistema Externo`)** individualmente o mediante **"✓ Visto a Todos"**. Si difiere, ingresa la cantidad que muestra su sistema externo para calcular al instante el faltante o sobrante y su impacto en USD.
+3. **Contabilización Exclusiva en el Informe Final:**
+   - El sistema contabiliza e incluye en el informe final **exclusivamente los ítems en los que el operador registró conteo**. Todo producto de la base de datos que no fue utilizado o no fue contado queda completamente excluido del reporte.
 
-### 4. Captura Fotográfica Híbrida (Cámara Móvil y PC)
-- Compatible con cámaras de smartphones (Android / iOS) mediante captura nativa trasera (`capture="environment"`) y explorador de archivos en PC.
-- **Compresor Inteligente en Cliente:** Mediante Canvas HTML5, comprime imágenes de 5-12 MB a ~60-100 KB en formato Base64 sin pérdida de legibilidad de etiquetas o códigos, permitiendo almacenamiento ultrarrápido y funcionamiento offline.
+#### 🔄 B. Modo Conteo Estándar (3 Pasos)
+1. **Paso 1:** Selección múltiple de ítems del catálogo.
+2. **Paso 2:** Asignación de stock desplegado por el sistema y validación de costos por caja/unidad.
+3. **Paso 3:** Conteo físico real en estantería y liquidación de diferencias.
 
-### 5. Reportes Ejecutivos y Etiquetas Físicas
-- **Reporte Detallado y Rápido:** Visualización tabular con filtros por estado (cuadrados, faltantes, sobrantes y en cuarentena).
-- **Hojas A6 Tipo Factura:**
-  - Hoja A6 independiente para el detalle de productos **Faltantes**.
-  - Hoja A6 independiente para el detalle de productos **Sobrantes**.
-- **Generador e Impresión de Etiquetas Físicas:** Modal con formato de etiqueta adhesiva térmica que incluye código de barras generado, descripción, ubicación, fecha de vencimiento, distintivo de cuarentena y fotografía del ítem.
-- **Exportación a Excel:** Descarga de balance consolidado completo o exclusivo de novedades.
+### 3. Informes PDF Interactivos con Link Público en Línea y Código QR (`/compartir/[sessionid]`)
+- **Enlace Público de Solo Lectura con Firma Criptográfica:** Desde cualquier reporte (`/sesion/[sessionid]/reporte`), el botón **"PDF con Link en Línea"** genera un enlace público seguro (`/compartir/[sessionid]?token=...`) respaldado por **Supabase** y renderizado por **Vercel**.
+- **PDF con Hipervínculo Clicable y QR Integrado:** Al imprimir o guardar como PDF (tanto el **Acta Formal Completa** como las **Hojas A6 de Faltantes y Sobrantes**), el documento PDF incluye un **botón/enlace interactivo clicable** y un **Código QR**. Cualquier directivo o auditor que reciba el PDF puede hacer clic dentro del archivo o escanear el QR para abrir en su navegador la vista detallada en línea (con KPIs financieros, tabla completa, lotes, vencimientos y fotografías) sin necesidad de usuario ni contraseña.
 
-### 6. Auditoría y Trazabilidad Legal
-- Cada modificación, reconteo, ajuste de stock o cambio de precio genera un registro inmutable en la tabla de auditoría con identificación del usuario, rol, valores anteriores, nuevos valores, motivo y fecha/hora exacta.
+### 4. Interfaz Responsiva Mobile-First y Paleta Material Design 3 Black
+- **Paleta OLED Dark/Black:** Superficies inspiradas en Material Design 3 (`#0A0A0A`, `#121212`, `#1E1E1E`, `#2C2C2C`) con alto contraste para entornos de bodega y ahorro de batería en dispositivos móviles.
+- **Experiencia Móvil Nativa:** Barra de navegación inferior fija de 5 accesos rápidos en smartphones, controles táctiles de gran tamaño (`+` / `-`), pestañas deslizables y prevención de auto-zoom en iOS/Android (`font-size: 16px` en formularios).
+
+### 5. Importación Inteligente de Bases de Datos y Captura Fotográfica Híbrida
+- **Mapeo Flexible de Excel (`.xlsx`, `.xls`) y `.csv`:** Detección prioritaria de `id`/`sku`, `stk-sis`/`stock`, `producto`/`descripción`, `valor` y factor de empaque (`1xN`), bloqueando fracciones cuando el producto es `1x1`.
+- **Compresor Fotográfico en Cliente:** Captura desde cámara trasera móvil (`capture="environment"`) o PC con compresión inteligente en Canvas HTML5 (~60-100 KB en Base64) para visualización inmediata en reportes y etiquetas térmicas.
+- **Alertas de Cuarentena Automáticas:** Identificación visual de productos vencidos o próximos a vencer (< 90 días).
 
 ---
 
 ## 🛠️ Tecnologías Utilizadas
 
-- **Framework:** [Next.js 16](https://nextjs.org/) (App Router, Turbopack, Server Actions)
+- **Framework:** [Next.js 16](https://nextjs.org/) (App Router, Turbopack, Server Actions, Proxy Security)
 - **Frontend:** [React 19](https://react.dev/), [Tailwind CSS 4](https://tailwindcss.com/), [Lucide React](https://lucide.dev/)
 - **ORM & Base de Datos:** [Drizzle ORM](https://orm.drizzle.team/), [PostgreSQL](https://www.postgresql.org/) hospedado en [Supabase](https://supabase.com/)
 - **Procesamiento de Archivos:** [SheetJS (xlsx)](https://docs.sheetjs.com/)
@@ -71,8 +72,8 @@ Flujo optimizado para dispositivos móviles en 3 pasos:
 
 ### 1. Clonar el Repositorio
 ```bash
-git clone https://github.com/TU_USUARIO/TU_REPOSITORIO.git
-cd inventario-app
+git clone https://github.com/Nejicg23/Muestreoapp.git
+cd Muestreoapp
 ```
 
 ### 2. Instalar Dependencias
@@ -90,7 +91,8 @@ Abre `.env.local` y coloca las credenciales de tu proyecto en Supabase / Postgre
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-clave-publica-anon
-DATABASE_URL=postgresql://postgres:[TU_CONTRASEÑA]@db.tu-proyecto.supabase.co:5432/postgres
+DATABASE_URL=postgresql://postgres:TU_PASSWORD@db.tu-proyecto.supabase.co:5432/postgres
+AUTH_SECRET=una-clave-secreta-larga-y-segura-para-firmar-sesiones-y-links
 ```
 
 ### 4. Sincronizar el Esquema de Base de Datos
@@ -109,10 +111,7 @@ Abre tu navegador en [http://localhost:3000](http://localhost:3000).
 
 ## ☁️ Guía Paso a Paso para Despliegue en Vercel
 
-Dado que la aplicación está lista para integrarse con Vercel desde GitHub:
-
 ### Paso 1: Subir cambios a tu repositorio de GitHub
-Asegúrate de que tus cambios locales estén en GitHub:
 ```bash
 git push -u origin main
 ```
@@ -120,35 +119,33 @@ git push -u origin main
 ### Paso 2: Importar el proyecto en Vercel
 1. Ingresa a tu cuenta en [Vercel](https://vercel.com).
 2. Haz clic en **"Add New..."** ➔ **"Project"**.
-3. Selecciona tu cuenta de GitHub y busca el repositorio `inventario-app`.
-4. Haz clic en **"Import"**.
+3. Selecciona el repositorio `Nejicg23/Muestreoapp` y haz clic en **"Import"**.
 
 ### Paso 3: Configurar las Variables de Entorno en Vercel
-En la sección **"Environment Variables"** antes de presionar Deploy, añade las 3 variables:
+En la sección **"Environment Variables"**, añade las siguientes variables:
 
 | Nombre de la Variable | Valor Requerido | Descripción |
 |---|---|---|
-| `DATABASE_URL` | `postgresql://postgres:[PASSWORD]@[HOST]:[PORT]/postgres` | URL de conexión directa o pooler de PostgreSQL |
+| `DATABASE_URL` | `postgresql://postgres:PASSWORD@HOST:PORT/postgres` | URL de conexión de PostgreSQL / Supabase (el sistema sanitiza automáticamente corchetes o caracteres especiales) |
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://[ID].supabase.co` | URL pública de tu instancia de Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGci...` | Clave pública anónima de Supabase |
-
-> [!TIP]
-> **Recomendación para Supabase en Serverless (Vercel):** En entornos serverless como Vercel, es preferible utilizar la cadena de conexión con **Session Pooling** o **Transaction Pooling** proporcionada por Supabase (puerto `6543` o `5432` con `?pgbouncer=true` o modo directo según tu plan) para optimizar la gestión de conexiones concurrentes.
+| `AUTH_SECRET` | `clave-secreta-produccion` | Llave criptográfica para firmar sesiones y enlaces públicos de reportes |
 
 ### Paso 4: Desplegar
-Haz clic en **"Deploy"**. Vercel compilará automáticamente el proyecto con Next.js y te proporcionará tu URL pública de producción lista para pruebas y uso en campo.
+Haz clic en **"Deploy"**. Vercel compilará automáticamente el proyecto con Next.js 16 y publicará tu entorno de producción.
 
 ---
 
 ## 📱 Rutas Principales de la Aplicación
 
-- `/` : Menú principal y acceso rápido a módulos de inventario.
-- `/login` : Selección interactiva de rol y autenticación del operador/auditor.
-- `/onboarding` : Asistente inicial para configuración de roles y carga de primera base de datos.
-- `/inventario-rapido` : Flujo en 3 pasos para inventarios móviles ágiles con fechas de caducidad y captura fotográfica.
-- `/conteo/[sessionid]` : Terminal de conteo físico formal con soporte offline.
-- `/sesion/[sessionid]/reporte` : Reporte detallado, exportación a Excel, impresión de hojas A6 y generador de etiquetas.
-- `/admin` : Panel de control maestro, historial legal de auditoría y reseteo general de sesiones.
+- `/login` : Portal blindado de inicio de sesión con protección anti-fuerza bruta.
+- `/` : Panel principal y acceso rápido a módulos de inventario.
+- `/inventario-rapido` : Conteo Rápido Móvil con **Modo Conteo Inverso (Físico ➔ Visto `✓` Sistema)** y **Modo Estándar**.
+- `/importar` : Importador inteligente de catálogos Excel (`.xlsx`, `.csv`) y creación de sesiones.
+- `/conteo/[sessionid]` : Terminal de conteo físico formal con soporte offline (IndexedDB).
+- `/sesion/[sessionid]/reporte` : Reporte ejecutivo, generador de **PDF con Link en Línea y QR**, hojas A6 de faltantes/sobrantes, etiquetas térmicas y exportación a Excel.
+- `/compartir/[sessionid]` : Vista pública interactiva de solo lectura (accesible mediante el link o código QR incrustado en el PDF).
+- `/admin` : Panel de control maestro, gestión de usuarios/contraseñas, desbloqueo de cuentas y bitácora legal inmutable.
 
 ---
 
