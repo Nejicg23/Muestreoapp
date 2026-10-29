@@ -1,22 +1,69 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #0a0a0a;
+  --foreground: #f4f4f5;
+  --md-surface-0: #0a0a0a;
+  --md-surface-1: #121212;
+  --md-surface-2: #1e1e1e;
+  --md-surface-3: #262626;
+  --md-outline: #2e2e2e;
 }
 
+/* Paleta Material Design 3 Dark / True Black aplicada globalmente */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Remapeo de superficies oscuras hacia Material Design Black (#0A0A0A -> #121212 -> #1E1E1E -> #2C2C2C) */
+  --color-slate-950: #0a0a0a;
+  --color-slate-900: #121212;
+  --color-slate-800: #1e1e1e;
+  --color-slate-700: #2c2c2c;
+  --color-slate-600: #3d3d3d;
+  --color-slate-500: #71717a;
+  --color-slate-400: #a1a1aa;
+  --color-slate-300: #d4d4d8;
+  --color-slate-200: #e4e4e7;
+  --color-slate-100: #f4f4f5;
+}
+
+html {
+  background-color: #0a0a0a;
+  color-scheme: dark;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: var(--background);
+  background-color: #0a0a0a;
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  min-height: 100vh;
+  font-family: var(--font-sans), 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* Utilidad para barras de pestañas deslizables en móvil estilo Material Design */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Optimización táctil para móviles (evita zoom involuntario en iOS y mejora respuesta táctil) */
+@media screen and (max-width: 640px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="password"],
+  input[type="date"],
+  input[type="datetime-local"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 /* REGLAS PARA IMPRESIÓN PROFESIONAL DE REPORTES DE INVENTARIO */

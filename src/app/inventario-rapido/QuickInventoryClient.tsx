@@ -513,8 +513,8 @@ export default function QuickInventoryClient({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-24">
-      {/* Encabezado */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/60 p-5 sm:p-6 rounded-3xl border border-slate-800 shadow-xl">
+      {/* Encabezado Material Dark */}
+      <div className="bg-gradient-to-r from-[#121212] via-[#1a1a1a] to-[#121212] p-4 sm:p-6 rounded-3xl border border-[#2c2c2c] shadow-xl">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/25 shrink-0">

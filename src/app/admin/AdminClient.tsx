@@ -312,51 +312,51 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
 
   return (
     <div className="space-y-8 pb-12">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/60 p-6 rounded-3xl border border-slate-800 shadow-xl">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
-            <Shield className="w-7 h-7" />
+      {/* Top Header Material Dark */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-[#121212] via-[#18181b] to-[#121212] p-5 sm:p-6 rounded-3xl border border-[#2c2c2c] shadow-xl">
+        <div className="flex items-center gap-3.5 sm:gap-4">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 shrink-0">
+            <Shield className="w-6 h-6 sm:w-7 sm:h-7" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black text-white tracking-tight">Panel de Administración</h1>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">Panel de Administración</h1>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                 Rol: Administrador
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-400 mt-1 truncate">
               Sesión activa de <strong className="text-slate-200">{data.currentUser.fullName}</strong> (@{data.currentUser.username})
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3">
           <Link
             href="/onboarding"
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-xs font-bold text-white flex items-center gap-2 transition-all shadow-md shadow-cyan-600/20"
+            className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-xs font-bold text-white flex items-center justify-center gap-2 transition-all shadow-md shadow-cyan-600/20"
           >
-            <Sparkles className="w-4 h-4" />
-            <span>Asistente Onboarding</span>
+            <Sparkles className="w-4 h-4 shrink-0" />
+            <span className="truncate">Onboarding</span>
           </Link>
           <Link
             href="/importar"
-            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 flex items-center gap-2 transition-all"
+            className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 flex items-center justify-center gap-2 transition-all"
           >
-            <FileSpreadsheet className="w-4 h-4 text-cyan-400" />
-            <span>Importar Datos</span>
+            <FileSpreadsheet className="w-4 h-4 text-cyan-400 shrink-0" />
+            <span className="truncate">Importar</span>
           </Link>
           <Link
             href="/servidores"
-            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 flex items-center gap-2 transition-all"
+            className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 flex items-center justify-center gap-2 transition-all"
           >
-            <Server className="w-4 h-4 text-emerald-400" />
-            <span>Diagnóstico</span>
+            <Server className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span className="truncate">Diagnóstico</span>
           </Link>
-          <form action={logoutAction}>
+          <form action={logoutAction} className="w-full sm:w-auto">
             <button
               type="submit"
-              className="px-4 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
             >
               <span>Salir</span>
             </button>
@@ -407,78 +407,78 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
         </div>
       </div>
 
-      {/* Tabs de Navegación del Panel */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+      {/* Tabs de Navegación del Panel (Scrollable en Móvil) */}
+      <div className="flex items-center gap-2 border-b border-slate-800 pb-3 overflow-x-auto no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0 whitespace-nowrap">
         <button
           onClick={() => setActiveTab('users')}
-          className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer ${
+          className={`px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
             activeTab === 'users'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
               : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
           }`}
         >
-          <Users className="w-4 h-4" />
-          <span>Gestión de Usuarios ({data.users.length})</span>
+          <Users className="w-4 h-4 shrink-0" />
+          <span>Usuarios ({data.users.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('sessions')}
-          className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer ${
+          className={`px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
             activeTab === 'sessions'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
               : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
           }`}
         >
-          <ClipboardList className="w-4 h-4" />
-          <span>Supervisión de Sesiones ({data.sessions.length})</span>
+          <ClipboardList className="w-4 h-4 shrink-0" />
+          <span>Sesiones ({data.sessions.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('audit')}
-          className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer ${
+          className={`px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
             activeTab === 'audit'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
               : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
           }`}
         >
-          <Search className="w-4 h-4" />
+          <Search className="w-4 h-4 shrink-0" />
           <span>Búsquedas ({data.auditLogs.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('legal_log')}
-          className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border ${
+          className={`px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border shrink-0 ${
             activeTab === 'legal_log'
               ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
               : 'border-transparent text-amber-400/80 hover:text-amber-300 hover:bg-slate-800/50'
           }`}
         >
-          <Shield className="w-4 h-4 text-amber-400" />
+          <Shield className="w-4 h-4 text-amber-400 shrink-0" />
           <span>Bitácora Legal ({data.legalModifications?.length || 0})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('cross_checks')}
-          className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border ${
+          className={`px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border shrink-0 ${
             activeTab === 'cross_checks'
               ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-sm'
               : 'border-transparent text-rose-400/80 hover:text-rose-300 hover:bg-slate-800/50'
           }`}
         >
-          <AlertTriangle className="w-4 h-4 text-rose-400" />
-          <span>Alertas de Cruce ({data.crossCheckRequests?.length || 0})</span>
+          <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+          <span>Cruces ({data.crossCheckRequests?.length || 0})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('wipe')}
-          className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border ${
+          className={`px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer border shrink-0 ${
             activeTab === 'wipe'
               ? 'bg-rose-600 text-white border-rose-500 shadow-lg shadow-rose-600/30'
               : 'border-transparent text-rose-400 hover:text-rose-300 hover:bg-rose-500/10'
           }`}
         >
-          <Trash2 className="w-4 h-4 text-rose-400" />
-          <span>Borrado Total & Reinicio</span>
+          <Trash2 className="w-4 h-4 text-rose-400 shrink-0" />
+          <span>Borrado Total</span>
         </button>
       </div>
 

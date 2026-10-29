@@ -548,32 +548,32 @@ export default function ReportClient({
           </div>
 
           {/* BOTONES DE ACCIÓN: IMPRIMIR, EXPORTAR EXCEL, CERRAR SESIÓN */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full lg:w-auto">
             <button
               type="button"
               onClick={handlePrint}
-              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-2 border border-slate-700 transition-all cursor-pointer shadow-sm hover:shadow"
+              className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-2 border border-slate-700 transition-all cursor-pointer shadow-sm"
             >
-              <Printer className="w-4 h-4 text-cyan-400" />
-              <span>Imprimir</span>
+              <Printer className="w-4 h-4 text-cyan-400 shrink-0" />
+              <span className="truncate">Imprimir</span>
             </button>
 
             <button
               type="button"
               onClick={handleExportExcelNovelties}
-              className="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs flex items-center gap-2 border border-amber-500/40 transition-all cursor-pointer shadow-sm hover:shadow"
+              className="px-3.5 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs flex items-center justify-center gap-2 border border-amber-500/40 transition-all cursor-pointer shadow-sm"
             >
-              <AlertTriangle className="w-4 h-4 text-amber-400" />
-              <span>Solo Novedades ({noveltiesOrDiffCount})</span>
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="truncate">Novedades ({noveltiesOrDiffCount})</span>
             </button>
 
             <button
               type="button"
               onClick={handleExportExcelFull}
-              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-emerald-600/20"
+              className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-emerald-600/20"
             >
-              <FileSpreadsheet className="w-4 h-4" />
-              <span>Excel Completo</span>
+              <FileSpreadsheet className="w-4 h-4 shrink-0" />
+              <span className="truncate">Excel Completo</span>
             </button>
 
             {session.status !== 'closed' && (
@@ -581,10 +581,10 @@ export default function ReportClient({
                 type="button"
                 onClick={handleCloseSession}
                 disabled={isClosing}
-                className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-lg shadow-rose-600/20 disabled:opacity-50"
+                className="px-3.5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-rose-600/20 disabled:opacity-50"
               >
-                <Lock className="w-4 h-4" />
-                <span>{isClosing ? 'Sellando...' : 'Cerrar y Sellar'}</span>
+                <Lock className="w-4 h-4 shrink-0" />
+                <span className="truncate">{isClosing ? 'Sellando...' : 'Cerrar y Sellar'}</span>
               </button>
             )}
           </div>
