@@ -149,8 +149,12 @@ export default function QuickInventoryClient({
 
   // Buscador para seleccionar ítems
   const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = React.useRef<HTMLInputElement | null>(null);
 
-  // Ítems seleccionados por el operador para el conteo rápido
+  // Ítem activo que el operador acaba de buscar y está contando en este instante (Modo Conteo Inverso - Paso 1)
+  const [activeDraftItem, setActiveDraftItem] = useState<QuickCountItemInput | null>(null);
+
+  // Ítems con conteo registrado por el operador para el informe final (solo estos se contabilizan)
   const [selectedQueue, setSelectedQueue] = useState<QuickCountItemInput[]>([]);
 
   // Modal para agregar ítem manual no catalogado
@@ -292,6 +296,9 @@ export default function QuickInventoryClient({
     if (!searchQuery.trim() || dbItems.length === 0) return [];
     const q = searchQuery.toLowerCase().trim();
     const alreadySelectedIds = new Set(selectedQueue.map((s) => s.originalItemId));
+    if (activeDraftItem) {
+      alreadySelectedIds.add(activeDraftItem.originalItemId);
+    }
 
     return dbItems
       .filter((item) => {
@@ -303,10 +310,10 @@ export default function QuickInventoryClient({
         );
       })
       .slice(0, 10);
-  }, [dbItems, searchQuery, selectedQueue]);
+  }, [dbItems, searchQuery, selectedQueue, activeDraftItem]);
 
-  // AGREGAR ÍTEM A LA COLA
-  const handleAddItemToQueue = (item: RawItem) => {
+  // PREPARAR ÍTEM DESDE EL CATÁLOGO
+  const buildQuickCountItem = (item: RawItem): QuickCountItemInput => {
     const factor = Math.max(1, item.packQuantity || 1);
     const initialTheoretical = Number(item.systemStock) || 0;
     const initialBreakdown = formatStockBreakdown(initialTheoretical, factor);
@@ -314,7 +321,7 @@ export default function QuickInventoryClient({
     const unitCostNum = Number(item.unitCostCalculated) || (factor > 0 && rawCostNum > 0 ? rawCostNum / factor : 0);
     const calculatedBoxCost = rawCostNum > 0 ? rawCostNum : (unitCostNum * factor);
 
-    const newItem: QuickCountItemInput = {
+    return {
       originalItemId: item.id,
       sku: item.sku,
       barcode: item.barcode,
@@ -336,9 +343,49 @@ export default function QuickInventoryClient({
       countedLoose: 0,
       hasNovelty: false,
     };
+  };
 
-    setSelectedQueue((prev) => [...prev, newItem]);
+  // SELECCIONAR ÍTEM DEL BUSCADOR
+  const handleAddItemToQueue = (item: RawItem) => {
+    const newItem = buildQuickCountItem(item);
+
+    if (countMode === 'reverse') {
+      // En Conteo Inverso: el operador busca el ítem, registra su conteo físico al instante y luego va por el siguiente
+      if (activeDraftItem) {
+        setSelectedQueue((prev) => [...prev, activeDraftItem]);
+      }
+      setActiveDraftItem(newItem);
+      setSearchQuery('');
+    } else {
+      setSelectedQueue((prev) => [...prev, newItem]);
+      setSearchQuery('');
+    }
+  };
+
+  // GUARDAR CONTEO DEL ÍTEM ACTUAL E IR POR EL SIGUIENTE (MODO CONTEO INVERSO - PASO 1)
+  const handleSaveDraftCountAndNext = () => {
+    if (!activeDraftItem) return;
+    setSelectedQueue((prev) => [...prev, activeDraftItem]);
+    setActiveDraftItem(null);
     setSearchQuery('');
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 50);
+  };
+
+  // TERMINAR DE REGISTRAR CONTEOS FÍSICOS Y PASAR AL SISTEMA EXTERNO (MODO CONTEO INVERSO)
+  const handleFinishReverseCounting = () => {
+    let finalCount = selectedQueue.length;
+    if (activeDraftItem) {
+      setSelectedQueue((prev) => [...prev, activeDraftItem]);
+      setActiveDraftItem(null);
+      finalCount += 1;
+    }
+    if (finalCount === 0) {
+      alert('Primero busca al menos un producto y registra su conteo físico.');
+      return;
+    }
+    setCountStage(3);
   };
 
   // AGREGAR ÍTEM MANUAL NO CATALOGADO
@@ -373,7 +420,14 @@ export default function QuickInventoryClient({
       hasNovelty: false,
     };
 
-    setSelectedQueue((prev) => [...prev, newItem]);
+    if (countMode === 'reverse') {
+      if (activeDraftItem) {
+        setSelectedQueue((prev) => [...prev, activeDraftItem]);
+      }
+      setActiveDraftItem(newItem);
+    } else {
+      setSelectedQueue((prev) => [...prev, newItem]);
+    }
     setManualItemModal(null);
   };
 
@@ -588,7 +642,7 @@ export default function QuickInventoryClient({
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
                 {countMode === 'reverse'
-                  ? '1. Elige ítems ➔ 2. Cuenta físicamente primero ➔ 3. Compara con tu sistema y pon Visto (✓).'
+                  ? 'Paso 1: Busca el ítem, registra su conteo físico y ve por el siguiente ➔ Paso 2: Al terminar, pasa al conteo del sistema externo y pon Visto (✓).'
                   : '1. Elige los ítems ➔ 2. Asigna stock del sistema ➔ 3. Cuenta físicamente.'}
               </p>
             </div>
@@ -601,6 +655,7 @@ export default function QuickInventoryClient({
             type="button"
             onClick={() => {
               setCountMode('reverse');
+              setCountStage(1);
               setAuditReason('Muestreo Rápido (Conteo Inverso con Visto)');
             }}
             className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
@@ -610,13 +665,14 @@ export default function QuickInventoryClient({
             }`}
           >
             <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>Conteo Inverso (Físico ➔ Visto ✓ Sistema)</span>
+            <span>Conteo Inverso (Buscar y Contar ➔ Sistema ✓)</span>
           </button>
 
           <button
             type="button"
             onClick={() => {
               setCountMode('standard');
+              setCountStage(1);
               setAuditReason('Muestreo Cíclico / Conteo Rápido');
             }}
             className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
@@ -630,61 +686,94 @@ export default function QuickInventoryClient({
           </button>
         </div>
 
-        {/* STEPPER DE LAS 3 ETAPAS */}
-        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80">
-          <button
-            type="button"
-            onClick={() => setCountStage(1)}
-            className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer ${
-              countStage === 1
-                ? 'bg-cyan-500/20 border-cyan-500/50 text-white shadow-md shadow-cyan-500/10'
-                : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-white'
-            }`}
-          >
-            <span className="text-[9px] font-mono font-bold uppercase block text-cyan-400">Paso 1</span>
-            <span className="text-xs font-bold block truncate mt-0.5">1. Elegir Ítems</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={selectedQueue.length === 0}
-            onClick={() => setCountStage(2)}
-            className={`p-2.5 rounded-2xl border text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${
-              countStage === 2
-                ? countMode === 'reverse'
+        {/* STEPPER DINÁMICO SEGÚN MODO */}
+        {countMode === 'reverse' ? (
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
+            <button
+              type="button"
+              onClick={() => setCountStage(1)}
+              className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                countStage === 1 || countStage === 2
                   ? 'bg-emerald-500/20 border-emerald-500/50 text-white shadow-md shadow-emerald-500/10'
-                  : 'bg-cyan-500/20 border-cyan-500/50 text-white shadow-md shadow-cyan-500/10'
-                : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-white'
-            }`}
-          >
-            <span
-              className={`text-[9px] font-mono font-bold uppercase block ${
-                countMode === 'reverse' ? 'text-emerald-400' : 'text-cyan-400'
+                  : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-white'
               }`}
             >
-              Paso 2
-            </span>
-            <span className="text-xs font-bold block truncate mt-0.5">
-              {countMode === 'reverse' ? '2. Contar Físico' : '2. Stock Sistema'}
-            </span>
-          </button>
+              <span className="text-[9px] font-mono font-bold uppercase block text-emerald-400">
+                Paso 1 (Conteo Físico)
+              </span>
+              <span className="text-xs font-bold block truncate mt-0.5">
+                1. Buscar Ítem y Registrar Conteo
+              </span>
+            </button>
 
-          <button
-            type="button"
-            disabled={selectedQueue.length === 0}
-            onClick={() => setCountStage(3)}
-            className={`p-2.5 rounded-2xl border text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${
-              countStage === 3
-                ? 'bg-cyan-500/20 border-cyan-500/50 text-white shadow-md shadow-cyan-500/10'
-                : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-white'
-            }`}
-          >
-            <span className="text-[9px] font-mono font-bold uppercase block text-cyan-400">Paso 3</span>
-            <span className="text-xs font-bold block truncate mt-0.5">
-              {countMode === 'reverse' ? '3. Cotejar & Visto ✓' : '3. Conteo Físico'}
-            </span>
-          </button>
-        </div>
+            <button
+              type="button"
+              disabled={selectedQueue.length === 0 && !activeDraftItem}
+              onClick={handleFinishReverseCounting}
+              className={`p-2.5 rounded-2xl border text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${
+                countStage === 3
+                  ? 'bg-cyan-500/20 border-cyan-500/50 text-white shadow-md shadow-cyan-500/10'
+                  : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              <span className="text-[9px] font-mono font-bold uppercase block text-cyan-400">
+                Paso 2 (Al Terminar Conteos)
+              </span>
+              <span className="text-xs font-bold block truncate mt-0.5">
+                2. Sistema Externo & Visto ✓ ({selectedQueue.length + (activeDraftItem ? 1 : 0)})
+              </span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80">
+            <button
+              type="button"
+              onClick={() => setCountStage(1)}
+              className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                countStage === 1
+                  ? 'bg-cyan-500/20 border-cyan-500/50 text-white shadow-md shadow-cyan-500/10'
+                  : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              <span className="text-[9px] font-mono font-bold uppercase block text-cyan-400">Paso 1</span>
+              <span className="text-xs font-bold block truncate mt-0.5">1. Elegir Ítems</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={selectedQueue.length === 0}
+              onClick={() => setCountStage(2)}
+              className={`p-2.5 rounded-2xl border text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${
+                countStage === 2
+                  ? 'bg-cyan-500/20 border-cyan-500/50 text-white shadow-md shadow-cyan-500/10'
+                  : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              <span className="text-[9px] font-mono font-bold uppercase block text-cyan-400">
+                Paso 2
+              </span>
+              <span className="text-xs font-bold block truncate mt-0.5">
+                2. Stock Sistema
+              </span>
+            </button>
+
+            <button
+              type="button"
+              disabled={selectedQueue.length === 0}
+              onClick={() => setCountStage(3)}
+              className={`p-2.5 rounded-2xl border text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${
+                countStage === 3
+                  ? 'bg-cyan-500/20 border-cyan-500/50 text-white shadow-md shadow-cyan-500/10'
+                  : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              <span className="text-[9px] font-mono font-bold uppercase block text-cyan-400">Paso 3</span>
+              <span className="text-xs font-bold block truncate mt-0.5">
+                3. Conteo Físico
+              </span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* BANNER DE BASE DE DATOS ACTIVA */}
@@ -695,7 +784,7 @@ export default function QuickInventoryClient({
             <div className="min-w-0">
               <span className="font-bold text-white block truncate">{activeDb.name}</span>
               <span className="text-[10px] text-slate-400 font-mono">
-                {dbItems.length} productos en catálogo
+                {dbItems.length} productos en catálogo • Solo se contabilizarán en el informe los ítems que cuentes ({selectedQueue.length})
               </span>
             </div>
           </div>
@@ -710,20 +799,32 @@ export default function QuickInventoryClient({
       )}
 
       {/* ========================================================================= */}
-      {/* PASO 1: ELEGIR LOS ÍTEMS A CONTAR                                         */}
+      {/* PASO 1: BUSCAR ÍTEM Y REGISTRAR CONTEO (INVERSO) O ELEGIR ÍTEMS (ESTÁNDAR) */}
       {/* ========================================================================= */}
       {countStage === 1 && (
         <div className="space-y-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 font-bold text-xs flex items-center justify-center border border-cyan-500/30">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <span
+                  className={`w-7 h-7 rounded-full font-bold text-xs flex items-center justify-center border shrink-0 ${
+                    countMode === 'reverse'
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                      : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+                  }`}
+                >
                   1
                 </span>
                 <div>
-                  <h2 className="text-sm font-bold text-white">Elegir Ítems a Contar</h2>
+                  <h2 className="text-sm font-bold text-white">
+                    {countMode === 'reverse'
+                      ? 'Buscar Producto y Registrar su Conteo Físico'
+                      : 'Elegir Ítems a Contar'}
+                  </h2>
                   <p className="text-[11px] text-slate-400">
-                    Busca y selecciona los 5, 10 o más productos que auditarás en esta ronda.
+                    {countMode === 'reverse'
+                      ? 'Busca el ítem que vas a contar, registra sus cajas/fracciones y ve por el siguiente. Tú decides cuándo terminar.'
+                      : 'Busca y selecciona los productos que auditarás en esta ronda.'}
                   </p>
                 </div>
               </div>
@@ -742,7 +843,7 @@ export default function QuickInventoryClient({
                     location: 'Bodega Principal',
                   })
                 }
-                className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[11px] font-bold border border-slate-700 flex items-center gap-1"
+                className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[11px] font-bold border border-slate-700 flex items-center gap-1 shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>+ Manual</span>
@@ -753,11 +854,16 @@ export default function QuickInventoryClient({
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
+                ref={searchInputRef}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar por nombre (ej: Copin, Abanix) o SKU..."
-                className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-2xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                placeholder={
+                  countMode === 'reverse'
+                    ? 'Escribe el nombre o SKU del ítem que vas a contar ahora...'
+                    : 'Buscar por nombre (ej: Copin, Abanix) o SKU...'
+                }
+                className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-2xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
@@ -770,7 +876,7 @@ export default function QuickInventoryClient({
                 {searchResults.map((item) => (
                   <div
                     key={item.id}
-                    className="p-3 rounded-xl bg-slate-900 hover:bg-cyan-950/30 border border-slate-800/80 hover:border-cyan-500/40 transition-all flex items-center justify-between gap-3 text-xs"
+                    className="p-3 rounded-xl bg-slate-900 hover:bg-emerald-950/30 border border-slate-800/80 hover:border-emerald-500/40 transition-all flex items-center justify-between gap-3 text-xs"
                   >
                     <div className="min-w-0 flex-1">
                       <span className="font-bold text-white block truncate">{item.description}</span>
@@ -782,54 +888,318 @@ export default function QuickInventoryClient({
                     <button
                       type="button"
                       onClick={() => handleAddItemToQueue(item)}
-                      className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-[11px] flex items-center gap-1 shrink-0 shadow-md shadow-cyan-600/20"
+                      className={`px-3 py-1.5 rounded-lg text-white font-bold text-[11px] flex items-center gap-1 shrink-0 shadow-md cursor-pointer ${
+                        countMode === 'reverse'
+                          ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20'
+                          : 'bg-cyan-600 hover:bg-cyan-500 shadow-cyan-600/20'
+                      }`}
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Seleccionar</span>
+                      <span>{countMode === 'reverse' ? 'Contar este Ítem' : 'Seleccionar'}</span>
                     </button>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Botones de muestra rápida si la cola está vacía */}
-            {selectedQueue.length === 0 && dbItems.length > 0 && (
+            {/* ===================================================================== */}
+            {/* TARJETA ACTIVA DE CONTEO INMEDIATO (SOLO EN MODO CONTEO INVERSO)      */}
+            {/* ===================================================================== */}
+            {countMode === 'reverse' && activeDraftItem && (() => {
+              const factor = Math.max(1, activeDraftItem.packQuantity || 1);
+              const physicalTotal = activeDraftItem.countedPacks * factor + activeDraftItem.countedLoose;
+
+              return (
+                <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-b from-emerald-950/40 to-slate-950 border-2 border-emerald-500/60 shadow-2xl shadow-emerald-950/40 space-y-4">
+                  <div className="flex items-start justify-between gap-2 border-b border-emerald-500/20 pb-3">
+                    <div className="min-w-0">
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono text-[10px] font-bold uppercase">
+                        Contando Ahora • SKU: {activeDraftItem.sku} (Factor 1x{factor})
+                      </span>
+                      <h3 className="text-sm sm:text-base font-black text-white mt-1.5">
+                        {activeDraftItem.description}
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveDraftItem(null)}
+                      className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white text-xs"
+                      title="Cancelar este ítem"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Controles de Cajas y Fracciones Físicas */}
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <label className="text-[11px] text-emerald-300 block mb-1.5 font-bold">
+                        Cajas Físicas (u)
+                      </label>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setActiveDraftItem({
+                              ...activeDraftItem,
+                              countedPacks: Math.max(0, activeDraftItem.countedPacks - 1),
+                            })
+                          }
+                          className="w-10 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black text-base flex items-center justify-center shrink-0"
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          min="0"
+                          value={activeDraftItem.countedPacks}
+                          onChange={(e) =>
+                            setActiveDraftItem({
+                              ...activeDraftItem,
+                              countedPacks: Math.max(0, parseInt(e.target.value) || 0),
+                            })
+                          }
+                          className="w-full h-11 px-2 bg-slate-900 border-2 border-emerald-500/50 rounded-xl text-white font-mono font-black text-center outline-none focus:border-emerald-400"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setActiveDraftItem({
+                              ...activeDraftItem,
+                              countedPacks: activeDraftItem.countedPacks + 1,
+                            })
+                          }
+                          className="w-10 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black text-base flex items-center justify-center shrink-0"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-[11px] text-emerald-300 block font-bold">
+                          Fracciones Físicas (f)
+                        </label>
+                        {factor <= 1 && (
+                          <span className="text-[9px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20">
+                            1x1
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          disabled={factor <= 1}
+                          onClick={() =>
+                            setActiveDraftItem({
+                              ...activeDraftItem,
+                              countedLoose: Math.max(0, activeDraftItem.countedLoose - 1),
+                            })
+                          }
+                          className="w-10 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-black text-base flex items-center justify-center shrink-0"
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          min="0"
+                          disabled={factor <= 1}
+                          value={factor <= 1 ? 0 : activeDraftItem.countedLoose}
+                          onChange={(e) =>
+                            setActiveDraftItem({
+                              ...activeDraftItem,
+                              countedLoose: Math.max(0, parseInt(e.target.value) || 0),
+                            })
+                          }
+                          className="w-full h-11 px-2 bg-slate-900 border-2 border-emerald-500/50 disabled:border-slate-800 disabled:bg-slate-950/60 rounded-xl text-white font-mono font-black text-center outline-none focus:border-emerald-400"
+                        />
+                        <button
+                          type="button"
+                          disabled={factor <= 1}
+                          onClick={() =>
+                            setActiveDraftItem({
+                              ...activeDraftItem,
+                              countedLoose: activeDraftItem.countedLoose + 1,
+                            })
+                          }
+                          className="w-10 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-black text-base flex items-center justify-center shrink-0"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Lote, Vencimiento y Foto opcionales en el acto */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-slate-800/80 text-xs">
+                    <div>
+                      <label className="text-[10px] text-slate-400 block mb-0.5">
+                        Lote / Batch (opcional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej: L-48920"
+                        value={activeDraftItem.batchNumber || ''}
+                        onChange={(e) =>
+                          setActiveDraftItem({
+                            ...activeDraftItem,
+                            batchNumber: e.target.value,
+                          })
+                        }
+                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono text-xs outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-0.5">
+                        <label className="text-[10px] text-slate-400 block">
+                          Vencimiento (opcional)
+                        </label>
+                        <div className="flex items-center gap-1">
+                          {[
+                            { label: '+3M', m: 3 },
+                            { label: '+6M', m: 6 },
+                            { label: '+1A', m: 12 },
+                            { label: '+2A', m: 24 },
+                          ].map((shortcut) => (
+                            <button
+                              key={shortcut.label}
+                              type="button"
+                              onClick={() => {
+                                const d = new Date();
+                                d.setMonth(d.getMonth() + shortcut.m);
+                                setActiveDraftItem({
+                                  ...activeDraftItem,
+                                  expirationDate: d.toISOString().split('T')[0],
+                                });
+                              }}
+                              className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-800 hover:bg-emerald-900 text-emerald-300 border border-slate-700"
+                            >
+                              {shortcut.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <input
+                        type="date"
+                        value={activeDraftItem.expirationDate || ''}
+                        onChange={(e) =>
+                          setActiveDraftItem({
+                            ...activeDraftItem,
+                            expirationDate: e.target.value,
+                          })
+                        }
+                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono text-xs outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Foto y Botón de Guardar Conteo e Ir por el Siguiente */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-800/80">
+                    <div className="flex items-center gap-2">
+                      {activeDraftItem.imageUrl && (
+                        <img
+                          src={activeDraftItem.imageUrl}
+                          alt="Foto"
+                          className="w-9 h-9 rounded-lg object-cover border border-emerald-500/50"
+                        />
+                      )}
+                      <label className="cursor-pointer px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 text-xs font-bold flex items-center gap-1.5">
+                        <Camera className="w-3.5 h-3.5" />
+                        <span>{activeDraftItem.imageUrl ? 'Cambiar Foto' : 'Foto / Etiqueta'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              try {
+                                const base64 = await compressAndConvertToBase64(file);
+                                setActiveDraftItem({
+                                  ...activeDraftItem,
+                                  imageUrl: base64,
+                                });
+                              } catch (err: any) {
+                                alert('Error al procesar la imagen: ' + err.message);
+                              }
+                            }
+                          }}
+                        />
+                      </label>
+
+                      <span className="text-xs font-mono font-bold text-emerald-300 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                        Total: {physicalTotal} fracc.
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleSaveDraftCountAndNext}
+                      className="px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 cursor-pointer transition-all"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Guardar Conteo e Ir por el Siguiente Producto</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Mensaje guía cuando aún no se ha buscado ningún producto */}
+            {selectedQueue.length === 0 && !activeDraftItem && dbItems.length > 0 && (
               <div className="p-4 rounded-2xl bg-slate-950/60 border border-dashed border-slate-800 text-center space-y-2">
                 <Package className="w-7 h-7 text-slate-500 mx-auto" />
-                <p className="text-xs text-slate-400">
-                  Escribe arriba el nombre de cualquier producto o selecciona una muestra rápida:
-                </p>
-                <div className="flex items-center justify-center gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      dbItems.slice(0, 5).forEach((i) => handleAddItemToQueue(i));
-                    }}
-                    className="text-xs font-bold text-cyan-400 bg-cyan-950/40 hover:bg-cyan-900/40 px-3 py-1.5 rounded-xl border border-cyan-800/40"
-                  >
-                    Elegir primeros 5
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      dbItems.slice(0, 10).forEach((i) => handleAddItemToQueue(i));
-                    }}
-                    className="text-xs font-bold text-indigo-400 bg-indigo-950/40 hover:bg-indigo-900/40 px-3 py-1.5 rounded-xl border border-indigo-800/40"
-                  >
-                    Elegir primeros 10
-                  </button>
-                </div>
+                {countMode === 'reverse' ? (
+                  <p className="text-xs text-slate-400">
+                    Escribe arriba el nombre o SKU del primer producto que tienes frente a ti para registrar su conteo físico.{' '}
+                    <strong className="text-emerald-300">
+                      Solo los ítems que cuentes aparecerán en el informe final.
+                    </strong>
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-xs text-slate-400">
+                      Escribe arriba el nombre de cualquier producto o selecciona una muestra rápida:
+                    </p>
+                    <div className="flex items-center justify-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          dbItems.slice(0, 5).forEach((i) => handleAddItemToQueue(i));
+                        }}
+                        className="text-xs font-bold text-cyan-400 bg-cyan-950/40 hover:bg-cyan-900/40 px-3 py-1.5 rounded-xl border border-cyan-800/40"
+                      >
+                        Elegir primeros 5
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          dbItems.slice(0, 10).forEach((i) => handleAddItemToQueue(i));
+                        }}
+                        className="text-xs font-bold text-indigo-400 bg-indigo-950/40 hover:bg-indigo-900/40 px-3 py-1.5 rounded-xl border border-indigo-800/40"
+                      >
+                        Elegir primeros 10
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
 
-          {/* LISTA DE ÍTEMS SELECCIONADOS EN PASO 1 */}
+          {/* LISTA DE ÍTEMS YA CONTADOS (MODO INVERSO) O SELECCIONADOS (MODO ESTÁNDAR) */}
           {selectedQueue.length > 0 && (
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-3">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
-                  <ClipboardCheck className="w-4 h-4 text-cyan-400" />
-                  <span>Ítems Seleccionados para esta Auditoría ({selectedQueue.length})</span>
+                  <ClipboardCheck className="w-4 h-4 text-emerald-400" />
+                  <span>
+                    {countMode === 'reverse'
+                      ? `Ítems con Conteo Físico Registrado (${selectedQueue.length})`
+                      : `Ítems Seleccionados para esta Auditoría (${selectedQueue.length})`}
+                  </span>
                 </h3>
                 <button
                   type="button"
@@ -840,45 +1210,111 @@ export default function QuickInventoryClient({
                 </button>
               </div>
 
-              <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-                {selectedQueue.map((item, idx) => (
-                  <div
-                    key={`${item.originalItemId}-${idx}`}
-                    className="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3 text-xs"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <span className="font-bold text-white block truncate">{item.description}</span>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        SKU: {item.sku} • Factor: 1x{item.packQuantity}
-                      </span>
-                    </div>
+              <div className="space-y-2.5 max-h-96 overflow-y-auto pr-1">
+                {selectedQueue.map((item, idx) => {
+                  const factor = Math.max(1, item.packQuantity || 1);
+                  const physicalTotal = item.countedPacks * factor + item.countedLoose;
 
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveFromQueue(idx)}
-                      className="p-1.5 text-slate-500 hover:text-rose-400"
-                      title="Eliminar de la lista"
+                  return (
+                    <div
+                      key={`${item.originalItemId}-${idx}`}
+                      className="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+                      <div className="min-w-0 flex-1">
+                        <span className="font-bold text-white block truncate">{item.description}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          SKU: {item.sku} • Factor: 1x{factor}
+                        </span>
+                      </div>
+
+                      {countMode === 'reverse' && (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-1 bg-slate-900 border border-emerald-500/30 rounded-xl px-2 py-1">
+                            <span className="text-[10px] text-emerald-400 font-bold">Cajas:</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={item.countedPacks}
+                              onChange={(e) =>
+                                handleUpdateQueueItem(
+                                  idx,
+                                  'countedPacks',
+                                  Math.max(0, parseInt(e.target.value) || 0)
+                                )
+                              }
+                              className="w-12 bg-transparent text-white font-mono font-bold text-center outline-none"
+                            />
+                          </div>
+                          {factor > 1 && (
+                            <div className="flex items-center gap-1 bg-slate-900 border border-emerald-500/30 rounded-xl px-2 py-1">
+                              <span className="text-[10px] text-emerald-400 font-bold">Fracc:</span>
+                              <input
+                                type="number"
+                                min="0"
+                                value={item.countedLoose}
+                                onChange={(e) =>
+                                  handleUpdateQueueItem(
+                                    idx,
+                                    'countedLoose',
+                                    Math.max(0, parseInt(e.target.value) || 0)
+                                  )
+                                }
+                                className="w-12 bg-transparent text-white font-mono font-bold text-center outline-none"
+                              />
+                            </div>
+                          )}
+                          <span className="px-2 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono text-[10px] font-bold">
+                            {physicalTotal} fracc.
+                          </span>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFromQueue(idx)}
+                        className="p-1.5 text-slate-500 hover:text-rose-400 self-end sm:self-center"
+                        title="Quitar ítem (no se incluirá en el informe)"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
 
-              {/* Botón de Avance al Paso 2 */}
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => setCountStage(2)}
-                  className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30 transition-all cursor-pointer"
-                >
-                  <span>
-                    {countMode === 'reverse'
-                      ? 'Continuar al Paso 2: Contar Físicamente en Estantería'
-                      : 'Continuar al Paso 2: Asignar Stock del Sistema'}
-                  </span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+              {/* Botón para Terminar Conteos e Ir a Sistema Externo (Inverso) o Paso 2 (Estándar) */}
+              <div className="pt-2 space-y-2">
+                {countMode === 'reverse' ? (
+                  <>
+                    <div className="p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/20 text-[11px] text-emerald-300 flex items-center justify-between gap-2">
+                      <span>
+                        ✓ Puedes seguir buscando y contando más productos arriba, o terminar ahora.
+                      </span>
+                      <span className="font-mono font-bold shrink-0">
+                        Solo estos {selectedQueue.length} ítems irán al informe
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleFinishReverseCounting}
+                      className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all cursor-pointer"
+                    >
+                      <span>
+                        Terminar de Registrar Conteos ➔ Pasar al Conteo del Sistema Externo ({selectedQueue.length} ítems)
+                      </span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setCountStage(2)}
+                    className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30 transition-all cursor-pointer"
+                  >
+                    <span>Continuar al Paso 2: Asignar Stock del Sistema</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -1415,7 +1851,7 @@ export default function QuickInventoryClient({
       )}
 
       {/* ========================================================================= */}
-      {/* PASO 3 (MODO INVERSO): COMPARAR CON SISTEMA EXTERNO Y PONER CHECK/VISTO ✓ */}
+      {/* PASO 2 (MODO INVERSO): COMPARAR CON SISTEMA EXTERNO Y PONER CHECK/VISTO ✓ */}
       {/* ========================================================================= */}
       {countStage === 3 && countMode === 'reverse' && (
         <div className="space-y-4">
@@ -1423,14 +1859,17 @@ export default function QuickInventoryClient({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2.5">
                 <span className="w-7 h-7 rounded-full bg-cyan-500/20 text-cyan-300 font-bold text-xs flex items-center justify-center border border-cyan-500/30 shrink-0">
-                  3
+                  2
                 </span>
                 <div>
                   <h2 className="text-sm font-bold text-white">
-                    Comparar con Sistema Externo y Poner Visto (✓)
+                    Conteo del Sistema Externo y Poner Visto (✓)
                   </h2>
                   <p className="text-[11px] text-slate-400">
-                    Revisa tu sistema externo: si la cantidad coincide con lo que contaste, marca el <strong>Check / Visto (✓)</strong>. Si difiere, ingresa la cantidad del sistema.
+                    Compara tus {selectedQueue.length} ítems contados con tu sistema externo: pon <strong>Check / Visto (✓)</strong> si concuerdan o ingresa la cantidad del sistema.{' '}
+                    <span className="text-emerald-300 font-semibold">
+                      Lo que no contaste no se incluye en el informe final.
+                    </span>
                   </p>
                 </div>
               </div>
@@ -1732,11 +2171,11 @@ export default function QuickInventoryClient({
               <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2">
                 <button
                   type="button"
-                  onClick={() => setCountStage(2)}
+                  onClick={() => setCountStage(1)}
                   className="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span>Volver al Conteo Físico</span>
+                  <span>Volver a Buscar / Registrar Conteos Físicos</span>
                 </button>
 
                 <button
