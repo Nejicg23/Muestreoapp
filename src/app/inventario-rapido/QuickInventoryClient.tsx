@@ -124,10 +124,16 @@ export default function QuickInventoryClient({
   // Catálogo completo de ítems de la base de datos activa
   const [dbItems, setDbItems] = useState<RawItem[]>(initialItems);
 
+  // MODALIDAD DE CONTEO RÁPIDO:
+  // 'standard' = 1. Elegir -> 2. Stock Sistema -> 3. Conteo Físico
+  // 'reverse'  = 1. Elegir -> 2. Conteo Físico Primero -> 3. Comparar con Sistema y poner Check/Visto (✓)
+  const [countMode, setCountMode] = useState<'standard' | 'reverse'>('reverse');
+  const [verifiedChecks, setVerifiedChecks] = useState<Record<string, boolean>>({});
+
   // ETAPA DEL FLUJO SECUENCIAL:
   // 1 = Elegir los ítems a contar
-  // 2 = Asignar las cantidades que el sistema despliega (Stock Teórico / ERP)
-  // 3 = Contar las cantidades físicas reales en estantería
+  // 2 = Paso intermedio (Stock Sistema en modo estándar | Conteo Físico en modo inverso)
+  // 3 = Paso final (Conteo Físico en modo estándar | Cotejo con Check/Visto contra Sistema en modo inverso)
   const [countStage, setCountStage] = useState<1 | 2 | 3>(1);
 
   // Control del modal selector / cargador de Base de Datos
@@ -387,6 +393,51 @@ export default function QuickInventoryClient({
     );
   };
 
+  // PONER O QUITAR CHECK / VISTO (✓) EN MODO CONTEO INVERSO
+  const handleToggleCheckMatch = (index: number) => {
+    const target = selectedQueue[index];
+    if (!target) return;
+    const key = `${target.originalItemId}-${index}`;
+    const nextChecked = !verifiedChecks[key];
+
+    setVerifiedChecks((prev) => ({
+      ...prev,
+      [key]: nextChecked,
+    }));
+
+    if (nextChecked) {
+      // Igualar automáticamente el stock del sistema externo con lo contado físicamente
+      setSelectedQueue((prev) =>
+        prev.map((item, i) =>
+          i === index
+            ? {
+                ...item,
+                externalPacks: item.countedPacks,
+                externalLoose: item.countedLoose,
+              }
+            : item
+        )
+      );
+    }
+  };
+
+  // MARCAR TODOS LOS ÍTEMS CON CHECK / VISTO (✓) DE CONFORMIDAD
+  const handleCheckAllMatches = () => {
+    const newChecks: Record<string, boolean> = {};
+    setSelectedQueue((prev) =>
+      prev.map((item, idx) => {
+        const key = `${item.originalItemId}-${idx}`;
+        newChecks[key] = true;
+        return {
+          ...item,
+          externalPacks: item.countedPacks,
+          externalLoose: item.countedLoose,
+        };
+      })
+    );
+    setVerifiedChecks(newChecks);
+  };
+
   // ASENTAR FORMALMENTE EL INVENTARIO RÁPIDO
   const handleSubmitQuickAudit = async () => {
     if (selectedQueue.length === 0) {
@@ -514,34 +565,77 @@ export default function QuickInventoryClient({
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-24">
       {/* Encabezado Material Dark */}
-      <div className="bg-gradient-to-r from-[#121212] via-[#1a1a1a] to-[#121212] p-4 sm:p-6 rounded-3xl border border-[#2c2c2c] shadow-xl">
-        <div className="flex items-center justify-between gap-3">
+      <div className="bg-gradient-to-r from-[#121212] via-[#1a1a1a] to-[#121212] p-4 sm:p-6 rounded-3xl border border-[#2c2c2c] shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/25 shrink-0">
               <Smartphone className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                   Inventario Rápido
                 </h1>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                  Flujo de 3 Pasos
+                <span
+                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                    countMode === 'reverse'
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                      : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+                  }`}
+                >
+                  {countMode === 'reverse' ? '⚡ Modo Conteo Inverso Activo' : '🔄 Flujo Estándar'}
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                1. Elige los ítems ➔ 2. Asigna stock del sistema ➔ 3. Cuenta físicamente.
+                {countMode === 'reverse'
+                  ? '1. Elige ítems ➔ 2. Cuenta físicamente primero ➔ 3. Compara con tu sistema y pon Visto (✓).'
+                  : '1. Elige los ítems ➔ 2. Asigna stock del sistema ➔ 3. Cuenta físicamente.'}
               </p>
             </div>
           </div>
         </div>
 
+        {/* SELECTOR DE MODO: CONTEO INVERSO vs CONTEO ESTÁNDAR */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-1.5 bg-[#0a0a0a] rounded-2xl border border-[#262626]">
+          <button
+            type="button"
+            onClick={() => {
+              setCountMode('reverse');
+              setAuditReason('Muestreo Rápido (Conteo Inverso con Visto)');
+            }}
+            className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              countMode === 'reverse'
+                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/25'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>Conteo Inverso (Físico ➔ Visto ✓ Sistema)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setCountMode('standard');
+              setAuditReason('Muestreo Cíclico / Conteo Rápido');
+            }}
+            className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              countMode === 'standard'
+                ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 text-white shadow-md shadow-cyan-600/25'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <SlidersHorizontal className="w-4 h-4 shrink-0" />
+            <span>Conteo Estándar (Sistema ➔ Físico)</span>
+          </button>
+        </div>
+
         {/* STEPPER DE LAS 3 ETAPAS */}
-        <div className="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-slate-800/80">
+        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80">
           <button
             type="button"
             onClick={() => setCountStage(1)}
-            className={`p-2.5 rounded-2xl border text-left transition-all ${
+            className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer ${
               countStage === 1
                 ? 'bg-cyan-500/20 border-cyan-500/50 text-white shadow-md shadow-cyan-500/10'
                 : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-white'
@@ -555,28 +649,40 @@ export default function QuickInventoryClient({
             type="button"
             disabled={selectedQueue.length === 0}
             onClick={() => setCountStage(2)}
-            className={`p-2.5 rounded-2xl border text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+            className={`p-2.5 rounded-2xl border text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${
               countStage === 2
-                ? 'bg-cyan-500/20 border-cyan-500/50 text-white shadow-md shadow-cyan-500/10'
+                ? countMode === 'reverse'
+                  ? 'bg-emerald-500/20 border-emerald-500/50 text-white shadow-md shadow-emerald-500/10'
+                  : 'bg-cyan-500/20 border-cyan-500/50 text-white shadow-md shadow-cyan-500/10'
                 : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-white'
             }`}
           >
-            <span className="text-[9px] font-mono font-bold uppercase block text-cyan-400">Paso 2</span>
-            <span className="text-xs font-bold block truncate mt-0.5">2. Stock Sistema</span>
+            <span
+              className={`text-[9px] font-mono font-bold uppercase block ${
+                countMode === 'reverse' ? 'text-emerald-400' : 'text-cyan-400'
+              }`}
+            >
+              Paso 2
+            </span>
+            <span className="text-xs font-bold block truncate mt-0.5">
+              {countMode === 'reverse' ? '2. Contar Físico' : '2. Stock Sistema'}
+            </span>
           </button>
 
           <button
             type="button"
             disabled={selectedQueue.length === 0}
             onClick={() => setCountStage(3)}
-            className={`p-2.5 rounded-2xl border text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+            className={`p-2.5 rounded-2xl border text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${
               countStage === 3
                 ? 'bg-cyan-500/20 border-cyan-500/50 text-white shadow-md shadow-cyan-500/10'
                 : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-white'
             }`}
           >
             <span className="text-[9px] font-mono font-bold uppercase block text-cyan-400">Paso 3</span>
-            <span className="text-xs font-bold block truncate mt-0.5">3. Conteo Físico</span>
+            <span className="text-xs font-bold block truncate mt-0.5">
+              {countMode === 'reverse' ? '3. Cotejar & Visto ✓' : '3. Conteo Físico'}
+            </span>
           </button>
         </div>
       </div>
@@ -766,7 +872,11 @@ export default function QuickInventoryClient({
                   onClick={() => setCountStage(2)}
                   className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30 transition-all cursor-pointer"
                 >
-                  <span>Continuar al Paso 2: Asignar Stock del Sistema</span>
+                  <span>
+                    {countMode === 'reverse'
+                      ? 'Continuar al Paso 2: Contar Físicamente en Estantería'
+                      : 'Continuar al Paso 2: Asignar Stock del Sistema'}
+                  </span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
@@ -776,9 +886,299 @@ export default function QuickInventoryClient({
       )}
 
       {/* ========================================================================= */}
-      {/* PASO 2: ASIGNAR LAS CANTIDADES QUE EL SISTEMA DESPLIEGA (ERP / WMS)       */}
+      {/* PASO 2 (MODO INVERSO): CONTEO FÍSICO CIEGO PRIMERO EN ESTANTERÍA           */}
       {/* ========================================================================= */}
-      {countStage === 2 && (
+      {countStage === 2 && countMode === 'reverse' && (
+        <div className="space-y-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-xs flex items-center justify-center border border-emerald-500/30">
+                  2
+                </span>
+                <div>
+                  <h2 className="text-sm font-bold text-white">
+                    Conteo Físico en Estantería (Primero Físico)
+                  </h2>
+                  <p className="text-[11px] text-slate-400">
+                    Cuenta físicamente lo que tienes frente a ti en Cajas (u) y Fracciones (f). En el siguiente paso lo compararás con tu sistema.
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs text-emerald-400 font-mono font-bold shrink-0">
+                {selectedQueue.length} ítems
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {selectedQueue.map((item, index) => {
+                const factor = Math.max(1, item.packQuantity || 1);
+                const physicalTotal = item.countedPacks * factor + item.countedLoose;
+
+                return (
+                  <div
+                    key={`rev-step2-${item.originalItemId}-${index}`}
+                    className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+                      <div className="min-w-0">
+                        <span className="font-mono text-[10px] text-emerald-400 font-bold">
+                          SKU: {item.sku} • Factor: 1x{factor}
+                        </span>
+                        <h3 className="text-xs font-bold text-white mt-0.5 truncate">
+                          {item.description}
+                        </h3>
+                      </div>
+                      <span className="text-[10px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-lg font-mono shrink-0 font-bold">
+                        Contado: {physicalTotal} fracc.
+                      </span>
+                    </div>
+
+                    {/* Inputs de Conteo Físico */}
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      {/* Cajas Físicas (u) */}
+                      <div>
+                        <label className="text-[10px] text-emerald-400 block mb-1 font-semibold">
+                          Cajas Físicas (u)
+                        </label>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleUpdateQueueItem(
+                                index,
+                                'countedPacks',
+                                Math.max(0, item.countedPacks - 1)
+                              )
+                            }
+                            className="w-8 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center shrink-0"
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min="0"
+                            value={item.countedPacks}
+                            onChange={(e) =>
+                              handleUpdateQueueItem(
+                                index,
+                                'countedPacks',
+                                Math.max(0, parseInt(e.target.value) || 0)
+                              )
+                            }
+                            className="w-full px-2 py-2 bg-slate-900 border border-emerald-500/40 rounded-xl text-white font-mono font-bold text-center outline-none focus:ring-1 focus:ring-emerald-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleUpdateQueueItem(
+                                index,
+                                'countedPacks',
+                                item.countedPacks + 1
+                              )
+                            }
+                            className="w-8 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center shrink-0"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Fracciones Físicas (f) */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[10px] text-emerald-400 block font-semibold">
+                            Fracciones Físicas (f)
+                          </label>
+                          {factor <= 1 && (
+                            <span className="text-[9px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20">
+                              No fracciona (1x1)
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            disabled={factor <= 1}
+                            onClick={() =>
+                              handleUpdateQueueItem(
+                                index,
+                                'countedLoose',
+                                Math.max(0, item.countedLoose - 1)
+                              )
+                            }
+                            className="w-8 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-200 font-bold flex items-center justify-center shrink-0"
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min="0"
+                            disabled={factor <= 1}
+                            value={factor <= 1 ? 0 : item.countedLoose}
+                            onChange={(e) =>
+                              handleUpdateQueueItem(
+                                index,
+                                'countedLoose',
+                                Math.max(0, parseInt(e.target.value) || 0)
+                              )
+                            }
+                            className="w-full px-2 py-2 bg-slate-900 border border-emerald-500/40 disabled:bg-slate-950/60 disabled:text-slate-500 rounded-xl text-white font-mono font-bold text-center outline-none focus:ring-1 focus:ring-emerald-500"
+                          />
+                          <button
+                            type="button"
+                            disabled={factor <= 1}
+                            onClick={() =>
+                              handleUpdateQueueItem(
+                                index,
+                                'countedLoose',
+                                item.countedLoose + 1
+                              )
+                            }
+                            className="w-8 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-200 font-bold flex items-center justify-center shrink-0"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Lote, Fecha de Vencimiento y Foto opcional en el conteo físico */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-800/60 text-xs">
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-0.5">
+                          Lote / Batch (opcional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Ej: L-48920"
+                          value={item.batchNumber || ''}
+                          onChange={(e) => handleUpdateQueueItem(index, 'batchNumber', e.target.value)}
+                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono text-xs outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-0.5">
+                          <label className="text-[10px] text-slate-400 block">
+                            Vencimiento (opcional)
+                          </label>
+                          <div className="flex items-center gap-1">
+                            {[
+                              { label: '+3M', m: 3 },
+                              { label: '+6M', m: 6 },
+                              { label: '+1A', m: 12 },
+                              { label: '+2A', m: 24 },
+                            ].map((shortcut) => (
+                              <button
+                                key={shortcut.label}
+                                type="button"
+                                onClick={() => {
+                                  const d = new Date();
+                                  d.setMonth(d.getMonth() + shortcut.m);
+                                  handleUpdateQueueItem(index, 'expirationDate', d.toISOString().split('T')[0]);
+                                }}
+                                className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-800 hover:bg-cyan-900 text-cyan-300 border border-slate-700"
+                              >
+                                {shortcut.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <input
+                          type="date"
+                          value={item.expirationDate || ''}
+                          onChange={(e) => handleUpdateQueueItem(index, 'expirationDate', e.target.value)}
+                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono text-xs outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Captura rápida de foto durante el conteo físico */}
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 text-xs">
+                      <div className="flex items-center gap-2">
+                        {item.imageUrl && (
+                          <img
+                            src={item.imageUrl}
+                            alt="Evidencia"
+                            onClick={() =>
+                              setViewImageModal({
+                                url: item.imageUrl!,
+                                title: item.description,
+                              })
+                            }
+                            className="w-9 h-9 object-cover rounded-lg border border-cyan-500/50 cursor-pointer"
+                          />
+                        )}
+                        <label className="cursor-pointer px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 text-[11px] font-bold flex items-center gap-1.5 transition-colors">
+                          <Camera className="w-3.5 h-3.5" />
+                          <span>{item.imageUrl ? 'Cambiar Foto' : 'Foto / Etiqueta'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                try {
+                                  const base64 = await compressAndConvertToBase64(file);
+                                  handleUpdateQueueItem(index, 'imageUrl', base64);
+                                } catch (err: any) {
+                                  alert('Error al procesar la imagen: ' + err.message);
+                                }
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleUpdateQueueItem(index, 'hasNovelty', !item.hasNovelty)
+                        }
+                        className={`text-[10px] font-bold px-2.5 py-1.5 rounded-lg border transition-all ${
+                          item.hasNovelty
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                            : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                        }`}
+                      >
+                        {item.hasNovelty ? 'Novedad Activa' : '+ Novedad'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Navegación entre Paso 1 y Paso 3 */}
+            <div className="pt-2 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+              <button
+                type="button"
+                onClick={() => setCountStage(1)}
+                className="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Volver a Elegir Ítems</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCountStage(3)}
+                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all cursor-pointer"
+              >
+                <span>Continuar al Paso 3: Comparar con Sistema y Poner Visto (✓)</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* PASO 2 (MODO ESTÁNDAR): ASIGNAR LAS CANTIDADES QUE EL SISTEMA DESPLIEGA   */}
+      {/* ========================================================================= */}
+      {countStage === 2 && countMode === 'standard' && (
         <div className="space-y-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
             <div className="flex items-center justify-between">
@@ -1015,9 +1415,358 @@ export default function QuickInventoryClient({
       )}
 
       {/* ========================================================================= */}
-      {/* PASO 3: CONTAR LAS CANTIDADES FÍSICAS REALES                               */}
+      {/* PASO 3 (MODO INVERSO): COMPARAR CON SISTEMA EXTERNO Y PONER CHECK/VISTO ✓ */}
       {/* ========================================================================= */}
-      {countStage === 3 && (
+      {countStage === 3 && countMode === 'reverse' && (
+        <div className="space-y-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="w-7 h-7 rounded-full bg-cyan-500/20 text-cyan-300 font-bold text-xs flex items-center justify-center border border-cyan-500/30 shrink-0">
+                  3
+                </span>
+                <div>
+                  <h2 className="text-sm font-bold text-white">
+                    Comparar con Sistema Externo y Poner Visto (✓)
+                  </h2>
+                  <p className="text-[11px] text-slate-400">
+                    Revisa tu sistema externo: si la cantidad coincide con lo que contaste, marca el <strong>Check / Visto (✓)</strong>. Si difiere, ingresa la cantidad del sistema.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleCheckAllMatches}
+                className="px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 font-bold text-xs flex items-center justify-center gap-1.5 shrink-0 cursor-pointer transition-all shadow-sm"
+              >
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>✓ Visto a Todos (Todo Concuerda)</span>
+              </button>
+            </div>
+
+            {/* Listado de Ítems para poner Check / Visto o ingresar diferencia */}
+            <div className="space-y-3">
+              {selectedQueue.map((item, index) => {
+                const factor = Math.max(1, item.packQuantity || 1);
+                const physicalTotal = item.countedPacks * factor + item.countedLoose;
+                const theoreticalTotal = item.externalPacks * factor + item.externalLoose;
+                const diff = physicalTotal - theoreticalTotal;
+                const checkKey = `${item.originalItemId}-${index}`;
+                const isCheckedMatch = Boolean(verifiedChecks[checkKey]) && diff === 0;
+                const unitCostSafe = item.unitCost || 0;
+                const impactUSD = diff * unitCostSafe;
+
+                return (
+                  <div
+                    key={`rev-step3-${item.originalItemId}-${index}`}
+                    className={`p-4 rounded-2xl border transition-all space-y-3 ${
+                      isCheckedMatch
+                        ? 'bg-emerald-950/20 border-emerald-500/50 shadow-md shadow-emerald-950/30'
+                        : 'bg-slate-950 border-slate-800'
+                    }`}
+                  >
+                    {/* Cabecera del Producto y Resumen del Conteo Físico */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+                      <div className="min-w-0">
+                        <span className="font-mono text-[10px] text-cyan-400 font-bold">
+                          SKU: {item.sku} • Factor: 1x{factor}
+                        </span>
+                        <h3 className="text-xs sm:text-sm font-bold text-white mt-0.5 truncate">
+                          {item.description}
+                        </h3>
+                      </div>
+
+                      {/* Lo que el operador contó físicamente en el Paso 2 */}
+                      <div className="px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-mono text-xs font-bold shrink-0 flex items-center gap-1.5">
+                        <Package className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>
+                          Físico Contado: {item.countedPacks}u {item.countedLoose}f ({physicalTotal} fracc.)
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* BOTÓN DE CHECK / VISTO (✓) DE CONCORDANCIA CON EL SISTEMA */}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleCheckMatch(index)}
+                      className={`w-full p-3.5 rounded-2xl border-2 font-bold text-xs sm:text-sm flex items-center justify-between gap-3 transition-all cursor-pointer ${
+                        isCheckedMatch
+                          ? 'bg-emerald-500/20 border-emerald-500 text-emerald-200 shadow-lg shadow-emerald-500/15'
+                          : 'bg-[#121212] hover:bg-[#1a1a1a] border-[#2c2c2c] text-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 text-left">
+                        <div
+                          className={`w-7 h-7 rounded-xl flex items-center justify-center border-2 transition-all shrink-0 ${
+                            isCheckedMatch
+                              ? 'bg-emerald-500 border-emerald-400 text-slate-950 scale-105'
+                              : 'bg-slate-900 border-slate-600 text-transparent'
+                          }`}
+                        >
+                          <Check className="w-5 h-5 stroke-[3]" />
+                        </div>
+                        <div>
+                          <span className="block font-black">
+                            {isCheckedMatch
+                              ? '✓ VISTO APLICADO: Concuerda con el Sistema Externo'
+                              : 'Marcar Visto (✓) si concuerda con tu Sistema Externo'}
+                          </span>
+                          <span className="text-[11px] font-normal text-slate-400 block">
+                            {isCheckedMatch
+                              ? `Confirmado: El sistema externo también refleja ${item.countedPacks} cajas y ${item.countedLoose} fracciones.`
+                              : 'Toca aquí para dar el visto bueno si las cantidades son idénticas, o ingresa abajo lo que muestra tu sistema.'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <span
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold shrink-0 ${
+                          isCheckedMatch
+                            ? 'bg-emerald-500 text-slate-950'
+                            : 'bg-slate-800 text-slate-400'
+                        }`}
+                      >
+                        {isCheckedMatch ? '✓ CONCUERDA' : 'PONER VISTO'}
+                      </span>
+                    </button>
+
+                    {/* Si NO está marcado con Visto (o si el operador desea ajustar la cantidad del sistema externo) */}
+                    {!isCheckedMatch && (
+                      <div className="p-3 rounded-xl bg-[#121212] border border-[#262626] space-y-3">
+                        <div className="flex items-center justify-between text-[11px] text-amber-300 font-semibold">
+                          <span>¿El sistema externo muestra una cantidad distinta? Ingrésala aquí:</span>
+                          <span className="font-mono text-cyan-400">
+                            Sistema: {theoreticalTotal} fracc.
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <label className="text-[10px] text-slate-400 block mb-1">
+                              Cajas según Sistema (u)
+                            </label>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleUpdateQueueItem(
+                                    index,
+                                    'externalPacks',
+                                    Math.max(0, item.externalPacks - 1)
+                                  )
+                                }
+                                className="w-8 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center shrink-0"
+                              >
+                                -
+                              </button>
+                              <input
+                                type="number"
+                                min="0"
+                                value={item.externalPacks}
+                                onChange={(e) =>
+                                  handleUpdateQueueItem(
+                                    index,
+                                    'externalPacks',
+                                    Math.max(0, parseInt(e.target.value) || 0)
+                                  )
+                                }
+                                className="w-full px-2 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono font-bold text-center outline-none focus:border-cyan-500"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleUpdateQueueItem(
+                                    index,
+                                    'externalPacks',
+                                    item.externalPacks + 1
+                                  )
+                                }
+                                className="w-8 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center shrink-0"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] text-slate-400 block mb-1">
+                              Fracciones según Sistema (f)
+                            </label>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                disabled={factor <= 1}
+                                onClick={() =>
+                                  handleUpdateQueueItem(
+                                    index,
+                                    'externalLoose',
+                                    Math.max(0, item.externalLoose - 1)
+                                  )
+                                }
+                                className="w-8 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-200 font-bold flex items-center justify-center shrink-0"
+                              >
+                                -
+                              </button>
+                              <input
+                                type="number"
+                                min="0"
+                                disabled={factor <= 1}
+                                value={factor <= 1 ? 0 : item.externalLoose}
+                                onChange={(e) =>
+                                  handleUpdateQueueItem(
+                                    index,
+                                    'externalLoose',
+                                    Math.max(0, parseInt(e.target.value) || 0)
+                                  )
+                                }
+                                className="w-full px-2 py-2 bg-slate-900 border border-slate-700 disabled:bg-slate-950/60 rounded-xl text-white font-mono font-bold text-center outline-none focus:border-cyan-500"
+                              />
+                              <button
+                                type="button"
+                                disabled={factor <= 1}
+                                onClick={() =>
+                                  handleUpdateQueueItem(
+                                    index,
+                                    'externalLoose',
+                                    item.externalLoose + 1
+                                  )
+                                }
+                                className="w-8 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-200 font-bold flex items-center justify-center shrink-0"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Resultado de Diferencia y Costo */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
+                          <div>
+                            {diff === 0 ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
+                                <Check className="w-3 h-3" />
+                                Exacto (0 fracc. • $0.00 USD)
+                              </span>
+                            ) : diff > 0 ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono">
+                                <TrendingUp className="w-3 h-3" />
+                                Sobrante (+{diff} fracc. • +${impactUSD.toFixed(2)} USD)
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 font-mono">
+                                <TrendingDown className="w-3 h-3" />
+                                Faltante ({diff} fracc. • -${Math.abs(impactUSD).toFixed(2)} USD)
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                            <span>Costo Caja $:</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={item.boxCost || (item.unitCost * factor).toFixed(2)}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value) || 0;
+                                const uCost = factor > 0 ? val / factor : val;
+                                handleUpdateQueueItem(index, 'boxCost', val);
+                                handleUpdateQueueItem(index, 'unitCost', uCost);
+                              }}
+                              className="w-20 px-2 py-0.5 bg-slate-950 border border-slate-700 rounded text-white font-mono text-[11px]"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ASENTAMIENTO Y FIRMA FORMAL EN MODO INVERSO */}
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 pt-4">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 block">
+                Formalización y Sello Legal del Conteo Inverso
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <label className="text-[10px] text-slate-400 block mb-1">
+                    Operador Responsable
+                  </label>
+                  <input
+                    type="text"
+                    value={operatorName}
+                    onChange={(e) => setOperatorName(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 block mb-1">
+                    Fecha de Conteo / Auditoría
+                  </label>
+                  <input
+                    type="date"
+                    value={auditDate}
+                    onChange={(e) => setAuditDate(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs outline-none font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 block mb-1">
+                    Motivo del Muestreo
+                  </label>
+                  <input
+                    type="text"
+                    value={auditReason}
+                    onChange={(e) => setAuditReason(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCountStage(2)}
+                  className="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Volver al Conteo Físico</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isSubmitting || selectedQueue.length === 0}
+                  onClick={handleSubmitQuickAudit}
+                  className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-xl shadow-emerald-600/30 transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Sellando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>Finalizar & Sellar Conteo Inverso</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* PASO 3 (MODO ESTÁNDAR): CONTAR LAS CANTIDADES FÍSICAS REALES              */}
+      {/* ========================================================================= */}
+      {countStage === 3 && countMode === 'standard' && (
         <div className="space-y-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
             <div className="flex items-center justify-between">
