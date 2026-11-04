@@ -60,11 +60,12 @@ El módulo `/inventario-rapido` cuenta con dos flujos de trabajo adaptados a la 
 
 ## 🛠️ Tecnologías Utilizadas
 
-- **Framework:** [Next.js 16](https://nextjs.org/) (App Router, Turbopack, Server Actions, Proxy Security)
-- **Frontend:** [React 19](https://react.dev/), [Tailwind CSS 4](https://tailwindcss.com/), [Lucide React](https://lucide.dev/)
-- **ORM & Base de Datos:** [Drizzle ORM](https://orm.drizzle.team/), [PostgreSQL](https://www.postgresql.org/) hospedado en [Supabase](https://supabase.com/)
-- **Procesamiento de Archivos:** [SheetJS (xlsx)](https://docs.sheetjs.com/)
+- **Framework:** [Next.js 16.4](https://nextjs.org/) (App Router, Turbopack, Server Actions, Proxy Security)
+- **Frontend:** [React 19.3](https://react.dev/), [Tailwind CSS 4](https://tailwindcss.com/), [Lucide React](https://lucide.dev/)
+- **ORM & Base de Datos:** [Drizzle ORM](https://orm.drizzle.team/) + [Drizzle Kit](https://orm.drizzle.com/kit), [PostgreSQL](https://www.postgresql.org/) hospedado en [Supabase](https://supabase.com/) (`@supabase/supabase-js`, `@supabase/ssr`, driver `postgres`)
+- **Procesamiento de Archivos:** [SheetJS (xlsx)](https://docs.sheetjs.com/) (Excel `.xlsx` / `.csv`)
 - **Almacenamiento Local Offline:** [Dexie.js](https://dexie.org/) (IndexedDB)
+- **Utilidades:** `dotenv`, `tsx`, TypeScript 5, ESLint 9
 
 ---
 
@@ -138,13 +139,16 @@ Haz clic en **"Deploy"**. Vercel compilará automáticamente el proyecto con Nex
 
 ## 📱 Rutas Principales de la Aplicación
 
-- `/login` : Portal blindado de inicio de sesión con protección anti-fuerza bruta.
 - `/` : Panel principal y acceso rápido a módulos de inventario.
+- `/login` : Portal blindado de inicio de sesión con protección anti-fuerza bruta.
+- `/onboarding` : Flujo de incorporación inicial del usuario.
 - `/inventario-rapido` : Conteo Rápido Móvil con **Modo Conteo Inverso (Físico ➔ Visto `✓` Sistema)** y **Modo Estándar**.
 - `/importar` : Importador inteligente de catálogos Excel (`.xlsx`, `.csv`) y creación de sesiones.
 - `/conteo/[sessionid]` : Terminal de conteo físico formal con soporte offline (IndexedDB).
 - `/sesion/[sessionid]/reporte` : Reporte ejecutivo, generador de **PDF con Link en Línea y QR**, hojas A6 de faltantes/sobrantes, etiquetas térmicas y exportación a Excel.
 - `/compartir/[sessionid]` : Vista pública interactiva de solo lectura (accesible mediante el link o código QR incrustado en el PDF).
+- `/reportes` : Índice y gestión de reportes de sesiones.
+- `/servidores` : Prueba y diagnóstico de conexión de servidores.
 - `/admin` : Panel de control maestro, gestión de usuarios/contraseñas, desbloqueo de cuentas y bitácora legal inmutable.
 
 ---
