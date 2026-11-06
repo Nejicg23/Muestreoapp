@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { createInventorySession } from '@/app/actions/sync';
 import { importInventoryItems } from '@/app/actions/import';
+import { duplicateInventorySessionAction } from '@/app/actions/session.actions';
 import {
   parseCSVText,
   parseExcelBuffer,
@@ -65,6 +66,7 @@ export default function HomeClient({
   const [parseError, setParseError] = useState<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [duplicatingSessionId, setDuplicatingSessionId] = useState<string | null>(null);
   const [searchFilter, setSearchFilter] = useState('');
   const router = useRouter();
 
@@ -189,6 +191,43 @@ export default function HomeClient({
       alert(err.message || 'Error del servidor');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // DUPLICAR SESIÓN EXISTENTE (conteo duplicado)
+  const handleDuplicateSession = async (
+    sessionId: string,
+    sessionTitle: string
+  ) => {
+    setDuplicatingSessionId(sessionId);
+    try {
+      const newTitle = `Copia de ${sessionTitle}`;
+      const res = await duplicateInventorySessionAction(sessionId, newTitle);
+
+      if (res.success && res.newSessionId) {
+        setSessions((prev) => [
+          ...prev,
+          {
+            id: res.newSessionId,
+            title: newTitle,
+            status: 'in_progress',
+            createdBy: 'Usuario',
+            createdAt: new Date(),
+            itemsCount: res.itemsDuplicated || 0,
+            countsCount: res.countsDuplicated || 0,
+          } as SessionItem,
+        ]);
+        alert(
+          `Sesión duplicada correctamente.\n\n${res.itemsDuplicated} ítems copiados\n${res.countsDuplicated} conteos heredados\n${res.noveltiesDuplicated || 0} novedades copiadas`
+        );
+        router.push(`/conteo/${res.newSessionId}`);
+      } else {
+        alert('Error al duplicar sesión: ' + (res.error || 'Desconocido'));
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error al duplicar sesión');
+    } finally {
+      setDuplicatingSessionId(null);
     }
   };
 
@@ -347,6 +386,15 @@ export default function HomeClient({
                   >
                     Reporte
                   </Link>
+                  <button
+                    onClick={() => handleDuplicateSession(session.id, session.title)}
+                    disabled={duplicatingSessionId === session.id}
+                    className="flex-1 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold text-center transition-all shadow-md shadow-amber-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {duplicatingSessionId === session.id
+                      ? 'Duplicando...'
+                      : 'Duplicar'}
+                  </button>
                 </div>
               </div>
             ))}
