@@ -316,6 +316,7 @@ export default function ReportClient({
       { Parámetro: 'Ítems Coincidentes (100% Exactos)', Valor: summary.matchedItems },
       { Parámetro: 'Ítems con Discrepancias', Valor: summary.discrepantItems },
       { Parámetro: 'Ítems que Requieren Reconteo', Valor: summary.requiresRecountCount },
+      { Parámetro: 'Ítems con Conteo Duplicado', Valor: itemsList.filter((i) => i.locationsCount > 1).length },
       { Parámetro: 'Total Novedades Físicas', Valor: summary.noveltiesTotal },
       { Parámetro: 'Ganancia por Sobrantes ($)', Valor: summary.totalSurplusCost },
       { Parámetro: 'Pérdida por Faltantes ($)', Valor: summary.totalShortageCost },
@@ -330,12 +331,19 @@ export default function ReportClient({
       const theo = formatStockBreakdown(item.systemStock, item.packQuantity);
       const counted = formatStockBreakdown(item.totalCounted, item.packQuantity);
       const diffBreakdown = formatStockBreakdown(Math.abs(item.difference), item.packQuantity);
+      const locationsText = item.locationsCount > 0
+        ? item.locations.join(' | ')
+        : (item.location || '');
+      const hasMultipleLocations = item.locationsCount > 1;
 
       return {
         'SKU': item.sku,
         'Código de Barras': item.barcode || '',
         'Descripción del Producto': item.description,
-        'Ubicación': item.location || '',
+        'Ubicación (Catálogo)': item.location || '',
+        'Ubicaciones de Conteo': locationsText,
+        'Veces Contado': item.locationsCount > 0 ? item.locationsCount : (item.countsCount > 0 ? item.countsCount : 0),
+        'Conteo Duplicado': hasMultipleLocations ? 'SÍ' : 'NO',
         'Factor (1xN)': `1x${item.packQuantity}`,
         'Stock Teórico (Fracc)': item.systemStock,
         'Stock Teórico (Desglose)': theo.formatted,

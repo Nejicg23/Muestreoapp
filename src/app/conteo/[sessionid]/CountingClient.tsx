@@ -356,6 +356,16 @@ export default function CountingClient({
     ? calculateBreakdown(quantity, unitMode, selectedItem.packQuantity)
     : { countedPacks: 0, countedLoose: 0, countedQuantity: 0 };
 
+  // Ubicaciones únicas donde ya se contó este ítem (conteo duplicado en distintas ubicaciones)
+  const existingLocations = selectedItem
+    ? recentCounts
+        .filter((c) => c.itemId === selectedItem.id && c.locationScanned)
+        .map((c) => c.locationScanned!)
+        .filter((loc, idx, arr) => arr.indexOf(loc) === idx)
+    : [];
+
+  const isDuplicateCount = existingLocations.length > 0;
+
   // Registrar conteo físico
   const handleRegisterCount = async () => {
     if (!selectedItem || quantity <= 0) return;
@@ -929,6 +939,22 @@ export default function CountingClient({
                   <h2 className="text-xl font-bold text-white mt-2 leading-snug">
                     {selectedItem.description}
                   </h2>
+
+                  {/* Advertencia: Conteo Duplicado en Otra Ubicación */}
+                  {isDuplicateCount && (
+                    <div className="mt-2 p-2.5 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center gap-2 animate-pulse">
+                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                      <div className="text-xs sm:text-sm text-amber-300 font-semibold leading-tight">
+                        <span className="block">Este producto ya fue contado en:</span>
+                        <span className="block font-mono text-[11px] mt-0.5">
+                          {existingLocations.join(' › ')}
+                        </span>
+                        <span className="block mt-0.5 text-[10px] opacity-90">
+                          Este conteo se consolidará con los previos en el reporte final.
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <button

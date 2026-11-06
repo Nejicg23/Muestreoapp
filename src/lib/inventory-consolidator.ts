@@ -83,7 +83,7 @@ export interface ConsolidatedItem {
   sku: string;
   barcode: string | null;
   description: string;
-  location: string | null;
+  location: string | null;                    // Ubicación del catálogo (maestra)
   packQuantity: number;
   systemStock: number;
   unitCostCalculated: number;
@@ -94,7 +94,9 @@ export interface ConsolidatedItem {
   difference: number;
   differencePercentage: number;
   costImpact: number;
-  countsCount: number;
+  countsCount: number;                        // Total de veces que se contó este ítem
+  locations: string[];                        // Ubicaciones únicas donde se contó
+  locationsCount: number;                     // Cantidad de ubicaciones distintas
   status: 'uncounted' | 'matched' | 'surplus' | 'shortage';
   hasNovelties: boolean;
   noveltiesCount: number;
@@ -134,6 +136,7 @@ export function consolidateSessionData(
     countedQuantity: string | number;
     countedPacks: number;
     countedLoose: string | number;
+    locationScanned?: string | null;
   }>,
   novelties: Array<{
     itemId: string | null;
@@ -180,6 +183,18 @@ export function consolidateSessionData(
   let matchedItems = 0;
   let countedCount = 0;
   let recountCount = 0;
+
+  // Ubicaciones únicas donde se contó cada ítem (para conteos duplicados en distintas ubicaciones)
+  const locationsByItem = new Map<string, string[]>();
+  for (const c of counts) {
+    if (c.locationScanned) {
+      const existing = locationsByItem.get(c.itemId) || [];
+      if (!existing.includes(c.locationScanned)) {
+        existing.push(c.locationScanned);
+        locationsByItem.set(c.itemId, existing);
+      }
+    }
+  }
 
   const consolidated: ConsolidatedItem[] = items.map((item) => {
     const stock = Number(item.systemStock) || 0;
@@ -243,6 +258,8 @@ export function consolidateSessionData(
       differencePercentage: Number(diffPct.toFixed(2)),
       costImpact: Number(costImpact.toFixed(2)),
       countsCount: countInfo?.count || 0,
+      locations: locationsByItem.get(item.id) || [],
+      locationsCount: (locationsByItem.get(item.id) || []).length,
       status,
       hasNovelties: novCount > 0,
       noveltiesCount: novCount,
