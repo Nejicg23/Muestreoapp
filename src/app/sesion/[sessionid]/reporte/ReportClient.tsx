@@ -1650,6 +1650,8 @@ export default function ReportClient({
                                       status: 'matched',
                                       hasNovelties: false,
                                       noveltiesCount: 0,
+                                      locations: [],
+                                      locationsCount: 0,
                                       batchNumber: p.batchNumber,
                                       expirationDate: p.expirationDate,
                                       imageUrl: p.imageUrl,
