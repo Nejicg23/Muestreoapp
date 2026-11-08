@@ -1,6 +1,6 @@
 # 📦 Sistema Empresarial de Gestión de Inventarios, Auditoría y Trazabilidad
 
-Aplicación web progresiva (PWA-ready) de alto rendimiento desarrollada con **Next.js 16 (App Router)**, **React 19**, **Drizzle ORM**, **PostgreSQL / Supabase** y **Tailwind CSS 4**. Diseñada con estética **Material Design 3 OLED Black** y arquitectura **Mobile-First** para resolver con precisión matemática y legal la toma de inventarios físicos, conteo inverso con visto bueno (`✓`), reconteos, detección de fechas de vencimiento/cuarentena, captura fotográfica de evidencias e impresión de etiquetas y reportes PDF interactivos con enlace público en línea.
+Aplicación web progresiva (PWA-ready) de alto rendimiento desarrollado con **Next.js 16 (App Router)**, **React 19**, **Drizzle ORM**, **PostgreSQL / Supabase** y **Tailwind CSS 4**. Diseñado con estética **Material Design 3 OLED Black** y arquitectura **Mobile-First** para resolver con precisión matemática y legal la toma de inventarios físicos, conteo inverso con visto bueno (`✓`), reconteos, detección de fechas de vencimiento/cuarentena, captura fotográfica de evidencias e impresión de etiquetas y reportes PDF interactivos con enlace público en línea.
 
 ---
 
@@ -55,6 +55,37 @@ El módulo `/inventario-rapido` cuenta con dos flujos de trabajo adaptados a la 
 - **Mapeo Flexible de Excel (`.xlsx`, `.xls`) y `.csv`:** Detección prioritaria de `id`/`sku`, `stk-sis`/`stock`, `producto`/`descripción`, `valor` y factor de empaque (`1xN`), bloqueando fracciones cuando el producto es `1x1`.
 - **Compresor Fotográfico en Cliente:** Captura desde cámara trasera móvil (`capture="environment"`) o PC con compresión inteligente en Canvas HTML5 (~60-100 KB en Base64) para visualización inmediata en reportes y etiquetas térmicas.
 - **Alertas de Cuarentena Automáticas:** Identificación visual de productos vencidos o próximos a vencer (< 90 días).
+
+### 6. 🆕 Módulo de Productos Maestros (Base Madre / Master Products)
+Módulo centralizado para gestionar el catálogo base de productos, permitiendo la comparación y sincronización entre items importados y la base de datos maestra.
+
+#### 📋 Funcionalidades Principales
+- **📦 Listado de Productos Maestros:** Visualización del catálogo completo desde la base madre, mostrando SKU, descripción, costo por caja y cantidad por paquete. Solo muestra productos activos por defecto.
+- **➕ Creación de Productos Maestros:** Formulario completo para agregar nuevos productos al catálogo base, con validación de campos requeridos (SKU, descripción, costo).
+- **🔍 Comparación Inteligente de Items:** Lógica para comparar items importados (por ejemplo, desde un archivo Excel o sistema externo) contra la base madre:
+  - **Coincidencia exacta por SKU:** Identifica productos idénticos mediante el código SKU.
+  - **Búsqueda difusa por descripción:** Encuentra productos con descripciones similares utilizando búsqueda de texto contains.
+  - **Clasificación de matches:** Cada ítem importado se clasifica en `exact_sku`, `fuzzy_description` o `no_match`.
+- **📊 Campo de Ubicación:** Cada producto maestro incluye campo `location` para rastrear dónde se almacenan fisicamente los productos.
+- **🔗 API REST Endpoint:** `POST /api/master-products` para creación de productos desde aplicaciones externas o flujos de importación automatizados.
+- **🔧 Server Actions:** Acciones del lado del servidor (`listMasterProducts`, `createMasterProduct`, `compareImportedItemsWithMaster`) integradas con el patrón App Router de Next.js 16.
+
+#### 📁 Archivos Implementados
+| Archivo | Descripción |
+|---------|-------------|
+| `src/app/actions/master-product-actions.ts` | Server Actions: `listMasterProducts`, `createMasterProduct`, `compareImportedItemsWithMaster` |
+| `src/app/api/master-products/route.tsx` | API route POST para crear productos maestros |
+| `src/app/admin/master-products/page.tsx` | Página de listado de productos maestros (grid responsivo) |
+| `src/app/admin/master-products/create/page.tsx` | Formulario de creación de nuevo producto maestro |
+| `src/app/components/master-product-card.tsx` | Componente de tarjeta para display de producto |
+| `src/app/components/loading-shimmer.tsx` | Componente de estado de carga skeleton |
+
+#### 🚀 Flujo de Trabajo Típico
+1. **Cargar catálogo:** Usar `listMasterProducts()` para ver todos los productos base madre activos.
+2. **Importar nueva base:** Preparar archivo Excel/CSV con nuevos productos o actualizaciones.
+3. **Comparar items:** Usar `compareImportedItemsWithMaster(items)` para obtener matches/no-matches.
+4. **Aplicar correcciones:** Para los `exact_sku` y `fuzzy_description`, aplicar los valores al inventario de sesión mediante `applyMasterCorrectionsToSessionItems()`.
+5. **Generar reporte:** Los productos sincronizados aparecen en el reporte de inventario con costos y cantidades actualizadas.
 
 ---
 
@@ -150,6 +181,7 @@ Haz clic en **"Deploy"**. Vercel compilará automáticamente el proyecto con Nex
 - `/reportes` : Índice y gestión de reportes de sesiones.
 - `/servidores` : Prueba y diagnóstico de conexión de servidores.
 - `/admin` : Panel de control maestro, gestión de usuarios/contraseñas, desbloqueo de cuentas y bitácora legal inmutable.
+- `/master-products` : **Nuevo** - Panel de gestión de Productos Maestros (base madre), listado, creación y comparación de items.
 
 ---
 
