@@ -61,7 +61,7 @@ export async function compareImportedItemsWithMaster(
 
   for (const item of importedItems) {
     // Buscar coincidencia exacta por SKU
-    const exactMatch: any[] = await db.select().from(masterProducts).where({ sku: item.sku, isActive: true }).limit(1);
+    const exactMatch: any[] = await db.select().from(masterProducts).where({ sku: item.sku, isActive: true } as any).limit(1);
     
     if (exactMatch && exactMatch.length > 0) {
       results.push({
@@ -77,7 +77,7 @@ export async function compareImportedItemsWithMaster(
     }
 
     // Búsqueda difusa por descripción - filtrado en JS
-    const allMatches: any[] = await db.select().from(masterProducts).where({ isActive: true });
+    const allMatches: any[] = await db.select().from(masterProducts).where({ isActive: true } as any);
     const fuzzyMatches = allMatches.filter((mp: any) =>
       mp.description.toLowerCase().includes(item.description.toLowerCase())
     );

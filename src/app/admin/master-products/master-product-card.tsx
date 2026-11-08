@@ -1,4 +1,4 @@
-import MasterProduct from '@/types/master-product';
+import { MasterProduct } from '@/types/master-product';
 
 interface MasterProductCardProps {
   product: MasterProduct;

@@ -1,5 +1,6 @@
 import { MasterProduct } from '@/types/master-product';
 import { useState } from 'react';
+import { createMasterProduct } from "@/app/actions/master-product-actions";
 
 export interface MasterProductFormProps {
   onSuccess?: (product: MasterProduct) => void;
