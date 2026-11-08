@@ -168,3 +168,51 @@ export const auditModifications = pgTable(
         index('audit_mod_entity_idx').on(table.entityType, table.entityId),
     ]
 );
+
+// 8. BASE DE DATOS MAESTRA DE PRODUCTOS (SIN CANTIDADES ASIGNADAS)
+export const masterProducts = pgTable(
+    'master_products',
+    {
+        id: uuid('id').defaultRandom().primaryKey(),
+        sku: varchar('sku', { length: 100 }).notNull().unique(),
+        barcode: varchar('barcode', { length: 100 }),
+        description: text('description').notNull(),
+        boxCost: numeric('box_cost', { precision: 12, scale: 2 }).notNull(), // precio por caja completa
+        packQuantity: integer('pack_quantity').default(1).notNull(), // factor de empaque (1xN)
+        unitCostCalculated: numeric('unit_cost_calculated', { precision: 12, scale: 4 }).default('0').notNull(), // costo por unidad fraccionada
+        location: varchar('location', { length: 100 }), // ubicación opcional en catálogo
+        isActive: boolean('is_active').default(true).notNull(),
+        createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+        updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    },
+    (table) => [
+        index('master_sku_idx').on(table.sku),
+        index('master_barcode_idx').on(table.barcode),
+    ]
+);
+
+// 9. DISCREPANCIAS DE INVENTARIO (Reportes de faltante/sobrante)
+export const inventoryDiscrepancies = pgTable(
+    'inventory_discrepancies',
+    {
+        id: uuid('id').defaultRandom().primaryKey(),
+        sessionId: uuid('session_id')
+            .references(() => inventorySessions.id, { onDelete: 'cascade' })
+            .notNull(),
+        itemId: uuid('item_id')
+            .references(() => inventoryItems.id, { onDelete: 'cascade' })
+            .notNull(),
+        systemQuantity: numeric('system_quantity', { precision: 12, scale: 2 }).notNull(), // stock teórico de la sesión
+        physicalCount: numeric('physical_count', { precision: 12, scale: 2 }).notNull(), // conteo real del operador
+        discrepancy: numeric('discrepancy', { precision: 12, scale: 2 }).notNull(), // físico - sistema (positivo = sobrante, negativo = faltante)
+        status: varchar('status', { length: 30 }).default('pending').notNull(), // 'pending', 'approved', 'rejected'
+        reportedBy: varchar('reported_by', { length: 100 }).notNull(),
+        reportedAt: timestamp('reported_at', { withTimezone: true }).defaultNow().notNull(),
+        resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+        auditorNotes: text('auditor_notes'),
+    },
+    (table) => [
+        index('discrepancy_session_item_idx').on(table.sessionId, table.itemId),
+        index('discrepancy_status_idx').on(table.status),
+    ]
+);
