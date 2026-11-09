@@ -43,7 +43,7 @@ import {
   updateItemCostEstimate,
   toggleItemRecountFlag,
 } from './actions';
-import { logSearchAudit } from '@/app/actions/sync';
+import { logSearchAudit, syncOfflineBatch } from '@/app/actions/sync';
 
 // Audio feedback usando Web Audio API sin dependencias externas
 function playFeedbackSound(type: 'success' | 'alert') {
@@ -149,6 +149,60 @@ export default function CountingClient({
   const [scanLocation, setScanLocation] = useState('');
   const [isRecount, setIsRecount] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Auto-save: Guardar sesión automáticamente al momento de abrirse
+  // y guardar conteos mientras el auditor/operador trabaja para evitar pérdida de datos
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    const autoSaveSession = async () => {
+      try {
+        if (!session.id || items.length === 0) return;
+
+        // Preparar datos para guardar: conteos actuales
+        const countsToSave = recentCounts.map((count) => ({
+          clientUuid: count.id || `${count.itemId}-${Date.now()}`,
+          sessionId: session.id,
+          itemId: count.itemId,
+          inputQuantity: Number(count.inputQuantity),
+          inputUnit: count.inputUnit as 'unit' | 'pack',
+          countedPacks: count.countedPacks,
+          countedLoose: Number(count.countedLoose),
+          countedQuantity: Number(count.countedQuantity),
+          locationScanned: count.locationScanned || null,
+          countedBy: count.countedBy || (currentUser?.fullName || 'Operador'),
+          isRecount: count.isRecount || false,
+          inputMethod: 'manual' as const,
+          countedAt: count.countedAt ? new Date(count.countedAt).toISOString() : new Date().toISOString(),
+        }));
+
+        // Guardar conteos en el servidor mediante syncOfflineBatch
+        if (countsToSave.length > 0) {
+          await syncOfflineBatch({
+            sessionId: session.id,
+            counts: countsToSave,
+            novelties: [],
+          });
+        }
+      } catch (err: any) {
+        console.warn('Auto-save error in CountingClient:', err);
+      }
+    };
+
+    // Ejecutar auto-save inmediatamente al montar si hay una sesión activa
+    autoSaveSession();
+
+    // Configurar intervalo de guardado cada 30 segundos mientras la sesión está activa
+    timeoutId = setInterval(autoSaveSession, 30000);
+
+    // Limpiar intervalo al desmontar el componente
+    return () => {
+      if (timeoutId) {
+        clearInterval(timeoutId);
+      }
+    };
+  }, [session.id, items, recentCounts, operatorName, syncOfflineBatch]); // Dependencies
+
   const [feedbackMsg, setFeedbackMsg] = useState<{
     text: string;
     type: 'success' | 'error';

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -32,6 +32,7 @@ import {
   ParsedInventoryItem,
 } from '@/lib/inventory-importer';
 import { initializeOnboardingDatabaseAction } from '@/app/actions/admin';
+import { executeTotalSystemWipeAction } from '@/app/actions/admin';
 import { createNewUserAction } from '@/app/actions/auth';
 
 interface ExistingUser {
@@ -158,6 +159,56 @@ export default function OnboardingClient({ currentUser, existingUsers }: Props) 
   const [sessionTitle, setSessionTitle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Efecto para limpiar sesiones al salir del navegador
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      // Limpiar sesiones de inventario (tanto formales como rápidas) al cerrar pestaña/navegador
+      const cleanupSessions = async () => {
+        try {
+          // Intentar notificar al servidor para eliminar sesiones activas
+          const abortController = new AbortController();
+          const timeoutId = setTimeout(() => abortController.abort(), 3000);
+
+          const response = await fetch('/api/sessions/cleanup', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              type: 'all',
+              includeQuick: true,
+              includeFormal: true,
+            }),
+            signal: abortController.signal,
+          });
+
+          const result = await response.json();
+          console.log('Session cleanup result:', result);
+        } catch (err) {
+          // Silenciar errores - la limpieza local ya se realizará abajo
+          console.log('Session cleanup skipped or failed:', err);
+        } finally {
+          // Limpiar sesiones en localStorage independientemente del resultado del servidor
+          localStorage.removeItem('currentSessionId');
+          localStorage.removeItem('pendingSessionCleanup');
+        }
+      };
+
+      // Ejecutar cleanup después de un breve delay para permitir que el evento complete
+      const timeoutId = setTimeout(cleanupSessions, 500);
+
+      // Prevenir el mensaje de confirmación por defecto del navegador
+      event.preventDefault();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Cleanup: remover el event listener cuando el componente se desmonta
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []); // Dependencias vacías - se ejecuta una vez al montar
+
   // Manejador de subida de archivos
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -246,6 +297,35 @@ export default function OnboardingClient({ currentUser, existingUsers }: Props) 
 
   // Enviar inicialización final
   const handleFinishOnboarding = async () => {
+    // Cuando el admin selecciona Base de Datos Maestra, solicitar borrado de inventarios previos
+    if (dbType === 'master') {
+      const confirmation = window.confirm(
+        'ESTO BORRARÁ TODO EL INVENTARIO ACTUAL.\n\n' +
+        '¿Deseas reiniciar el sistema completamente y comenzar desde cero en el onboarding?\n' +
+        'Esto eliminará todas las sesiones de inventario existentes y sus registros.\n' +
+        'Escriba "ACEPTAR" para confirmar el borrado total, o "Cancelar" para regresar al onboarding.'
+      );
+      if (!confirmation) {
+        return; // User canceled, stay on current step
+      }
+      // Ejecutar borrado total del sistema
+      try {
+        const res = await executeTotalSystemWipeAction({
+          confirmationText: 'BORRAR TODO',
+          reason: 'Reinicio de base de datos maestra - nuevo onboarding administrativo',
+        });
+        if (!res.success) {
+          alert('No se pudo completar el borrado total: ' + (res.error || 'Error desconocido'));
+          return;
+        }
+        // Show result and continue
+        alert(res.message || 'Borrado completado');
+      } catch (err: any) {
+        alert('Error al ejecutar borrado total: ' + (err.message || 'Error desconocido'));
+        return;
+      }
+    }
+
     let itemsToInitialize: any[] = [];
 
     if (dbType === 'sample' && inputMode === 'sample') {

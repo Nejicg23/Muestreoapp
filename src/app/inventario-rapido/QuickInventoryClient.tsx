@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Smartphone,
@@ -43,6 +43,7 @@ import {
   submitQuickInventoryAudit,
   getItemsBySession,
 } from '@/app/actions/quick-inventory';
+import { syncOfflineBatch } from '@/app/actions/sync';
 import { formatStockBreakdown } from '@/lib/inventory-consolidator';
 import {
   parseExcelBuffer,
@@ -176,6 +177,60 @@ export default function QuickInventoryClient({
   const [auditDate, setAuditDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [auditReason, setAuditReason] = useState('Muestreo Cíclico / Conteo Rápido');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Auto-save: Guardar sesión automáticamente al momento de abrirse
+  // y guardar conteos mientras el operador trabaja para evitar pérdida de datos
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    const autoSaveSession = async () => {
+      try {
+        if (!initialSessionId || dbItems.length === 0) return;
+
+        // Preparar datos para guardar: conteos actuales del operador
+        const countsToSave = selectedQueue.map((item) => ({
+          clientUuid: item.originalItemId || `${item.sku}-${Date.now()}`,
+          sessionId: initialSessionId,
+          itemId: item.originalItemId || `${item.sku}-${Date.now()}`,
+          inputQuantity: item.externalPacks * Math.max(1, item.packQuantity) + item.externalLoose,
+          inputUnit: 'unit' as 'unit' | 'pack',
+          countedPacks: item.countedPacks || 0,
+          countedLoose: item.countedLoose || 0,
+          countedQuantity: item.countedPacks * Math.max(1, item.packQuantity) + item.countedLoose,
+          locationScanned: item.location || null,
+          countedBy: operatorName || 'Operador Móvil',
+          inputMethod: 'manual' as 'manual',
+          isRecount: false,
+          countedAt: new Date().toISOString(),
+        }));
+
+        // Guardar conteos en el servidor mediante syncOfflineBatch
+        if (countsToSave.length > 0) {
+          await syncOfflineBatch({
+            sessionId: initialSessionId,
+            counts: countsToSave,
+            novelties: [],
+          });
+        }
+      } catch (err: any) {
+        console.warn('Auto-save error:', err);
+      }
+    };
+
+    // Ejecutar auto-save inmediatamente al montar si hay una sesión activa
+    autoSaveSession();
+
+    // Configurar intervalo de guardado cada 30 segundos mientras la sesión está activa
+    timeoutId = setInterval(autoSaveSession, 30000);
+
+    // Limpiar intervalo al desmontar el componente
+    return () => {
+      if (timeoutId) {
+        clearInterval(timeoutId);
+      }
+    };
+  }, [initialSessionId, dbItems, selectedQueue, operatorName, syncOfflineBatch]); // Dependencies
+
   const [viewImageModal, setViewImageModal] = useState<{ url: string; title: string } | null>(null);
 
   // Comprobante final una vez asentado

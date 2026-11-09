@@ -1,3 +1,6 @@
+'use client';
+
+import React, { useEffect } from 'react';
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import Link from 'next/link';
@@ -33,6 +36,34 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const user = await getCurrentUser();
+
+  // Cleanup sessions on browser/tab close
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      sessionStorage.removeItem('inventorySession');
+      localStorage.removeItem('inventorySession');
+      sessionStorage.removeItem('currentInventory');
+      localStorage.removeItem('currentInventory');
+      sessionStorage.removeItem('countingState');
+      localStorage.removeItem('countingState');
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        sessionStorage.removeItem('inventorySession');
+        localStorage.removeItem('inventorySession');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   return (
     <html lang="es" className="h-full antialiased dark">
