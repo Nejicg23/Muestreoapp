@@ -46,7 +46,7 @@ export default function BottomNav({
           aria-label="Inicio"
         >
           <Package2 className="w-4 h-4 mb-1" />
-          <span className="hidden sm:inline">Inicio</span>
+          <span className="text-[10px] text-slate-400 block">Inicio</span>
         </Link>
 
         {/* Inventario Rápido */}
@@ -61,7 +61,7 @@ export default function BottomNav({
           aria-label="Inventario Rápido"
         >
           <Smartphone className="w-4 h-4 mb-1" />
-          <span className="hidden sm:inline">Inventario Rápido</span>
+          <span className="text-[10px] text-slate-400 block">Inventario Rápido</span>
         </Link>
 
         {/* Conteo Formal */}
@@ -76,7 +76,7 @@ export default function BottomNav({
           aria-label="Conteo Formal"
         >
           <FileSpreadsheet className="w-4 h-4 mb-1" />
-          <span className="hidden sm:inline">Conteo Formal</span>
+          <span className="text-[10px] text-slate-400 block">Conteo Formal</span>
         </Link>
 
         {/* Administración */}
@@ -91,7 +91,7 @@ export default function BottomNav({
           aria-label="Panel de Administración"
         >
           <Shield className="w-4 h-4 mb-1" />
-          <span className="hidden sm:inline">Admin</span>
+          <span className="text-[10px] text-slate-400 block">Admin</span>
         </Link>
       </div>
     </nav>
