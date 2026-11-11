@@ -1,17 +1,7 @@
 import React from 'react';
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import Link from 'next/link';
-import {
-  Package2,
-  Server,
-  ClipboardList,
-  FileSpreadsheet,
-  FileText,
-  Shield,
-  LogOut,
-  Smartphone,
-} from 'lucide-react';
+import BottomNav from '@/app/components/BottomNav';
 
 export const metadata: Metadata = {
   title: 'StockSync Pro | Control de Inventario y Conteo Físico',
@@ -34,6 +24,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body>{children}</body>
+      <BottomNav />
     </html>
   );
 }
