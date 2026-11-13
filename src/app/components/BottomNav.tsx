@@ -75,13 +75,13 @@ export default function BottomNav({ onTabChange }: BottomNavProps) {
 
           {/* Reportes de Novedades */}
           <Link
-            href="/reportes/productos-novedades"
+            href="/reportes/novedades"
             onClick={() => handleTabSelect("reportes-novedades")}
             className={`flex flex-col items-center justify-center rounded-lg px-3 py-2 text-xs font-medium transition-all ${activeTab === "reportes-novedades" ? "text-cyan-400 bg-cyan-500/20 border border-cyan-500/30" : "text-slate-400 hover:text-white hover:bg-slate-800/30"}`}
             aria-label="Reportes de Novedades"
           >
             <ClipboardList className="w-4 h-4 mb-1" />
-            <span className="text-[10px] text-slate-400 block">Reportes</span>
+            <span className="text-[10px] text-slate-400 block">Novedades</span>
           </Link>
         </div>
       </div>
