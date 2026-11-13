@@ -4,23 +4,19 @@ import React from 'react';
 import Link from 'next/link';
 import {
   Package2,
-  Server,
-  ClipboardList,
-  FileSpreadsheet,
-  FileText,
-  Shield,
-  LogOut,
   Smartphone,
+  FileSpreadsheet,
+  Shield,
 } from 'lucide-react';
 
 interface BottomNavProps {
-  onTabChange?: (tab: 'home' | 'quick' | 'formal' | 'admin' | 'reportes-novedades') => void;
+  onTabChange?: (tab: 'home' | 'quick' | 'formal' | 'admin') => void;
 }
 
 export default function BottomNav({ onTabChange }: BottomNavProps) {
-  const [activeTab, setActiveTab] = React.useState<'home' | 'quick' | 'formal' | 'admin' | 'reportes-novedades'>('home');
+  const [activeTab, setActiveTab] = React.useState<'home' | 'quick' | 'formal' | 'admin'>('home');
 
-  const handleTabSelect = (tab: 'home' | 'quick' | 'formal' | 'admin' | 'reportes-novedades') => {
+  const handleTabSelect = (tab: 'home' | 'quick' | 'formal' | 'admin') => {
     setActiveTab(tab);
     onTabChange?.(tab);
   };
@@ -71,17 +67,6 @@ export default function BottomNav({ onTabChange }: BottomNavProps) {
           >
             <Shield className="w-4 h-4 mb-1" />
             <span className="text-[10px] text-slate-400 block">Admin</span>
-          </Link>
-
-          {/* Reportes de Novedades */}
-          <Link
-            href="/reportes/novedades"
-            onClick={() => handleTabSelect("reportes-novedades")}
-            className={`flex flex-col items-center justify-center rounded-lg px-3 py-2 text-xs font-medium transition-all ${activeTab === "reportes-novedades" ? "text-cyan-400 bg-cyan-500/20 border border-cyan-500/30" : "text-slate-400 hover:text-white hover:bg-slate-800/30"}`}
-            aria-label="Reportes de Novedades"
-          >
-            <ClipboardList className="w-4 h-4 mb-1" />
-            <span className="text-[10px] text-slate-400 block">Novedades</span>
           </Link>
         </div>
       </div>
