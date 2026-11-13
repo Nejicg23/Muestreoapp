@@ -128,7 +128,7 @@ export default function QuickInventoryClient({
   // MODALIDAD DE CONTEO RÁPIDO:
   // 'standard' = 1. Elegir -> 2. Stock Sistema -> 3. Conteo Físico
   // 'reverse'  = 1. Elegir -> 2. Conteo Físico Primero -> 3. Comparar con Sistema y poner Check/Visto (✓)
-  const [countMode, setCountMode] = useState<'standard' | 'reverse'>('reverse');
+  const [countMode, setCountMode] = useState<'standard' | 'reverse' | 'novedades'>('reverse');
   const [verifiedChecks, setVerifiedChecks] = useState<Record<string, boolean>>({});
 
   // ETAPA DEL FLUJO SECUENCIAL:
@@ -704,7 +704,7 @@ export default function QuickInventoryClient({
           </div>
         </div>
 
-        {/* SELECTOR DE MODO: CONTEO INVERSO vs CONTEO ESTÁNDAR */}
+        {/* SELECTOR DE MODO: CONTEO INVERSO / ESTÁNDAR / NOVEDADES */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-1.5 bg-[#0a0a0a] rounded-2xl border border-[#262626]">
           <button
             type="button"
@@ -721,6 +721,23 @@ export default function QuickInventoryClient({
           >
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span>Conteo Inverso (Buscar y Contar ➔ Sistema ✓)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setCountMode('novedades');
+              setCountStage(1);
+              setAuditReason('Modo Reporte de Novedades');
+            }}
+            className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              countMode === 'novedades'
+                ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md shadow-amber-600/25'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>Reporte de Novedades</span>
           </button>
 
           <button
@@ -856,7 +873,7 @@ export default function QuickInventoryClient({
       {/* ========================================================================= */}
       {/* PASO 1: BUSCAR ÍTEM Y REGISTRAR CONTEO (INVERSO) O ELEGIR ÍTEMS (ESTÁNDAR) */}
       {/* ========================================================================= */}
-      {countStage === 1 && (
+      {countStage === 1 && (countMode === 'reverse' || countMode === 'novedades') && (
         <div className="space-y-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
             <div className="flex items-center justify-between gap-2">
@@ -879,6 +896,8 @@ export default function QuickInventoryClient({
                   <p className="text-[11px] text-slate-400">
                     {countMode === 'reverse'
                       ? 'Busca el ítem que vas a contar, registra sus cajas/fracciones y ve por el siguiente. Tú decides cuándo terminar.'
+                      : countMode === 'novedades'
+                      ? 'Busca y selecciona los productos con novedad (lote, vencimiento, tipo). Cada ítem será registrado en el reporte de novedades.'
                       : 'Busca y selecciona los productos que auditarás en esta ronda.'}
                   </p>
                 </div>
@@ -1660,6 +1679,269 @@ export default function QuickInventoryClient({
               >
                 <span>Continuar al Paso 3: Comparar con Sistema y Poner Visto (✓)</span>
                 <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* PASO 2 (MODO NOVEDADES): REGISTRAR CONTEO + LOTE + VENCIMIENTO + TIPO     */}
+      {/* ========================================================================= */}
+      {countStage === 2 && countMode === 'novedades' && (
+        <div className="space-y-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs flex items-center justify-center border border-amber-500/30">
+                  2
+                </span>
+                <div>
+                  <h2 className="text-sm font-bold text-white">
+                    Registrar Conteo Físico + Datos de Novedad
+                  </h2>
+                  <p className="text-[11px] text-slate-400">
+                    Para cada ítem seleccionado, registra el conteo físico, lote, fecha de vencimiento y tipo de novedad.
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs text-amber-400 font-mono font-bold shrink-0">
+                {selectedQueue.length} ítems
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {selectedQueue.map((item, index) => {
+                const factor = Math.max(1, item.packQuantity || 1);
+                const physicalTotal = item.countedPacks * factor + item.countedLoose;
+
+                return (
+                  <div
+                    key={`nov-step2-${item.originalItemId}-${index}`}
+                    className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+                      <div className="min-w-0">
+                        <span className="font-mono text-[10px] text-amber-400 font-bold">
+                          SKU: {item.sku} • Factor: 1x{factor}
+                        </span>
+                        <h3 className="text-xs font-bold text-white mt-0.5 truncate">
+                          {item.description}
+                        </h3>
+                      </div>
+                      <span className="text-[10px] bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-lg font-mono shrink-0 font-bold">
+                        Conteo: {physicalTotal} fracc.
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      {/* Cajas Físicas (u) */}
+                      <div>
+                        <label className="text-[10px] text-amber-400 block mb-1 font-semibold">
+                          Cajas Físicas (u)
+                        </label>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleUpdateQueueItem(
+                                index,
+                                'countedPacks',
+                                Math.max(0, item.countedPacks - 1)
+                              )
+                            }
+                            className="w-8 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center shrink-0"
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min="0"
+                            value={item.countedPacks}
+                            onChange={(e) =>
+                              handleUpdateQueueItem(
+                                index,
+                                'countedPacks',
+                                Math.max(0, parseInt(e.target.value) || 0)
+                              )
+                            }
+                            className="w-full px-2 py-2 bg-slate-900 border-amber-500/40 rounded-xl text-white font-mono font-bold text-center outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleUpdateQueueItem(
+                                index,
+                                'countedPacks',
+                                item.countedPacks + 1
+                              )
+                            }
+                            className="w-8 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center shrink-0"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Fracciones Físicas (f) */}
+                      <div>
+                        <label className="text-[10px] text-amber-400 block mb-1 font-semibold">
+                          Fracciones Físicas (f)
+                        </label>
+                        {factor <= 1 && (
+                          <span className="text-[9px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20">
+                            No fracciona (1x1)
+                          </span>
+                        )}
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            disabled={factor <= 1}
+                            onClick={() =>
+                              handleUpdateQueueItem(
+                                index,
+                                'countedLoose',
+                                Math.max(0, item.countedLoose - 1)
+                              )
+                            }
+                            className="w-8 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-200 font-bold flex items-center justify-center shrink-0"
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min="0"
+                            disabled={factor <= 1}
+                            value={factor <= 1 ? 0 : item.countedLoose}
+                            onChange={(e) =>
+                              handleUpdateQueueItem(
+                                index,
+                                'countedLoose',
+                                Math.max(0, parseInt(e.target.value) || 0)
+                              )
+                            }
+                            className="w-full px-2 py-2 bg-slate-900 disabled:border-slate-800 disabled:bg-slate-950/60 rounded-xl text-white font-mono font-bold text-center outline-none focus:ring-1 focus:ring-amber-500"
+                          />
+                          <button
+                            type="button"
+                            disabled={factor <= 1}
+                            onClick={() =>
+                              handleUpdateQueueItem(
+                                index,
+                                'countedLoose',
+                                item.countedLoose + 1
+                              )
+                            }
+                            className="w-8 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-200 font-bold flex items-center justify-center shrink-0"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Lote / Batch */}
+                      <div className="sm:col-span-2">
+                        <label className="text-[10px] text-slate-400 block mb-1">
+                          Lote / Batch (opcional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Ej: L-48920"
+                          value={item.batchNumber || ''}
+                          onChange={(e) => handleUpdateQueueItem(index, 'batchNumber', e.target.value)}
+                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono text-xs outline-none focus:border-amber-500"
+                        />
+                      </div>
+
+                      {/* Vencimiento + Tipo de Novedad */}
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-1">
+                          Vencimiento (opcional)
+                        </label>
+                        <select
+                          value={item.expirationDate || ''}
+                          onChange={(e) => handleUpdateQueueItem(index, 'expirationDate', e.target.value || undefined)}
+                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs outline-none focus:border-amber-500"
+                        >
+                          <option value="">Sin fecha</option>
+                          <option value="+3M">+3 Meses</option>
+                          <option value="+6M">+6 Meses</option>
+                          <option value="+1A">+1 Año</option>
+                          <option value="+2A">+2 Años</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-1">
+                          Tipo de Novedad (opcional)
+                        </label>
+                        <select
+                          value={item.noveltyType || ''}
+                          onChange={(e) => handleUpdateQueueItem(index, 'noveltyType', e.target.value || undefined)}
+                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs outline-none focus:border-amber-500"
+                        >
+                          <option value="">Sin novedad</option>
+                          <option value="mermado">Mermado</option>
+                          <option value="extra">Extra</option>
+                          <option value="dañado">Dañado</option>
+                          <option value="otro">Otro</option>
+                        </select>
+                      </div>
+
+                      {/* Notas de Novedad */}
+      <div>
+        <label className="text-[10px] text-slate-400 block mb-1">
+          Notas de Novedad (opcional)
+        </label>
+        <textarea
+          rows={2}
+          placeholder="Observaciones adicionales sobre la novedad..."
+          value={item.noveltyNotes || ''}
+          onChange={(e) => handleUpdateQueueItem(index, 'noveltyNotes', e.target.value)}
+          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs outline-none focus:border-amber-500 resize-none"
+        />
+      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  // Generate the novelties report data
+                  const reportData = selectedQueue.map(item => ({
+                    sku: item.sku,
+                    description: item.description,
+                    countedPacks: item.countedPacks,
+                    countedLoose: item.countedLoose,
+                    batchNumber: item.batchNumber,
+                    expirationDate: item.expirationDate,
+                    noveltyType: item.noveltyType,
+                    noveltyNotes: item.noveltyNotes,
+                    timestamp: new Date().toISOString()
+                  }));
+                  
+                  // Here you would typically call an API or navigate to a report view
+                  // For now, we'll reset the count stage and show an alert with the summary
+                  const totalItems = reportData.length;
+                  const totalPacks = reportData.reduce((sum, item) => sum + item.countedPacks, 0);
+                  const totalLoose = reportData.reduce((sum, item) => sum + item.countedLoose, 0);
+                  
+                  setCountStage(1);
+                  setCountMode('reverse');
+                  setSelectedQueue([]);
+                  setAuditReason('Reporte de Novedades finalizado');
+                  
+                  // In a real app, you'd send this to an API or navigate to a report page
+                  // window.alert(`Reporte de Novedades generado:\n${totalItems} ítems\n${totalPacks} cajas\n${totalLoose} fracciones`);
+                }}
+                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all cursor-pointer"
+              >
+                <span>Terminar y Generar Reporte de Novedades ({selectedQueue.length} ítems)</span>
+                <CheckCircle2 className="w-4 h-4" />
               </button>
             </div>
           </div>
