@@ -76,6 +76,11 @@ export default function ProductosNovedadesClient({
           <h2 className="text-[11px] font-bold text-cyan-300 uppercase tracking-wider">
             Ítems con Novedad (Físico Solo)
           </h2>
+          <div className="mt-2 text-[9px] text-slate-500">
+            <span className="bg-slate-800 rounded-xl px-2 py-1 mr-2">
+              Registro físico sin validación de sistema
+            </span>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full">
