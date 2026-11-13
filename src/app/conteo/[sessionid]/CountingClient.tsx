@@ -221,6 +221,7 @@ export default function CountingClient({
   const [noveltyNotes, setNoveltyNotes] = useState('');
   const [noveltyImage, setNoveltyImage] = useState<string | null>(null);
   const [isNoveltySubmitting, setIsNoveltySubmitting] = useState(false);
+  const [recentNovelties, setRecentNovelties] = useState<any[]>([]);
 
   // Auditor Recount Modal state
   const [isAuditorRecountOpen, setIsAuditorRecountOpen] = useState(false);
@@ -563,6 +564,24 @@ export default function CountingClient({
         type: 'success',
       });
     }
+
+    setRecentNovelties((prev) => [
+      ...prev,
+      {
+        itemId: selectedItem.id,
+        sku: selectedItem.sku,
+        description: selectedItem.description.length > 20
+          ? selectedItem.description.substring(0, 20) + '...'
+          : selectedItem.description,
+        noveltyType,
+        batchNumber: noveltyBatch || null,
+        expirationDate: noveltyExpiry || null,
+        quantity: noveltyQty,
+        notes: noveltyNotes || null,
+        reportedBy: operatorName,
+        timestamp: new Date().toISOString(),
+      },
+    ]);
 
     setIsNoveltySubmitting(false);
     setIsNoveltyOpen(false);
