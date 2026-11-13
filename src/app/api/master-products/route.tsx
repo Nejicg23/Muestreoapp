@@ -11,11 +11,12 @@ export async function GET(request: Request) {
     let products;
     
     if (query) {
-      // Search by SKU or barcode
+      // Search by SKU, barcode, or description
       products = await db.select().from(masterProducts).where(
         or(
           ilike(masterProducts.sku, `%${query}%`),
-          ilike(masterProducts.barcode, `%${query}%`)
+          ilike(masterProducts.barcode, `%${query}%`),
+          ilike(masterProducts.description, `%${query}%`)
         )
       );
     } else {
