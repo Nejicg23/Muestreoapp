@@ -177,6 +177,11 @@ export default function QuickInventoryClient({
   const [auditDate, setAuditDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [auditReason, setAuditReason] = useState('Muestreo Cíclico / Conteo Rápido');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [noveltyBatch, setNoveltyBatch] = useState("");
+  const [noveltyExpiration, setNoveltyExpiration] = useState("");
+  const [noveltyType, setNoveltyType] = useState("otro");
+  const [noveltyNotes, setNoveltyNotes] = useState("");
+  const [showNoveltyModal, setShowNoveltyModal] = useState(false);
 
   // Auto-save: Guardar sesión automáticamente al momento de abrirse
   // y guardar conteos mientras el operador trabaja para evitar pérdida de datos
@@ -403,6 +408,17 @@ export default function QuickInventoryClient({
   // SELECCIONAR ÍTEM DEL BUSCADOR
   const handleAddItemToQueue = (item: RawItem) => {
     const newItem = buildQuickCountItem(item);
+    // MODO NOVEDADES: abrir ventana de edición antes de agregar
+    if (countMode === "novedades") {
+      // Mostrar modal de novedad y completar datos
+      setNoveltyBatch(item.batchNumber || "");
+      setNoveltyExpiration((item.expirationDate?.toString() || "").replace("T", " "));
+      setNoveltyType("otro");
+      setNoveltyNotes("");
+      setShowNoveltyModal(true);
+      return;
+    }
+    
 
     if (countMode === 'reverse') {
       // En Conteo Inverso: el operador busca el ítem, registra su conteo físico al instante y luego va por el siguiente
