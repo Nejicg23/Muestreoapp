@@ -1,16 +1,23 @@
+'use client';
+
+import React from 'react';
+
 import ProductosNovedadesClient from './ProductosNovedadesClient';
 
 export const dynamic = 'force-dynamic';
 
+// Manejo robusto de sessionId - both optional and with fallback
 export default function ProductosNovedadesPage({
   params,
 }: { params: { sessionId?: string } }) {
-  // Si no hay sessionId, mostramos la página con datos vacíos o un mensaje
-  const sessionId = params.sessionId || 'default-session';
+  const sessionId = params?.sessionId || 'default-session-' + Date.now();
 
-  // Reporte de productos con novedades
-  // Recibe sessionId y renderiza el cliente de reporte
-  // Los datos se poblarán al integrarse con el sync real
-
-  return <ProductosNovedadesClient sessionId={sessionId} consolidated={[]} onClose={() => {}} onExport={() => {}} />;
+  return (
+    <ProductosNovedadesClient
+      sessionId={sessionId}
+      consolidated={[]}
+      onClose={() => {}}
+      onExport={() => {}}
+    />
+  );
 }
