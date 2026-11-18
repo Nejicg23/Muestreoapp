@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { inventorySessions, inventoryItems } from '@/db/schema';
+import { inventorySessions, inventoryItems, masterProducts } from '@/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import { requireAuth } from '@/lib/auth';
 import QuickInventoryClient from './QuickInventoryClient';
@@ -7,16 +7,16 @@ import QuickInventoryClient from './QuickInventoryClient';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Inventario Rápido Móvil | StockSync Pro',
-  description: 'Módulo móvil de muestreo rápido y cotejo manual contra sistema externo con validez legal.',
+  title: 'Inventario Rápido & Reporte de Novedades | StockSync Pro',
+  description: 'Módulo móvil de muestreo rápido y reporte de novedades con validez legal.',
 };
 
 interface PageProps {
-  searchParams: Promise<{ sessionId?: string }>;
+  searchParams: Promise<{ sessionId?: string; mode?: string }>;
 }
 
 export default async function InventarioRapidoPage({ searchParams }: PageProps) {
-  const { sessionId } = (await searchParams) || {};
+  const { sessionId, mode } = (await searchParams) || {};
   const currentUser = await requireAuth();
 
   // Obtener sesiones existentes con recuento de ítems
@@ -36,27 +36,61 @@ export default async function InventarioRapidoPage({ searchParams }: PageProps) 
   let items: any[] = [];
   let initialSessionId = '';
 
-  if (sessionId) {
-    const sessionExists = sessions.find((s) => s.id === sessionId);
-    if (sessionExists) {
-      initialSessionId = sessionId;
-      items = await db
+  const targetSessionId = sessionId || (sessions.length > 0 ? sessions[0].id : '');
+
+  if (targetSessionId) {
+    initialSessionId = targetSessionId;
+    items = await db
+      .select({
+        id: inventoryItems.id,
+        sessionId: inventoryItems.sessionId,
+        sku: inventoryItems.sku,
+        barcode: inventoryItems.barcode,
+        description: inventoryItems.description,
+        systemStock: inventoryItems.systemStock,
+        packQuantity: inventoryItems.packQuantity,
+        rawCost: inventoryItems.rawCost,
+        unitCostCalculated: inventoryItems.unitCostCalculated,
+        location: inventoryItems.location,
+      })
+      .from(inventoryItems)
+      .where(eq(inventoryItems.sessionId, targetSessionId))
+      .orderBy(inventoryItems.sku);
+  }
+
+  // Si no hay ítems en la sesión seleccionada, intentar cargar desde la base maestra
+  if (items.length === 0) {
+    try {
+      const masters = await db
         .select({
-          id: inventoryItems.id,
-          sessionId: inventoryItems.sessionId,
-          sku: inventoryItems.sku,
-          barcode: inventoryItems.barcode,
-          description: inventoryItems.description,
-          systemStock: inventoryItems.systemStock,
-          packQuantity: inventoryItems.packQuantity,
-          rawCost: inventoryItems.rawCost,
-          unitCostCalculated: inventoryItems.unitCostCalculated,
-          location: inventoryItems.location,
+          id: masterProducts.id,
+          sku: masterProducts.sku,
+          barcode: masterProducts.barcode,
+          description: masterProducts.description,
+          packQuantity: masterProducts.packQuantity,
+          boxCost: masterProducts.boxCost,
+          unitCostCalculated: masterProducts.unitCostCalculated,
+          location: masterProducts.location,
         })
-        .from(inventoryItems)
-        .where(eq(inventoryItems.sessionId, sessionId))
-        .orderBy(inventoryItems.sku);
-    }
+        .from(masterProducts)
+        .where(eq(masterProducts.isActive, true))
+        .limit(300);
+
+      if (masters.length > 0) {
+        items = masters.map((m) => ({
+          id: m.id,
+          sessionId: undefined,
+          sku: m.sku,
+          barcode: m.barcode,
+          description: m.description,
+          systemStock: '0',
+          packQuantity: m.packQuantity,
+          rawCost: m.boxCost,
+          unitCostCalculated: m.unitCostCalculated || '0',
+          location: m.location || 'Bodega Principal',
+        }));
+      }
+    } catch {}
   }
 
   return (
@@ -68,6 +102,7 @@ export default async function InventarioRapidoPage({ searchParams }: PageProps) 
       initialSessionId={initialSessionId}
       initialItems={items}
       currentUser={currentUser}
+      initialMode={mode as any}
     />
   );
 }

@@ -108,6 +108,18 @@ export default function ReportClient({
     }
   }, [session.id, shareToken]);
 
+  // Soporte para auto-impresión si la URL contiene ?print=true
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('print') === 'true') {
+        setTimeout(() => {
+          window.print();
+        }, 800);
+      }
+    }
+  }, []);
+
   const handleCopyShareLink = async () => {
     if (!publicShareUrl) return;
     try {
@@ -1161,6 +1173,131 @@ export default function ReportClient({
         </div>
       )}
 
+      {/* ============================================================== */}
+      {/* SECCIÓN DETALLADA DE NOVEDADES E INCIDENCIAS (ONLINE & VISTA)   */}
+      {/* ============================================================== */}
+      {novelties && novelties.length > 0 && (
+        <div className="bg-slate-900 border border-amber-500/40 rounded-3xl p-5 sm:p-7 shadow-xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/40 shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
+                  <span>Reporte Oficial de Novedades e Incidencias</span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono font-bold border border-amber-500/30">
+                    {novelties.length} {novelties.length === 1 ? 'novedad' : 'novedades'}
+                  </span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Evidencia fotográfica, lote, fecha, cantidad física afectada y observaciones
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {novelties.map((nov, idx) => {
+              const matching = itemsList.find((x) => x.id === nov.itemId);
+              const sku = matching?.sku || 'N/A';
+              const description = matching?.description || nov.notes || 'Ítem con novedad';
+              const img = nov.imageUrl || matching?.imageUrl;
+
+              return (
+                <div
+                  key={nov.id || idx}
+                  className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 hover:border-amber-500/40 transition-all shadow-md"
+                >
+                  {/* Evidencia Fotográfica */}
+                  {img ? (
+                    <div className="shrink-0 flex flex-col items-center justify-center">
+                      <img
+                        src={img}
+                        alt="Evidencia fotográfica"
+                        onClick={() => setViewImageModal({ url: img, title: `${sku} - ${description}` })}
+                        className="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-xl border border-amber-500/40 shadow cursor-pointer hover:opacity-90 transition-opacity"
+                        title="Haz clic para ver la imagen en tamaño completo"
+                      />
+                      <span className="text-[10px] text-amber-400 font-medium mt-1 cursor-pointer">
+                        Ver foto ampliada
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-slate-400 shrink-0 text-center p-2">
+                      <Camera className="w-6 h-6 mb-1 opacity-40 text-slate-400" />
+                      <span className="text-[10px] text-slate-400">Sin foto adjunta</span>
+                    </div>
+                  )}
+
+                  {/* Datos del Ítem y Novedad */}
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div>
+                      <span className="font-mono text-[10px] text-amber-400 font-bold">
+                        SKU: {sku}
+                      </span>
+                      <h3 className="text-sm font-bold text-white leading-tight mt-0.5 break-words">
+                        {description}
+                      </h3>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+                        <span className="text-[10px] text-slate-400 block font-medium">Lote:</span>
+                        <span className="font-mono font-bold text-amber-300">
+                          {nov.batchNumber || 'N/A'}
+                        </span>
+                      </div>
+
+                      <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+                        <span className="text-[10px] text-slate-400 block font-medium">Fecha:</span>
+                        <span className="font-mono font-bold text-cyan-300">
+                          {nov.expirationDate
+                            ? new Date(nov.expirationDate).toLocaleDateString('es-ES')
+                            : 'N/A'}
+                        </span>
+                      </div>
+
+                      <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+                        <span className="text-[10px] text-slate-400 block font-medium">Cantidad:</span>
+                        <span className="font-mono font-bold text-emerald-400 text-sm">
+                          {nov.quantity} u
+                        </span>
+                      </div>
+
+                      <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+                        <span className="text-[10px] text-slate-400 block font-medium">Tipo:</span>
+                        <span className="font-semibold text-slate-200 capitalize truncate block">
+                          {nov.noveltyType.replace('_', ' ')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {nov.notes && (
+                      <div className="p-2.5 rounded-xl bg-amber-950/20 border border-amber-500/20 text-xs">
+                        <span className="text-[10px] text-amber-400 font-bold block mb-0.5">
+                          Nota / Detalle:
+                        </span>
+                        <p className="text-slate-200 whitespace-pre-wrap leading-relaxed">
+                          {nov.notes}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="text-[10px] text-slate-400 flex items-center justify-between pt-1">
+                      <span>Reportado por: <strong className="text-slate-300">{nov.reportedBy}</strong></span>
+                      {nov.createdAt && (
+                        <span>{new Date(nov.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* ========================================================================= */}
       {/* VISTA 2: REPORTE RÁPIDO (FORMATO A6 FACTURA/TICKET - FALTANTES Y SOBRANTES) */}
       {/* ========================================================================= */}
@@ -1996,6 +2133,79 @@ export default function ReportClient({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* SECCIÓN SOLO PARA IMPRESIÓN (TABLA DE NOVEDADES EN PDF)        */}
+      {/* ============================================================== */}
+      {reportView !== 'quick_a6' && novelties && novelties.length > 0 && (
+        <div className="print-only mt-8 page-break">
+          <div className="border-b-2 border-slate-900 pb-1 mb-3">
+            <h2 className="text-sm font-black uppercase text-slate-900">
+              DETALLE DE NOVEDADES E INCIDENCIAS FÍSICAS REPORTADAS ({novelties.length})
+            </h2>
+            <p className="text-[10px] text-slate-600">
+              Registro con evidencia fotográfica, lote, vencimiento, cantidad y notas de auditoría
+            </p>
+          </div>
+
+          <table className="w-full text-[10px] border-collapse border border-slate-400">
+            <thead>
+              <tr className="bg-slate-200 text-slate-900 font-bold">
+                <th className="border border-slate-400 p-1.5 text-center w-16">Foto</th>
+                <th className="border border-slate-400 p-1.5 text-left">SKU / Producto</th>
+                <th className="border border-slate-400 p-1.5 text-center">Lote</th>
+                <th className="border border-slate-400 p-1.5 text-center">Fecha</th>
+                <th className="border border-slate-400 p-1.5 text-right">Cantidad</th>
+                <th className="border border-slate-400 p-1.5 text-left">Observaciones / Notas</th>
+                <th className="border border-slate-400 p-1.5 text-left">Reportó</th>
+              </tr>
+            </thead>
+            <tbody>
+              {novelties.map((nov, idx) => {
+                const matching = itemsList.find((x) => x.id === nov.itemId);
+                const img = nov.imageUrl || matching?.imageUrl;
+
+                return (
+                  <tr key={idx} className="border-b border-slate-300">
+                    <td className="border border-slate-400 p-1 text-center">
+                      {img ? (
+                        <img
+                          src={img}
+                          alt="Evidencia"
+                          className="w-14 h-14 object-cover mx-auto rounded border border-slate-300"
+                        />
+                      ) : (
+                        <span className="text-[9px] text-slate-500 italic">Sin foto</span>
+                      )}
+                    </td>
+                    <td className="border border-slate-400 p-1.5 align-top">
+                      <div className="font-mono font-bold text-slate-900">{matching?.sku || 'N/A'}</div>
+                      <div className="font-semibold text-slate-800">{matching?.description || nov.notes}</div>
+                    </td>
+                    <td className="border border-slate-400 p-1.5 text-center font-mono font-bold align-top">
+                      {nov.batchNumber || 'N/A'}
+                    </td>
+                    <td className="border border-slate-400 p-1.5 text-center font-mono align-top">
+                      {nov.expirationDate
+                        ? new Date(nov.expirationDate).toLocaleDateString('es-ES')
+                        : 'N/A'}
+                    </td>
+                    <td className="border border-slate-400 p-1.5 text-right font-mono font-bold text-slate-900 align-top">
+                      {nov.quantity} u
+                    </td>
+                    <td className="border border-slate-400 p-1.5 text-slate-800 align-top">
+                      {nov.notes || '—'}
+                    </td>
+                    <td className="border border-slate-400 p-1.5 text-slate-700 font-medium align-top">
+                      {nov.reportedBy}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 

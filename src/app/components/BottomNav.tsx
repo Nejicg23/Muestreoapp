@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Package2, Smartphone, Upload, Shield } from "lucide-react";
+import { Package2, Smartphone, Upload, Shield, AlertTriangle } from "lucide-react";
 
 const navItems = [
   { href: "/", icon: Package2, label: "Sesiones" },
   { href: "/inventario-rapido", icon: Smartphone, label: "Rápido" },
+  { href: "/novedades", icon: AlertTriangle, label: "Novedades" },
   { href: "/importar", icon: Upload, label: "Importar" },
   { href: "/admin", icon: Shield, label: "Admin" },
 ];

@@ -36,6 +36,8 @@ import {
   Camera,
   Image as ImageIcon,
   Calendar,
+  ExternalLink,
+  Share2,
 } from 'lucide-react';
 import { compressAndConvertToBase64 } from '@/lib/image-helper';
 import {
@@ -85,6 +87,7 @@ interface Props {
     fullName: string;
     role: string;
   } | null;
+  initialMode?: 'standard' | 'reverse' | 'novedades';
 }
 
 interface ActiveDatabaseInfo {
@@ -99,6 +102,7 @@ export default function QuickInventoryClient({
   initialSessionId,
   initialItems,
   currentUser,
+  initialMode,
 }: Props) {
   // Estado de la base de datos activa
   const [activeDb, setActiveDb] = useState<ActiveDatabaseInfo | null>(() => {
@@ -125,10 +129,10 @@ export default function QuickInventoryClient({
   // Catálogo completo de ítems de la base de datos activa
   const [dbItems, setDbItems] = useState<RawItem[]>(initialItems);
 
-  // MODALIDAD DE CONTEO RÁPIDO:
-  // 'standard' = 1. Elegir -> 2. Stock Sistema -> 3. Conteo Físico
-  // 'reverse'  = 1. Elegir -> 2. Conteo Físico Primero -> 3. Comparar con Sistema y poner Check/Visto (✓)
-  const [countMode, setCountMode] = useState<'standard' | 'reverse' | 'novedades'>('reverse');
+  // MODALIDAD DE CONTEO:
+  const [countMode, setCountMode] = useState<'standard' | 'reverse' | 'novedades'>(
+    initialMode || 'reverse'
+  );
   const [verifiedChecks, setVerifiedChecks] = useState<Record<string, boolean>>({});
 
   // ETAPA DEL FLUJO SECUENCIAL:
@@ -175,8 +179,25 @@ export default function QuickInventoryClient({
     currentUser?.fullName || 'Operador Móvil'
   );
   const [auditDate, setAuditDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
-  const [auditReason, setAuditReason] = useState('Muestreo Cíclico / Conteo Rápido');
+  const [auditReason, setAuditReason] = useState(
+    initialMode === 'novedades'
+      ? 'Reporte Oficial de Novedades e Incidencias'
+      : 'Muestreo Cíclico / Conteo Rápido'
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search);
+      const m = p.get('mode');
+      if (m === 'novedades' || m === 'reverse' || m === 'standard') {
+        setCountMode(m);
+        if (m === 'novedades') {
+          setAuditReason('Reporte Oficial de Novedades e Incidencias');
+        }
+      }
+    }
+  }, []);
   const [noveltyBatch, setNoveltyBatch] = useState("");
   const [noveltyExpiration, setNoveltyExpiration] = useState("");
   const [noveltyType, setNoveltyType] = useState("otro");
@@ -241,6 +262,7 @@ export default function QuickInventoryClient({
   // Comprobante final una vez asentado
   const [completedVoucher, setCompletedVoucher] = useState<{
     sessionId: string;
+    shareToken?: string;
     closedHash: string;
     summary: {
       totalItems: number;
@@ -407,15 +429,23 @@ export default function QuickInventoryClient({
 
   // SELECCIONAR ÍTEM DEL BUSCADOR
   const handleAddItemToQueue = (item: RawItem) => {
-    const newItem = buildQuickCountItem(item);
-    // MODO NOVEDADES: abrir ventana de edición antes de agregar
+    // MODO NOVEDADES: abrir tarjeta de captura de novedad inmediata
     if (countMode === "novedades") {
-      // Mostrar modal de novedad y completar datos
-      setNoveltyBatch(item.batchNumber || "");
-      setNoveltyExpiration((item.expirationDate?.toString() || "").replace("T", " "));
-      setNoveltyType("otro");
-      setNoveltyNotes("");
-      setShowNoveltyModal(true);
+      const draft = buildQuickCountItem(item);
+      draft.hasNovelty = true;
+      draft.noveltyType = 'novedad_fisica';
+      draft.batchNumber = item.batchNumber || '';
+      draft.expirationDate = item.expirationDate
+        ? (typeof item.expirationDate === 'string'
+            ? item.expirationDate.split('T')[0]
+            : new Date(item.expirationDate).toISOString().split('T')[0])
+        : new Date().toISOString().split('T')[0];
+      draft.noveltyNotes = '';
+      draft.imageUrl = item.imageUrl || null;
+      draft.countedPacks = 0;
+      draft.countedLoose = 0;
+      setActiveDraftItem(draft);
+      setSearchQuery('');
       return;
     }
     
@@ -587,6 +617,7 @@ export default function QuickInventoryClient({
       if (res.success && res.sessionId && res.closedHash && res.summary) {
         setCompletedVoucher({
           sessionId: res.sessionId,
+          shareToken: (res as any).shareToken,
           closedHash: res.closedHash,
           summary: res.summary,
         });
@@ -660,26 +691,65 @@ export default function QuickInventoryClient({
           </div>
 
           {/* Acciones */}
-          <div className="space-y-2 pt-2">
-            <Link
-              href={`/sesion/${completedVoucher.sessionId}/reporte`}
-              className="w-full py-3.5 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-cyan-600/25"
+          <div className="space-y-2.5 pt-2">
+            {/* BOTÓN IMPRIMIR / GENERAR PDF */}
+            <a
+              href={`/sesion/${completedVoucher.sessionId}/reporte?print=true`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-cyan-600/25 cursor-pointer"
             >
-              <span>Ver Reporte Consolidado y Exportar Excel</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+              <Printer className="w-4 h-4" />
+              <span>Generar / Imprimir PDF Oficial</span>
+            </a>
+
+            {/* BOTÓN VER EN LÍNEA (CON FOTOS Y NOTAS) */}
+            <a
+              href={
+                completedVoucher.shareToken
+                  ? `/compartir/${completedVoucher.sessionId}?key=${completedVoucher.shareToken}`
+                  : `/sesion/${completedVoucher.sessionId}/reporte`
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-600/25 cursor-pointer"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span>Ver en Línea (Con Fotos y Notas Detalladas)</span>
+            </a>
+
+            {/* COPIAR ENLACE PÚBLICO */}
+            {completedVoucher.shareToken && (
+              <button
+                type="button"
+                onClick={async () => {
+                  const url = `${window.location.origin}/compartir/${completedVoucher.sessionId}?key=${completedVoucher.shareToken}`;
+                  await navigator.clipboard.writeText(url);
+                  alert('¡Enlace público copiado al portapapeles!');
+                }}
+                className="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs flex items-center justify-center gap-2 transition-all border border-slate-700 cursor-pointer"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>Copiar Enlace para Compartir</span>
+              </button>
+            )}
 
             <button
               type="button"
               onClick={() => {
                 setCompletedVoucher(null);
                 setSelectedQueue([]);
+                setActiveDraftItem(null);
                 setCountStage(1);
               }}
-              className="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs flex items-center justify-center gap-2 transition-all"
+              className="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
-              <span>Realizar Otro Inventario Rápido</span>
+              <span>
+                {countMode === 'novedades'
+                  ? 'Iniciar Otro Reporte de Novedades'
+                  : 'Realizar Otro Inventario Rápido'}
+              </span>
             </button>
           </div>
         </div>
@@ -979,18 +1049,350 @@ export default function QuickInventoryClient({
                       type="button"
                       onClick={() => handleAddItemToQueue(item)}
                       className={`px-3 py-1.5 rounded-lg text-white font-bold text-[11px] flex items-center gap-1 shrink-0 shadow-md cursor-pointer ${
-                        countMode === 'reverse'
+                        countMode === 'novedades'
+                          ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-600/25'
+                          : countMode === 'reverse'
                           ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20'
                           : 'bg-cyan-600 hover:bg-cyan-500 shadow-cyan-600/20'
                       }`}
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>{countMode === 'reverse' ? 'Contar este Ítem' : 'Seleccionar'}</span>
+                      <span>
+                        {countMode === 'novedades'
+                          ? 'Reportar Novedad'
+                          : countMode === 'reverse'
+                          ? 'Contar este Ítem'
+                          : 'Seleccionar'}
+                      </span>
                     </button>
                   </div>
                 ))}
               </div>
             )}
+
+            {/* ===================================================================== */}
+            {/* TARJETA ACTIVA DE REGISTRO DE NOVEDAD (MODO NOVEDADES)                */}
+            {/* ===================================================================== */}
+            {countMode === 'novedades' && activeDraftItem && (() => {
+              const factor = Math.max(1, activeDraftItem.packQuantity || 1);
+              const physicalTotal = (activeDraftItem.countedPacks * factor) + activeDraftItem.countedLoose;
+
+              return (
+                <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-b from-amber-950/40 via-slate-950 to-slate-950 border-2 border-amber-500/60 shadow-2xl shadow-amber-950/40 space-y-4">
+                  <div className="flex items-start justify-between gap-2 border-b border-amber-500/20 pb-3">
+                    <div className="min-w-0">
+                      <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono text-[10px] font-bold uppercase">
+                        Registrando Novedad • SKU: {activeDraftItem.sku} (Factor 1x{factor})
+                      </span>
+                      <h3 className="text-sm sm:text-base font-black text-white mt-1.5 break-words">
+                        {activeDraftItem.description}
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveDraftItem(null)}
+                      className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white text-xs"
+                      title="Cancelar este ítem"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* 1. Cantidades (Obligatorio) */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-amber-300 flex items-center gap-1">
+                        <span>1. Cantidad Afectada</span>
+                        <span className="text-rose-400 text-sm">*</span>
+                      </label>
+                      <span className="text-[11px] font-mono font-bold text-amber-300 bg-amber-500/15 px-2.5 py-0.5 rounded-lg border border-amber-500/30">
+                        Total: {physicalTotal} {physicalTotal === 1 ? 'unidad' : 'unidades'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-1">
+                          Cajas Completas (u)
+                        </label>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveDraftItem({
+                                ...activeDraftItem,
+                                countedPacks: Math.max(0, activeDraftItem.countedPacks - 1),
+                              })
+                            }
+                            className="w-10 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black text-base flex items-center justify-center shrink-0 cursor-pointer"
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min="0"
+                            value={activeDraftItem.countedPacks}
+                            onChange={(e) =>
+                              setActiveDraftItem({
+                                ...activeDraftItem,
+                                countedPacks: Math.max(0, parseInt(e.target.value) || 0),
+                              })
+                            }
+                            className="w-full h-11 bg-slate-900 border border-slate-700 rounded-xl text-center font-mono font-black text-white text-sm outline-none focus:border-amber-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveDraftItem({
+                                ...activeDraftItem,
+                                countedPacks: activeDraftItem.countedPacks + 1,
+                              })
+                            }
+                            className="w-10 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black text-base flex items-center justify-center shrink-0 cursor-pointer"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-1">
+                          Unidades Sueltas (f)
+                        </label>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveDraftItem({
+                                ...activeDraftItem,
+                                countedLoose: Math.max(0, activeDraftItem.countedLoose - 1),
+                              })
+                            }
+                            className="w-10 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black text-base flex items-center justify-center shrink-0 cursor-pointer"
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min="0"
+                            value={activeDraftItem.countedLoose}
+                            onChange={(e) =>
+                              setActiveDraftItem({
+                                ...activeDraftItem,
+                                countedLoose: Math.max(0, parseInt(e.target.value) || 0),
+                              })
+                            }
+                            className="w-full h-11 bg-slate-900 border border-slate-700 rounded-xl text-center font-mono font-black text-white text-sm outline-none focus:border-amber-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveDraftItem({
+                                ...activeDraftItem,
+                                countedLoose: activeDraftItem.countedLoose + 1,
+                              })
+                            }
+                            className="w-10 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black text-base flex items-center justify-center shrink-0 cursor-pointer"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Lote y Fecha (Obligatorios) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <label className="text-xs font-bold text-amber-300 flex items-center gap-1 mb-1.5">
+                        <span>2. Número de Lote</span>
+                        <span className="text-rose-400 text-sm">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Ej: LOTE-2025-01A"
+                        value={activeDraftItem.batchNumber || ''}
+                        onChange={(e) =>
+                          setActiveDraftItem({
+                            ...activeDraftItem,
+                            batchNumber: e.target.value,
+                          })
+                        }
+                        className="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono text-xs outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-amber-300 flex items-center gap-1 mb-1.5">
+                        <span>3. Fecha de Novedad / Vto</span>
+                        <span className="text-rose-400 text-sm">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={activeDraftItem.expirationDate || new Date().toISOString().split('T')[0]}
+                        onChange={(e) =>
+                          setActiveDraftItem({
+                            ...activeDraftItem,
+                            expirationDate: e.target.value,
+                          })
+                        }
+                        className="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono text-xs outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 3. Nota de la Novedad (Opcional) */}
+                  <div className="space-y-1.5 text-xs">
+                    <label className="text-xs font-semibold text-slate-300 block">
+                      4. Nota u Observación de la Novedad (Opcional)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={activeDraftItem.noveltyNotes || ''}
+                      onChange={(e) =>
+                        setActiveDraftItem({
+                          ...activeDraftItem,
+                          noveltyNotes: e.target.value,
+                        })
+                      }
+                      placeholder="Ej: Empaque roto en transporte, fecha corta de vencimiento, producto abollado..."
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 resize-none placeholder-slate-500"
+                    />
+                  </div>
+
+                  {/* 4. Evidencia Fotográfica / Imagen (Opcional) */}
+                  <div className="space-y-2 text-xs border-t border-slate-800 pt-3">
+                    <label className="text-xs font-semibold text-slate-300 block">
+                      5. Evidencia Fotográfica (Opcional)
+                    </label>
+
+                    <div className="flex items-center gap-3">
+                      {activeDraftItem.imageUrl ? (
+                        <div className="relative group shrink-0">
+                          <img
+                            src={activeDraftItem.imageUrl}
+                            alt="Foto novedad"
+                            onClick={() => setViewImageModal({ url: activeDraftItem.imageUrl!, title: activeDraftItem.description })}
+                            className="w-16 h-16 object-cover rounded-xl border-2 border-amber-500/60 cursor-pointer shadow hover:opacity-90"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setActiveDraftItem({ ...activeDraftItem, imageUrl: null })}
+                            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-600 text-white flex items-center justify-center text-[10px] shadow"
+                            title="Eliminar foto"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-500/40 font-bold text-xs flex items-center gap-2 cursor-pointer transition-colors shadow">
+                          <Camera className="w-4 h-4 text-amber-400" />
+                          <span>Tomar Foto con Cámara / Subir Imagen</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                try {
+                                  const base64 = await compressAndConvertToBase64(file);
+                                  setActiveDraftItem({ ...activeDraftItem, imageUrl: base64 });
+                                } catch (err: any) {
+                                  alert('Error al procesar foto: ' + err.message);
+                                }
+                              }
+                            }}
+                          />
+                        </label>
+                      )}
+
+                      {activeDraftItem.imageUrl && (
+                        <label className="text-[11px] text-slate-400 hover:text-amber-300 cursor-pointer underline">
+                          Cambiar foto
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                try {
+                                  const base64 = await compressAndConvertToBase64(file);
+                                  setActiveDraftItem({ ...activeDraftItem, imageUrl: base64 });
+                                } catch (err: any) {
+                                  alert('Error al procesar foto: ' + err.message);
+                                }
+                              }
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Botón Guardar Novedad e ir al siguiente ítem */}
+                  <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 border-t border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setActiveDraftItem(null)}
+                      className="px-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Cancelar este ítem
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const factorVal = Math.max(1, activeDraftItem.packQuantity || 1);
+                        const totalQty = (activeDraftItem.countedPacks * factorVal) + activeDraftItem.countedLoose;
+                        if (totalQty <= 0) {
+                          alert('Debes ingresar al menos 1 unidad o caja para registrar la novedad.');
+                          return;
+                        }
+                        if (!activeDraftItem.batchNumber?.trim()) {
+                          alert('El número de lote es obligatorio.');
+                          return;
+                        }
+                        if (!activeDraftItem.expirationDate) {
+                          alert('La fecha de la novedad es obligatoria.');
+                          return;
+                        }
+
+                        // Agregar a la cola de novedades
+                        const itemToSave = {
+                          ...activeDraftItem,
+                          hasNovelty: true,
+                          noveltyType: 'novedad_fisica',
+                          batchNumber: activeDraftItem.batchNumber.trim(),
+                          noveltyNotes: activeDraftItem.noveltyNotes?.trim() || 'Novedad de inventario',
+                        };
+
+                        setSelectedQueue((prev) => [...prev, itemToSave]);
+                        setActiveDraftItem(null);
+                        setSearchQuery('');
+                        playFeedbackSound('success');
+                        setFeedbackMsg({
+                          text: `✓ Novedad guardada: ${itemToSave.description} (${totalQty} u, Lote ${itemToSave.batchNumber}). Selecciona el siguiente ítem.`,
+                          type: 'success',
+                        });
+                        setTimeout(() => {
+                          searchInputRef.current?.focus();
+                        }, 100);
+                      }}
+                      className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-amber-500 hover:from-amber-500 hover:to-orange-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-xl shadow-amber-600/30 transition-all cursor-pointer"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Guardar Novedad y Registrar Siguiente Ítem ➔</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* ===================================================================== */}
             {/* TARJETA ACTIVA DE CONTEO INMEDIATO (SOLO EN MODO CONTEO INVERSO)      */}
@@ -1359,6 +1761,28 @@ export default function QuickInventoryClient({
                         </div>
                       )}
 
+                      {countMode === 'novedades' && (
+                        <div className="flex flex-wrap items-center gap-2 shrink-0">
+                          {item.imageUrl && (
+                            <img
+                              src={item.imageUrl}
+                              alt="Foto"
+                              onClick={() => setViewImageModal({ url: item.imageUrl!, title: item.description })}
+                              className="w-10 h-10 object-cover rounded-lg border border-amber-500/50 cursor-pointer shadow hover:opacity-80"
+                            />
+                          )}
+                          <span className="px-2 py-1 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono text-[10px] font-bold">
+                            Lote: {item.batchNumber}
+                          </span>
+                          <span className="px-2 py-1 rounded-lg bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-mono text-[10px] font-bold">
+                            {item.expirationDate}
+                          </span>
+                          <span className="px-2 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono text-[10px] font-bold">
+                            {physicalTotal} u
+                          </span>
+                        </div>
+                      )}
+
                       <button
                         type="button"
                         onClick={() => handleRemoveFromQueue(idx)}
@@ -1372,9 +1796,66 @@ export default function QuickInventoryClient({
                 })}
               </div>
 
-              {/* Botón para Terminar Conteos e Ir a Sistema Externo (Inverso) o Paso 2 (Estándar) */}
+              {/* Botón para Terminar Conteos e Ir a Sistema Externo (Inverso) o Paso 2 (Estándar) o Finalizar Novedades */}
               <div className="pt-2 space-y-2">
-                {countMode === 'reverse' ? (
+                {countMode === 'novedades' ? (
+                  <div className="pt-2 space-y-3">
+                    <div className="p-3 rounded-2xl bg-amber-950/30 border border-amber-500/20 text-xs text-amber-200 flex items-center justify-between gap-2">
+                      <span>
+                        ✓ Puedes seguir buscando y registrando más novedades arriba, o finalizar el reporte oficial cuando estés listo.
+                      </span>
+                      <span className="font-mono font-bold shrink-0 text-amber-400">
+                        {selectedQueue.length} {selectedQueue.length === 1 ? 'novedad lista' : 'novedades listas'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-950/80 p-3 rounded-2xl border border-slate-800">
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-1 font-semibold">
+                          Auditor / Responsable:
+                        </label>
+                        <input
+                          type="text"
+                          value={operatorName}
+                          onChange={(e) => setOperatorName(e.target.value)}
+                          placeholder="Nombre del auditor"
+                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs outline-none focus:border-amber-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-1 font-semibold">
+                          Título del Reporte:
+                        </label>
+                        <input
+                          type="text"
+                          value={auditReason}
+                          onChange={(e) => setAuditReason(e.target.value)}
+                          placeholder="Reporte Oficial de Novedades"
+                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs outline-none focus:border-amber-500"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isSubmitting || selectedQueue.length === 0}
+                      onClick={handleSubmitQuickAudit}
+                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-amber-500 hover:from-amber-500 hover:to-orange-500 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl shadow-amber-600/30 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          <span>Generando Reporte Oficial y PDF...</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>Finalizar y Sellar Reporte de Novedades ({selectedQueue.length} ítems) ➔</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                ) : countMode === 'reverse' ? (
                   <>
                     <div className="p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/20 text-[11px] text-emerald-300 flex items-center justify-between gap-2">
                       <span>
@@ -1695,269 +2176,6 @@ export default function QuickInventoryClient({
               >
                 <span>Continuar al Paso 3: Comparar con Sistema y Poner Visto (✓)</span>
                 <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* PASO 2 (MODO NOVEDADES): REGISTRAR CONTEO + LOTE + VENCIMIENTO + TIPO     */}
-      {/* ========================================================================= */}
-      {countStage === 2 && countMode === 'novedades' && (
-        <div className="space-y-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs flex items-center justify-center border border-amber-500/30">
-                  2
-                </span>
-                <div>
-                  <h2 className="text-sm font-bold text-white">
-                    Registrar Conteo Físico + Datos de Novedad
-                  </h2>
-                  <p className="text-[11px] text-slate-400">
-                    Para cada ítem seleccionado, registra el conteo físico, lote, fecha de vencimiento y tipo de novedad.
-                  </p>
-                </div>
-              </div>
-              <span className="text-xs text-amber-400 font-mono font-bold shrink-0">
-                {selectedQueue.length} ítems
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {selectedQueue.map((item, index) => {
-                const factor = Math.max(1, item.packQuantity || 1);
-                const physicalTotal = item.countedPacks * factor + item.countedLoose;
-
-                return (
-                  <div
-                    key={`nov-step2-${item.originalItemId}-${index}`}
-                    className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3"
-                  >
-                    <div className="flex items-start justify-between gap-2 border-b border-slate-800/80 pb-2.5">
-                      <div className="min-w-0">
-                        <span className="font-mono text-[10px] text-amber-400 font-bold">
-                          SKU: {item.sku} • Factor: 1x{factor}
-                        </span>
-                        <h3 className="text-xs font-bold text-white mt-0.5 truncate">
-                          {item.description}
-                        </h3>
-                      </div>
-                      <span className="text-[10px] bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-lg font-mono shrink-0 font-bold">
-                        Conteo: {physicalTotal} fracc.
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                      {/* Cajas Físicas (u) */}
-                      <div>
-                        <label className="text-[10px] text-amber-400 block mb-1 font-semibold">
-                          Cajas Físicas (u)
-                        </label>
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleUpdateQueueItem(
-                                index,
-                                'countedPacks',
-                                Math.max(0, item.countedPacks - 1)
-                              )
-                            }
-                            className="w-8 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center shrink-0"
-                          >
-                            -
-                          </button>
-                          <input
-                            type="number"
-                            min="0"
-                            value={item.countedPacks}
-                            onChange={(e) =>
-                              handleUpdateQueueItem(
-                                index,
-                                'countedPacks',
-                                Math.max(0, parseInt(e.target.value) || 0)
-                              )
-                            }
-                            className="w-full px-2 py-2 bg-slate-900 border-amber-500/40 rounded-xl text-white font-mono font-bold text-center outline-none focus:ring-1 focus:ring-amber-500"
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleUpdateQueueItem(
-                                index,
-                                'countedPacks',
-                                item.countedPacks + 1
-                              )
-                            }
-                            className="w-8 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold flex items-center justify-center shrink-0"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Fracciones Físicas (f) */}
-                      <div>
-                        <label className="text-[10px] text-amber-400 block mb-1 font-semibold">
-                          Fracciones Físicas (f)
-                        </label>
-                        {factor <= 1 && (
-                          <span className="text-[9px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20">
-                            No fracciona (1x1)
-                          </span>
-                        )}
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            disabled={factor <= 1}
-                            onClick={() =>
-                              handleUpdateQueueItem(
-                                index,
-                                'countedLoose',
-                                Math.max(0, item.countedLoose - 1)
-                              )
-                            }
-                            className="w-8 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-200 font-bold flex items-center justify-center shrink-0"
-                          >
-                            -
-                          </button>
-                          <input
-                            type="number"
-                            min="0"
-                            disabled={factor <= 1}
-                            value={factor <= 1 ? 0 : item.countedLoose}
-                            onChange={(e) =>
-                              handleUpdateQueueItem(
-                                index,
-                                'countedLoose',
-                                Math.max(0, parseInt(e.target.value) || 0)
-                              )
-                            }
-                            className="w-full px-2 py-2 bg-slate-900 disabled:border-slate-800 disabled:bg-slate-950/60 rounded-xl text-white font-mono font-bold text-center outline-none focus:ring-1 focus:ring-amber-500"
-                          />
-                          <button
-                            type="button"
-                            disabled={factor <= 1}
-                            onClick={() =>
-                              handleUpdateQueueItem(
-                                index,
-                                'countedLoose',
-                                item.countedLoose + 1
-                              )
-                            }
-                            className="w-8 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed text-slate-200 font-bold flex items-center justify-center shrink-0"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Lote / Batch */}
-                      <div className="sm:col-span-2">
-                        <label className="text-[10px] text-slate-400 block mb-1">
-                          Lote / Batch (opcional)
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Ej: L-48920"
-                          value={item.batchNumber || ''}
-                          onChange={(e) => handleUpdateQueueItem(index, 'batchNumber', e.target.value)}
-                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono text-xs outline-none focus:border-amber-500"
-                        />
-                      </div>
-
-                      {/* Vencimiento + Tipo de Novedad */}
-                      <div>
-                        <label className="text-[10px] text-slate-400 block mb-1">
-                          Vencimiento (opcional)
-                        </label>
-                        <select
-                          value={item.expirationDate || ''}
-                          onChange={(e) => handleUpdateQueueItem(index, 'expirationDate', e.target.value || undefined)}
-                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs outline-none focus:border-amber-500"
-                        >
-                          <option value="">Sin fecha</option>
-                          <option value="+3M">+3 Meses</option>
-                          <option value="+6M">+6 Meses</option>
-                          <option value="+1A">+1 Año</option>
-                          <option value="+2A">+2 Años</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="text-[10px] text-slate-400 block mb-1">
-                          Tipo de Novedad (opcional)
-                        </label>
-                        <select
-                          value={item.noveltyType || ''}
-                          onChange={(e) => handleUpdateQueueItem(index, 'noveltyType', e.target.value || undefined)}
-                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs outline-none focus:border-amber-500"
-                        >
-                          <option value="">Sin novedad</option>
-                          <option value="mermado">Mermado</option>
-                          <option value="extra">Extra</option>
-                          <option value="dañado">Dañado</option>
-                          <option value="otro">Otro</option>
-                        </select>
-                      </div>
-
-                      {/* Notas de Novedad */}
-      <div>
-        <label className="text-[10px] text-slate-400 block mb-1">
-          Notas de Novedad (opcional)
-        </label>
-        <textarea
-          rows={2}
-          placeholder="Observaciones adicionales sobre la novedad..."
-          value={item.noveltyNotes || ''}
-          onChange={(e) => handleUpdateQueueItem(index, 'noveltyNotes', e.target.value)}
-          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs outline-none focus:border-amber-500 resize-none"
-        />
-      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  // Generate the novelties report data
-                  const reportData = selectedQueue.map(item => ({
-                    sku: item.sku,
-                    description: item.description,
-                    countedPacks: item.countedPacks,
-                    countedLoose: item.countedLoose,
-                    batchNumber: item.batchNumber,
-                    expirationDate: item.expirationDate,
-                    noveltyType: item.noveltyType,
-                    noveltyNotes: item.noveltyNotes,
-                    timestamp: new Date().toISOString()
-                  }));
-                  
-                  // Here you would typically call an API or navigate to a report view
-                  // For now, we'll reset the count stage and show an alert with the summary
-                  const totalItems = reportData.length;
-                  const totalPacks = reportData.reduce((sum, item) => sum + item.countedPacks, 0);
-                  const totalLoose = reportData.reduce((sum, item) => sum + item.countedLoose, 0);
-                  
-                  setCountStage(1);
-                  setCountMode('reverse');
-                  setSelectedQueue([]);
-                  setAuditReason('Reporte de Novedades finalizado');
-                  
-                  // In a real app, you'd send this to an API or navigate to a report page
-                  // window.alert(`Reporte de Novedades generado:\n${totalItems} ítems\n${totalPacks} cajas\n${totalLoose} fracciones`);
-                }}
-                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all cursor-pointer"
-              >
-                <span>Terminar y Generar Reporte de Novedades ({selectedQueue.length} ítems)</span>
-                <CheckCircle2 className="w-4 h-4" />
               </button>
             </div>
           </div>

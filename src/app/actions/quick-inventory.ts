@@ -9,7 +9,7 @@ import {
 } from '@/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { logLegalModification } from '@/lib/audit';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, generatePublicReportToken } from '@/lib/auth';
 import crypto from 'crypto';
 
 export interface QuickCountItemInput {
@@ -203,16 +203,18 @@ export async function submitQuickInventoryAudit(payload: QuickInventoryPayload) 
       }
 
       // Si tiene novedad reportada
-      if (itemInput.hasNovelty && itemInput.noveltyType) {
+      if (itemInput.hasNovelty) {
+        const factor = Math.max(1, itemInput.packQuantity || 1);
+        const totalFractions = (itemInput.countedPacks * factor) + (itemInput.countedLoose || 0);
         await db.insert(inventoryNovelties).values({
           sessionId: newSession.id,
           itemId: createdItem.id,
-          noveltyType: itemInput.noveltyType,
-          quantity: (itemInput.countedLoose || 1).toString(),
+          noveltyType: itemInput.noveltyType || 'novedad_fisica',
+          quantity: (totalFractions > 0 ? totalFractions : 1).toString(),
           batchNumber: itemInput.batchNumber || null,
           expirationDate: itemInput.expirationDate ? new Date(itemInput.expirationDate) : null,
           imageUrl: itemInput.imageUrl || null,
-          notes: itemInput.noveltyNotes || 'Reporte en inventario rápido móvil',
+          notes: itemInput.noveltyNotes || 'Reporte de novedad física',
           reportedBy: effectiveUser,
         });
       }
@@ -269,9 +271,12 @@ export async function submitQuickInventoryAudit(payload: QuickInventoryPayload) 
       reason: payload.reason?.trim() || 'Inventario Rápido Móvil / Muestreo Cíclico Formal',
     });
 
+    const shareToken = generatePublicReportToken(newSession.id);
+
     return {
       success: true,
       sessionId: newSession.id,
+      shareToken,
       closedHash,
       summary: {
         totalItems: payload.items.length,
