@@ -429,9 +429,11 @@ export default function QuickInventoryClient({
 
   // SELECCIONAR ÍTEM DEL BUSCADOR
   const handleAddItemToQueue = (item: RawItem) => {
+    const newItem = buildQuickCountItem(item);
+
     // MODO NOVEDADES: abrir tarjeta de captura de novedad inmediata
     if (countMode === "novedades") {
-      const draft = buildQuickCountItem(item);
+      const draft = { ...newItem };
       draft.hasNovelty = true;
       draft.noveltyType = 'novedad_fisica';
       draft.batchNumber = item.batchNumber || '';
@@ -1375,11 +1377,6 @@ export default function QuickInventoryClient({
                         setSelectedQueue((prev) => [...prev, itemToSave]);
                         setActiveDraftItem(null);
                         setSearchQuery('');
-                        playFeedbackSound('success');
-                        setFeedbackMsg({
-                          text: `✓ Novedad guardada: ${itemToSave.description} (${totalQty} u, Lote ${itemToSave.batchNumber}). Selecciona el siguiente ítem.`,
-                          type: 'success',
-                        });
                         setTimeout(() => {
                           searchInputRef.current?.focus();
                         }, 100);
