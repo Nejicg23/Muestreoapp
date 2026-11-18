@@ -1,25 +1,45 @@
 import React from 'react';
 
-export function LoadingShimmer({ rowCount = 3 }: { rowCount?: number }) {
+interface SkeletonProps {
+  className?: string;
+}
+
+export function Skeleton({ className = '' }: SkeletonProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {Array.from({ length: rowCount }, () => (
-        <div key={Math.random()} className="h-12 w-full bg-gray-200 rounded animate-shimmer" />
-      ))}
+    <div
+      className={`md-skeleton ${className}`}
+      aria-hidden="true"
+    />
+  );
+}
+
+export function SessionCardSkeleton() {
+  return (
+    <div className="rounded-2xl p-4 space-y-3"
+      style={{ background: 'var(--md-surface-container)', border: '1px solid rgba(255,255,255,0.07)' }}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-3 w-1/2" />
+        </div>
+        <Skeleton className="h-6 w-16 rounded-full" />
+      </div>
+      <div className="flex gap-2 pt-1">
+        <Skeleton className="h-6 w-20 rounded-full" />
+        <Skeleton className="h-6 w-20 rounded-full" />
+      </div>
     </div>
   );
 }
 
-const ShimmerStyle = {
-  background: "linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)",
-  backgroundSize: "200% 100%",
-  animation: "shimmer 1.5s infinite",
-};
-
-function ShimmerDiv({ className, ...props }: any) {
-  return <div className={className} style={ShimmerStyle} {...props} />;
+export function LoadingShimmer({ rowCount = 3 }: { rowCount?: number }) {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: rowCount }).map((_, i) => (
+        <SessionCardSkeleton key={i} />
+      ))}
+    </div>
+  );
 }
-
-ShimmerDiv.displayName = "ShimmerDiv";
 
 export default LoadingShimmer;

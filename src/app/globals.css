@@ -1,59 +1,261 @@
 @import "tailwindcss";
 
+/* =============================================
+   MATERIAL YOU (MATERIAL DESIGN 3) — DARK THEME
+   StockSync Pro Design System
+   ============================================= */
+
 :root {
-  --background: #0a0a0a;
-  --foreground: #f4f4f5;
-  --md-surface-0: #0a0a0a;
-  --md-surface-1: #121212;
-  --md-surface-2: #1e1e1e;
-  --md-surface-3: #262626;
-  --md-outline: #2e2e2e;
+  /* MD3 Color Roles — Dark scheme */
+  --md-primary:            #6DD5FA;
+  --md-on-primary:         #003547;
+  --md-primary-container:  #004D61;
+  --md-on-primary-container: #B8EAFF;
+
+  --md-secondary:          #80CBC4;
+  --md-on-secondary:       #003733;
+  --md-secondary-container: #004F4A;
+  --md-on-secondary-container: #9EF2EB;
+
+  --md-error:              #FFB4AB;
+  --md-on-error:           #690005;
+  --md-error-container:    #93000A;
+  --md-on-error-container: #FFDAD6;
+
+  --md-surface-dim:         #0C0C12;
+  --md-surface:             #0F0F17;
+  --md-surface-container-lowest: #0A0A10;
+  --md-surface-container-low:    #141420;
+  --md-surface-container:        #181824;
+  --md-surface-container-high:   #1E1E2E;
+  --md-surface-container-highest:#232336;
+
+  --md-on-surface:         #E3E1EC;
+  --md-on-surface-variant: #9490A5;
+  --md-outline:            #514E62;
+  --md-outline-variant:    rgba(255,255,255,0.08);
+
+  --md-inverse-surface:    #E3E1EC;
+  --md-inverse-on-surface: #1A1824;
+  --md-inverse-primary:    #005D77;
+
+  --background: var(--md-surface);
+  --foreground: var(--md-on-surface);
 }
 
-/* Paleta Material Design 3 Dark / True Black aplicada globalmente */
+/* Tailwind token bridge */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* Remapeo de superficies oscuras hacia Material Design Black (#0A0A0A -> #121212 -> #1E1E1E -> #2C2C2C) */
-  --color-slate-950: #0a0a0a;
-  --color-slate-900: #121212;
-  --color-slate-800: #1e1e1e;
-  --color-slate-700: #2c2c2c;
-  --color-slate-600: #3d3d3d;
-  --color-slate-500: #71717a;
-  --color-slate-400: #a1a1aa;
-  --color-slate-300: #d4d4d8;
-  --color-slate-200: #e4e4e7;
-  --color-slate-100: #f4f4f5;
+  /* Surface scale remapped to MD3 */
+  --color-slate-950: #0A0A10;
+  --color-slate-900: #0F0F17;
+  --color-slate-800: #1E1E2E;
+  --color-slate-700: #232336;
+  --color-slate-600: #3A3A52;
+  --color-slate-500: #6B6880;
+  --color-slate-400: #9490A5;
+  --color-slate-300: #C5C3D6;
+  --color-slate-200: #E3E1EC;
+  --color-slate-100: #F4F2FF;
+
+  /* Primary accent (cyan-teal) */
+  --color-cyan-400: #6DD5FA;
+  --color-cyan-300: #9DE8FF;
+  --color-cyan-500: #3BBFE8;
+  --color-cyan-600: #0098C5;
 }
 
 html {
-  background-color: #0a0a0a;
+  background-color: var(--md-surface);
   color-scheme: dark;
   -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background-color: #0a0a0a;
+  background-color: var(--md-surface);
   color: var(--foreground);
-  font-family: var(--font-sans), 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans), 'Roboto Flex', 'Roboto', system-ui, -apple-system, sans-serif;
   min-height: 100dvh;
   overflow-x: hidden;
+  /* Padding for bottom nav */
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom));
 }
 
-/* Utilidad para barras de pestañas deslizables en móvil estilo Material Design */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+/* =============================================
+   MD3 COMPONENT TOKENS
+   ============================================= */
+
+/* State layer: ripple/hover overlay */
+.md-state-hover {
+  position: relative;
+  overflow: hidden;
 }
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.md-state-hover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  border-radius: inherit;
+  transition: opacity 150ms ease;
+  pointer-events: none;
+}
+.md-state-hover:hover::before { opacity: 0.08; }
+.md-state-hover:active::before { opacity: 0.12; }
+.md-state-hover:focus-visible::before { opacity: 0.10; }
+
+/* Elevation surface tints (MD3 tonal elevation) */
+.md-elevation-1 { background-color: color-mix(in srgb, var(--md-primary) 5%, var(--md-surface-container-low)); }
+.md-elevation-2 { background-color: color-mix(in srgb, var(--md-primary) 8%, var(--md-surface-container)); }
+.md-elevation-3 { background-color: color-mix(in srgb, var(--md-primary) 11%, var(--md-surface-container-high)); }
+
+/* MD3 Cards */
+.md-card {
+  background: var(--md-surface-container);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: 1rem;
+  transition: box-shadow 200ms ease, background 200ms ease;
+}
+.md-card-elevated {
+  background: var(--md-surface-container-high);
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,.35), 0 4px 12px rgba(0,0,0,.25);
+}
+.md-card-filled {
+  background: var(--md-surface-container-highest);
+  border-radius: 1rem;
 }
 
-/* Optimización táctil para móviles (evita zoom involuntario en iOS y mejora respuesta táctil) */
+/* MD3 Buttons */
+.md-btn-filled {
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+  border-radius: 9999px;
+  padding: 0.625rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.00625rem;
+  transition: all 200ms ease;
+  position: relative;
+  overflow: hidden;
+}
+.md-btn-filled:hover { box-shadow: 0 1px 8px rgba(109,213,250,0.3); }
+
+.md-btn-tonal {
+  background: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+  border-radius: 9999px;
+  padding: 0.625rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 200ms ease;
+}
+
+.md-btn-outlined {
+  background: transparent;
+  color: var(--md-primary);
+  border: 1px solid var(--md-outline);
+  border-radius: 9999px;
+  padding: 0.625rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 200ms ease;
+}
+.md-btn-outlined:hover { border-color: var(--md-primary); background: color-mix(in srgb, var(--md-primary) 8%, transparent); }
+
+.md-btn-text {
+  background: transparent;
+  color: var(--md-primary);
+  border-radius: 9999px;
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 200ms ease;
+}
+.md-btn-text:hover { background: color-mix(in srgb, var(--md-primary) 8%, transparent); }
+
+/* MD3 Chips */
+.md-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: var(--md-surface-container-high);
+  border: 1px solid var(--md-outline);
+  border-radius: 9999px;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--md-on-surface);
+  transition: all 150ms ease;
+}
+.md-chip:hover { background: var(--md-surface-container-highest); }
+.md-chip-active {
+  background: var(--md-secondary-container);
+  border-color: transparent;
+  color: var(--md-on-secondary-container);
+}
+
+/* MD3 Text fields */
+.md-input {
+  width: 100%;
+  background: var(--md-surface-container-high);
+  border: 1px solid var(--md-outline);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: var(--md-on-surface);
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+  outline: none;
+}
+.md-input::placeholder { color: var(--md-on-surface-variant); }
+.md-input:hover { border-color: var(--md-on-surface); }
+.md-input:focus {
+  border-color: var(--md-primary);
+  box-shadow: 0 0 0 1px var(--md-primary);
+}
+
+/* =============================================
+   SHIMMER / SKELETON LOADER (MD3 Dark)
+   ============================================= */
+@keyframes md-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.md-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--md-surface-container-high) 25%,
+    var(--md-surface-container-highest) 50%,
+    var(--md-surface-container-high) 75%
+  );
+  background-size: 200% 100%;
+  animation: md-shimmer 1.6s ease-in-out infinite;
+  border-radius: 0.75rem;
+}
+
+/* =============================================
+   SCROLLBAR (Material You minimal)
+   ============================================= */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--md-outline);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--md-on-surface-variant); }
+
+/* =============================================
+   MOBILE INPUT OPTIMIZATION
+   ============================================= */
 @media screen and (max-width: 640px) {
   input[type="text"],
   input[type="number"],
@@ -66,17 +268,12 @@ body {
   }
 }
 
-/* REGLAS PARA IMPRESIÓN PROFESIONAL DE REPORTES DE INVENTARIO */
+/* =============================================
+   PRINT STYLES (Inventory Reports)
+   ============================================= */
 @media print {
-  header,
-  footer,
-  nav,
-  .no-print {
-    display: none !important;
-  }
-
-  body,
-  main {
+  header, footer, nav, .no-print { display: none !important; }
+  body, main {
     background: #ffffff !important;
     color: #000000 !important;
     padding: 0 !important;
@@ -84,37 +281,30 @@ body {
     max-width: 100% !important;
     font-size: 11px !important;
   }
-
-  .print-only {
-    display: block !important;
-  }
-
-  table {
-    border-collapse: collapse !important;
-    width: 100% !important;
-  }
-
-  th,
-  td {
+  .print-only { display: block !important; }
+  table { border-collapse: collapse !important; width: 100% !important; }
+  th, td {
     border: 1px solid #cbd5e1 !important;
     padding: 6px 8px !important;
     color: #0f172a !important;
   }
+  thead { background-color: #f1f5f9 !important; color: #0f172a !important; }
+  tr { page-break-inside: avoid !important; }
+  .page-break { page-break-after: always !important; }
+}
+.print-only { display: none; }
 
-  thead {
-    background-color: #f1f5f9 !important;
-    color: #0f172a !important;
-  }
-
-  tr {
-    page-break-inside: avoid !important;
-  }
-
-  .page-break {
-    page-break-after: always !important;
-  }
+/* =============================================
+   ANIMATIONS
+   ============================================= */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
-.print-only {
-  display: none;
-}
+.animate-fade-in  { animation: fade-in  200ms ease-out both; }
+.animate-scale-in { animation: scale-in 200ms ease-out both; }

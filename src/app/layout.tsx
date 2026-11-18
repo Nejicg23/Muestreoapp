@@ -13,7 +13,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#121212',
+  themeColor: '#0F0F17',
 };
 
 export default function RootLayout({
@@ -23,8 +23,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body>{children}</body>
-      <BottomNav />
+      <body>
+        <main className="min-h-dvh">
+          {children}
+        </main>
+        <BottomNav />
+      </body>
     </html>
   );
 }

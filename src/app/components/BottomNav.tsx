@@ -1,74 +1,62 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import {
-  Package2,
-  Smartphone,
-  FileSpreadsheet,
-  Shield,
-} from 'lucide-react';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Package2, Smartphone, Upload, Shield } from "lucide-react";
 
-interface BottomNavProps {
-  onTabChange?: (tab: 'home' | 'quick' | 'formal' | 'admin') => void;
-}
+const navItems = [
+  { href: "/", icon: Package2, label: "Sesiones" },
+  { href: "/inventario-rapido", icon: Smartphone, label: "Rápido" },
+  { href: "/importar", icon: Upload, label: "Importar" },
+  { href: "/admin", icon: Shield, label: "Admin" },
+];
 
-export default function BottomNav({ onTabChange }: BottomNavProps) {
-  const [activeTab, setActiveTab] = React.useState<'home' | 'quick' | 'formal' | 'admin'>('home');
-
-  const handleTabSelect = (tab: 'home' | 'quick' | 'formal' | 'admin') => {
-    setActiveTab(tab);
-    onTabChange?.(tab);
-  };
+export default function BottomNav() {
+  const pathname = usePathname();
 
   return (
-    <nav className="flex bottom-0 left-0 right-0 border-t border-slate-800/80 bg-slate-950/95 px-4 pt-2 pb-3 sm:pt-4 pb-4">
-      <div className="flex flex-col items-center justify-between w-full max-w-screenxl mx-auto">
-        <div className="flex gap-2">
-          {/* Inicio */}
-          <Link
-            href="/"
-            onClick={() => handleTabSelect("home")}
-            className={`flex flex-col items-center justify-center rounded-lg px-3 py-2 text-xs font-medium transition-all ${activeTab === "home" ? "text-cyan-400 bg-cyan-500/20 border border-cyan-500/30" : "text-slate-400 hover:text-white hover:bg-slate-800/30"}`}
-            aria-label="Inicio"
-          >
-            <Package2 className="w-4 h-4 mb-1" />
-            <span className="text-[10px] text-slate-400 block">Inicio</span>
-          </Link>
-
-          {/* Inventario Rápido */}
-          <Link
-            href="/inventario-rapido"
-            onClick={() => handleTabSelect("quick")}
-            className={`flex flex-col items-center justify-center rounded-lg px-3 py-2 text-xs font-medium transition-all ${activeTab === "quick" ? "text-cyan-400 bg-cyan-500/20 border border-cyan-500/30" : "text-slate-400 hover:text-white hover:bg-slate-800/30"}`}
-            aria-label="Inventario Rápido"
-          >
-            <Smartphone className="w-4 h-4 mb-1" />
-            <span className="text-[10px] text-slate-400 block">Inventario Rápido</span>
-          </Link>
-
-          {/* Conteo Formal */}
-          <Link
-            href="/"
-            onClick={() => handleTabSelect("formal")}
-            className={`flex flex-col items-center justify-center rounded-lg px-3 py-2 text-xs font-medium transition-all ${activeTab === "formal" ? "text-cyan-400 bg-cyan-500/20 border border-cyan-500/30" : "text-slate-400 hover:text-white hover:bg-slate-800/30"}`}
-            aria-label="Conteo Formal"
-          >
-            <FileSpreadsheet className="w-4 h-4 mb-1" />
-            <span className="text-[10px] text-slate-400 block">Conteo Formal</span>
-          </Link>
-
-          {/* Administración */}
-          <Link
-            href="/admin"
-            onClick={() => handleTabSelect("admin")}
-            className={`flex flex-col items-center justify-center rounded-lg px-3 py-2 text-xs font-medium transition-all ${activeTab === "admin" ? "text-cyan-400 bg-cyan-500/20 border border-cyan-500/30" : "text-slate-400 hover:text-white hover:bg-slate-800/30"}`}
-            aria-label="Administración"
-          >
-            <Shield className="w-4 h-4 mb-1" />
-            <span className="text-[10px] text-slate-400 block">Admin</span>
-          </Link>
-        </div>
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 bg-[#0F0F0F]/90 backdrop-blur-xl border-t border-white/[0.06] shadow-lg"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      <div className="flex items-center justify-around h-16 px-2">
+        {navItems.map(({ href, icon: Icon, label }) => {
+          const isActive = pathname === href;
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`
+                flex flex-col items-center justify-center gap-0.5 flex-1 h-full px-1 py-1
+                transition-all duration-200 ease-out select-none
+                ${isActive ? "" : "text-slate-500 hover:text-slate-300"}
+              `}
+            >
+              <div
+                className={`
+                  relative flex items-center justify-center w-14 h-7 rounded-full transition-all duration-200 ease-out
+                  ${isActive ? "bg-[#004D61]" : "hover:bg-white/5 rounded-2xl"}
+                `}
+              >
+                <Icon
+                  size={20}
+                  className={`transition-colors duration-200 ease-out ${
+                    isActive ? "text-cyan-300" : ""
+                  }`}
+                />
+              </div>
+              <span
+                className={`text-[10px] leading-tight transition-all duration-200 ease-out ${
+                  isActive
+                    ? "text-cyan-200 font-semibold"
+                    : "text-slate-500"
+                }`}
+              >
+                {label}
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );
