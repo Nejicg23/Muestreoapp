@@ -1,41 +1,73 @@
+'use server';
+
 import { db } from '@/db';
 import { masterProducts } from '@/db/schema';
+import { getCurrentUser } from '@/lib/auth';
+import { eq, and } from 'drizzle-orm';
 
 // 1. Listar productos de la base madre (solo activos por defecto)
 export async function listMasterProducts(activeOnly: boolean = true) {
-  const condition = activeOnly ? { isActive: true } : {};
-  // Usamos any en el where para evadir tipos estrictos de Drizzle
-  const data: any[] = await db.select().from(masterProducts).where(condition as any);
-  
-  const result: any[] = [];
-  for (const p of data) {
-    result.push({
-      id: p.id,
-      sku: p.sku,
-      description: p.description,
-      barcode: p.barcode,
-      boxCost: Number(p.boxCost),
-      packQuantity: p.packQuantity,
-      unitCostCalculated: p.unitCostCalculated ? Number(p.unitCostCalculated) : undefined,
-      location: p.location,
-      isActive: p.isActive,
-      createdAt: p.createdAt,
-      updatedAt: p.updatedAt,
-    });
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error('No autorizado');
   }
-  return result;
+
+  const query = activeOnly
+    ? db.select().from(masterProducts).where(eq(masterProducts.isActive, true))
+    : db.select().from(masterProducts);
+
+  const data = await query;
+  
+  return data.map((p) => ({
+    id: p.id,
+    sku: p.sku,
+    description: p.description,
+    barcode: p.barcode,
+    boxCost: Number(p.boxCost),
+    packQuantity: p.packQuantity,
+    unitCostCalculated: p.unitCostCalculated ? Number(p.unitCostCalculated) : undefined,
+    location: p.location,
+    isActive: p.isActive,
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+  }));
 }
 
 // 2. Crear nuevo producto en la base madre
-export async function createMasterProduct(data: any) {
-  const [created]: any[] = await db.insert(masterProducts).values({
-    sku: data.sku,
-    description: data.description,
-    barcode: data.barcode,
-    boxCost: data.boxCost,
-    packQuantity: data.packQuantity,
-    unitCostCalculated: data.unitCostCalculated,
-    location: data.location,
+export async function createMasterProduct(data: {
+  sku: string;
+  description: string;
+  barcode?: string;
+  boxCost: number;
+  packQuantity: number;
+  unitCostCalculated?: number;
+  location?: string;
+  isActive?: boolean;
+}) {
+  const user = await getCurrentUser();
+  if (!user || user.role !== 'admin') {
+    throw new Error('Acceso no autorizado. Se requieren permisos de administrador.');
+  }
+
+  const sku = data.sku.trim();
+  const description = data.description.trim();
+  const boxCost = Number(data.boxCost);
+  const packQuantity = parseInt(String(data.packQuantity || '1'), 10);
+
+  if (!sku || !description || isNaN(boxCost) || boxCost < 0 || isNaN(packQuantity) || packQuantity <= 0) {
+    throw new Error('Datos inválidos para creación de producto maestro.');
+  }
+
+  const unitCostCalculated = boxCost > 0 && packQuantity > 0 ? (boxCost / packQuantity).toFixed(4) : undefined;
+
+  const [created] = await db.insert(masterProducts).values({
+    sku,
+    description,
+    barcode: data.barcode?.trim() || undefined,
+    boxCost: boxCost.toString(),
+    packQuantity,
+    unitCostCalculated: data.unitCostCalculated ? data.unitCostCalculated.toString() : unitCostCalculated,
+    location: data.location?.trim() || undefined,
     isActive: data.isActive ?? true,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -57,11 +89,20 @@ export async function compareImportedItemsWithMaster(
     packQuantity: number;
   }>
 ) {
+  const user = await getCurrentUser();
+  if (!user) {
+    throw new Error('No autorizado');
+  }
+
   const results: any[] = [];
 
   for (const item of importedItems) {
-    // Buscar coincidencia exacta por SKU
-    const exactMatch: any[] = await db.select().from(masterProducts).where({ sku: item.sku, isActive: true } as any).limit(1);
+    // Buscar coincidencia exacta por SKU con operador de Drizzle correcto
+    const exactMatch = await db
+      .select()
+      .from(masterProducts)
+      .where(and(eq(masterProducts.sku, item.sku), eq(masterProducts.isActive, true)))
+      .limit(1);
     
     if (exactMatch && exactMatch.length > 0) {
       results.push({
@@ -76,9 +117,13 @@ export async function compareImportedItemsWithMaster(
       continue;
     }
 
-    // Búsqueda difusa por descripción - filtrado en JS
-    const allMatches: any[] = await db.select().from(masterProducts).where({ isActive: true } as any);
-    const fuzzyMatches = allMatches.filter((mp: any) =>
+    // Búsqueda difusa por descripción
+    const allMatches = await db
+      .select()
+      .from(masterProducts)
+      .where(eq(masterProducts.isActive, true));
+
+    const fuzzyMatches = allMatches.filter((mp) =>
       mp.description.toLowerCase().includes(item.description.toLowerCase())
     );
 

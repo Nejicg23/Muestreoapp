@@ -11,6 +11,7 @@ import {
 import { eq, desc, sql, count } from 'drizzle-orm';
 import crypto from 'crypto';
 import { calculateBreakdown, consolidateSessionData } from '@/lib/inventory-consolidator';
+import { getCurrentUser } from '@/lib/auth';
 
 // ==========================================
 // 1. SESIONES DE INVENTARIO
@@ -18,6 +19,11 @@ import { calculateBreakdown, consolidateSessionData } from '@/lib/inventory-cons
 
 export async function getInventorySessions() {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: 'No autorizado. Se requiere sesión activa.' };
+    }
+
     const sessions = await db
       .select({
         id: inventorySessions.id,
@@ -46,11 +52,16 @@ export async function createInventorySession(formData: {
   seedDemoItems?: boolean;
 }) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: 'No autorizado. Debe iniciar sesión para crear sesiones.' };
+    }
+
     const [newSession] = await db
       .insert(inventorySessions)
       .values({
         title: formData.title.trim(),
-        createdBy: formData.createdBy.trim() || 'Auditor',
+        createdBy: user.fullName || formData.createdBy.trim() || 'Auditor',
         status: 'in_progress',
       })
       .returning();
@@ -193,6 +204,11 @@ export async function seedSampleSessionData(sessionId: string) {
 
 export async function getSessionDetails(sessionId: string) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: 'No autorizado. Debe iniciar sesión.' };
+    }
+
     const [session] = await db
       .select()
       .from(inventorySessions)
@@ -282,6 +298,11 @@ export async function syncOfflineBatch(payload: {
   novelties: SyncNoveltyPayload[];
 }) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: 'No autorizado. Debe iniciar sesión para sincronizar datos.' };
+    }
+
     const insertedCounts = [];
     const insertedNovelties = [];
 
@@ -374,6 +395,11 @@ export async function logSearchAudit(params: {
 
 export async function closeInventorySession(sessionId: string, closedBy: string) {
   try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { success: false, error: 'No autorizado. Debe iniciar sesión para cerrar una sesión.' };
+    }
+
     const counts = await db
       .select()
       .from(inventoryCounts)
@@ -414,6 +440,22 @@ export async function closeInventorySession(sessionId: string, closedBy: string)
 // ==========================================
 
 export async function runServerDiagnostics() {
+  const user = await getCurrentUser();
+  if (!user || (user.role !== 'admin' && user.role !== 'auditor')) {
+    return {
+      overallSuccess: false,
+      checks: [
+        {
+          name: 'Permisos de Diagnóstico',
+          status: 'error' as const,
+          details: 'Acceso no autorizado. Se requieren permisos de Administrador o Auditor.',
+        },
+      ],
+      totalLatencyMs: 0,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
   const startTime = performance.now();
   const checks: {
     name: string;

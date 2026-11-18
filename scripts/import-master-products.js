@@ -1,11 +1,16 @@
 const { createClient } = require('@supabase/supabase-js');
 const XLSX = require('xlsx');
 
-// Configuración Supabase
-const supabase = createClient(
-  'https://nefidcjxqlpvbdykpfpv.supabase.cloud',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjI1MTY5OTgwMDAsImF0aSI6IjExZmU3ZTBkLTQ5NGItNDA5YS1hZWQxLWMwZDBiM2UxZjBhMyJ9'
-);
+// Configuración Supabase desde variables de entorno
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Error: NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY deben estar definidas en las variables de entorno.');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function importMasterProducts() {
   console.log('=== Importador de Productos Maestros desde Excel ===\n');

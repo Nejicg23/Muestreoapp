@@ -6,7 +6,17 @@ import { appUsers } from '@/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 
 export const COOKIE_NAME = 'stocksync_session';
-const SESSION_SECRET = process.env.SESSION_SECRET || 'stocksync_enterprise_secret_key_2026';
+
+export function getSessionSecret(): string {
+  const secret = process.env.SESSION_SECRET || process.env.AUTH_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('CRITICAL SECURITY ERROR: SESSION_SECRET or AUTH_SECRET must be defined in production environment.');
+    }
+    return 'stocksync_dev_fallback_secret_key_change_in_production';
+  }
+  return secret;
+}
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutos de bloqueo
@@ -30,14 +40,16 @@ export function hashPassword(password: string, salt: string): string {
 // Token firmado con HMAC SHA-256
 export function signSessionPayload(payload: UserSession): string {
   const data = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  const signature = crypto.createHmac('sha256', SESSION_SECRET).update(data).digest('base64url');
+  const secret = getSessionSecret();
+  const signature = crypto.createHmac('sha256', secret).update(data).digest('base64url');
   return `${data}.${signature}`;
 }
 
 // Genera un token criptográfico público de solo lectura para compartir un informe en línea
 export function generatePublicReportToken(sessionId: string): string {
+  const secret = getSessionSecret();
   return crypto
-    .createHmac('sha256', SESSION_SECRET)
+    .createHmac('sha256', secret)
     .update(`public_report_v1:${sessionId}`)
     .digest('base64url')
     .slice(0, 24);
@@ -55,7 +67,8 @@ export function verifySessionToken(token: string): UserSession | null {
     const [data, signature] = token.split('.');
     if (!data || !signature) return null;
 
-    const expectedSig = crypto.createHmac('sha256', SESSION_SECRET).update(data).digest('base64url');
+    const secret = getSessionSecret();
+    const expectedSig = crypto.createHmac('sha256', secret).update(data).digest('base64url');
     if (signature !== expectedSig) return null;
 
     const json = Buffer.from(data, 'base64url').toString('utf8');
@@ -98,39 +111,43 @@ export async function ensureUsersTableInitialized() {
     // Comprobar si ya existen usuarios
     const existing = await db.select().from(appUsers).limit(1);
     if (existing.length === 0) {
-      const defaultUsers = [
-        {
-          username: 'admin',
-          fullName: 'Administrador Principal',
-          pass: 'admin123',
-          role: 'admin' as const,
-        },
-        {
-          username: 'auditor',
-          fullName: 'Auditor de Calidad e Inventarios',
-          pass: 'auditor123',
-          role: 'auditor' as const,
-        },
-        {
-          username: 'operador',
-          fullName: 'Operador de Conteo Físico',
-          pass: 'operador123',
-          role: 'operator' as const,
-        },
-      ];
+      if (process.env.NODE_ENV === 'production') {
+        console.warn('⚠️ [SEGURIDAD] Base de datos de usuarios vacía en producción. Configure los usuarios administradores de forma segura mediante variables de entorno o migración.');
+      } else {
+        const defaultUsers = [
+          {
+            username: 'admin',
+            fullName: 'Administrador Principal',
+            pass: 'admin123',
+            role: 'admin' as const,
+          },
+          {
+            username: 'auditor',
+            fullName: 'Auditor de Calidad e Inventarios',
+            pass: 'auditor123',
+            role: 'auditor' as const,
+          },
+          {
+            username: 'operador',
+            fullName: 'Operador de Conteo Físico',
+            pass: 'operador123',
+            role: 'operator' as const,
+          },
+        ];
 
-      for (const u of defaultUsers) {
-        const salt = crypto.randomBytes(16).toString('hex');
-        const hash = hashPassword(u.pass, salt);
-        await db.insert(appUsers).values({
-          username: u.username,
-          fullName: u.fullName,
-          passwordHash: hash,
-          salt,
-          role: u.role,
-          isActive: true,
-          failedAttempts: 0,
-        });
+        for (const u of defaultUsers) {
+          const salt = crypto.randomBytes(16).toString('hex');
+          const hash = hashPassword(u.pass, salt);
+          await db.insert(appUsers).values({
+            username: u.username,
+            fullName: u.fullName,
+            passwordHash: hash,
+            salt,
+            role: u.role,
+            isActive: true,
+            failedAttempts: 0,
+          });
+        }
       }
     }
     isInitialized = true;
