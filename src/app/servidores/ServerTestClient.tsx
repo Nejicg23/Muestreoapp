@@ -23,6 +23,7 @@ import { useRouter } from 'next/navigation';
 
 interface DiagnosticResult {
   success: boolean;
+  overallSuccess?: boolean;
   totalLatencyMs: number;
   timestamp: string;
   checks: Array<{

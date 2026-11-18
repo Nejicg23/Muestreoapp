@@ -40,7 +40,10 @@ export function MasterProductForm({ onSuccess }: MasterProductFormProps) {
 
     try {
       const product = await createMasterProduct(formData);
-      onSuccess?.(product);
+      onSuccess?.({
+        ...product,
+        location: product.location ?? undefined,
+      } as MasterProduct);
     } catch (err: any) {
       alert('Error al crear producto: ' + (err.message || 'Error desconocido'));
     }

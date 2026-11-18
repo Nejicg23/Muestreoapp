@@ -443,6 +443,7 @@ export async function runServerDiagnostics() {
   const user = await getCurrentUser();
   if (!user || (user.role !== 'admin' && user.role !== 'auditor')) {
     return {
+      success: false,
       overallSuccess: false,
       checks: [
         {
@@ -556,6 +557,7 @@ export async function runServerDiagnostics() {
 
   return {
     success: overallSuccess,
+    overallSuccess,
     totalLatencyMs: totalTime,
     timestamp: new Date().toISOString(),
     checks,
