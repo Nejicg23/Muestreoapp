@@ -14,6 +14,11 @@ const navItems = [
 export default function BottomNav() {
   const pathname = usePathname();
 
+  // No mostrar navegación en login ni en reportes públicos compartidos
+  if (pathname === "/login" || pathname?.startsWith("/compartir")) {
+    return null;
+  }
+
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 bg-[#0F0F0F]/90 backdrop-blur-xl border-t border-white/[0.06] shadow-lg"
