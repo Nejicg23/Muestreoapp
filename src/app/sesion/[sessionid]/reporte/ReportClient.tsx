@@ -27,6 +27,9 @@ import {
   HelpCircle,
   Hash,
   ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Check,
   X,
   ShieldAlert,
@@ -159,15 +162,21 @@ export default function ReportClient({
     }
   };
 
+  // Paginación a 30 ítems por página / hoja
+  const ITEMS_PER_PAGE = 30;
+  const [discrepancyPage, setDiscrepancyPage] = useState(1);
+  const [compliantPage, setCompliantPage] = useState(1);
+  const [showCompliantSection, setShowCompliantSection] = useState(false);
+
   // Conteo de discrepancias y novedades para insignias
   const noveltiesOrDiffCount = itemsList.filter(
     (i) => i.status === 'surplus' || i.status === 'shortage' || i.requiresRecount || i.hasNovelties
   ).length;
 
-  const surplusCount = itemsList.filter((i) => i.status === 'surplus').length;
-  const shortageCount = itemsList.filter((i) => i.status === 'shortage').length;
+  const surplusCount = itemsList.filter((i) => i.status === 'surplus' || i.difference > 0).length;
+  const shortageCount = itemsList.filter((i) => i.status === 'shortage' || i.difference < 0).length;
   const uncountedCount = itemsList.filter((i) => i.status === 'uncounted').length;
-  const matchedCount = itemsList.filter((i) => i.status === 'matched').length;
+  const matchedCount = itemsList.filter((i) => (i.status === 'matched' || i.difference === 0) && !i.hasNovelties && !i.requiresRecount).length;
 
   // Listados específicos para los Tickets A6
   const shortageItems = useMemo(
@@ -178,6 +187,49 @@ export default function ReportClient({
     () => itemsList.filter((i) => i.status === 'surplus' || i.difference > 0),
     [itemsList]
   );
+
+  // 1. Resumen Priorizado de Novedades y Discrepancias (Faltantes primero, luego Sobrantes)
+  const discrepancyItems = useMemo(() => {
+    return itemsList
+      .filter(
+        (i) =>
+          i.status === 'shortage' ||
+          i.status === 'surplus' ||
+          i.difference !== 0 ||
+          i.requiresRecount ||
+          i.hasNovelties
+      )
+      .sort((a, b) => {
+        // Faltantes (diferencias negativas) primero, ordenadas por mayor merma
+        if (a.difference < 0 && b.difference >= 0) return -1;
+        if (a.difference >= 0 && b.difference < 0) return 1;
+        if (a.difference < 0 && b.difference < 0) return a.difference - b.difference;
+        // Sobrantes (diferencias positivas), mayores primero
+        return b.difference - a.difference;
+      });
+  }, [itemsList]);
+
+  // 2. Ítems Conformes (100% Exactos sin diferencias)
+  const compliantItems = useMemo(() => {
+    return itemsList.filter(
+      (i) =>
+        i.difference === 0 &&
+        i.status !== 'shortage' &&
+        i.status !== 'surplus' &&
+        !i.requiresRecount &&
+        !i.hasNovelties
+    );
+  }, [itemsList]);
+
+  // Chunks de exactamente 30 ítems por hoja para Impresión Oficial en PDF
+  const discrepancyPrintChunks = useMemo(() => {
+    if (discrepancyItems.length === 0) return [[]];
+    const chunks: ConsolidatedItem[][] = [];
+    for (let i = 0; i < discrepancyItems.length; i += ITEMS_PER_PAGE) {
+      chunks.push(discrepancyItems.slice(i, i + ITEMS_PER_PAGE));
+    }
+    return chunks;
+  }, [discrepancyItems]);
 
   // Productos con Fecha de Vencimiento y Análisis de Cuarentena (< 3 meses)
   const expiringProducts = useMemo(() => {
@@ -266,7 +318,7 @@ export default function ReportClient({
     });
   }, [expiringProducts, searchQuery, quarantineFilter]);
 
-  // Filtrado de items consolidados para vista detallada
+  // Filtrado de items consolidados para vista general
   const filteredItems = itemsList.filter((item) => {
     const matchesSearch =
       item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -294,6 +346,56 @@ export default function ReportClient({
 
     return true;
   });
+
+  // 1. Filtrado y paginación a 30 ítems para el Resumen de Novedades y Discrepancias (Pantalla)
+  const filteredDiscrepancyItems = useMemo(() => {
+    return discrepancyItems.filter((item) => {
+      const matchesSearch =
+        item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.barcode && item.barcode.includes(searchQuery)) ||
+        (item.location && item.location.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      if (!matchesSearch) return false;
+      if (filterStatus === 'all' || filterStatus === 'novelties_only') return true;
+      if (filterStatus === 'shortage') return item.status === 'shortage' || item.difference < 0;
+      if (filterStatus === 'surplus') return item.status === 'surplus' || item.difference > 0;
+      if (filterStatus === 'recount') return item.requiresRecount;
+      return true;
+    });
+  }, [discrepancyItems, searchQuery, filterStatus]);
+
+  const totalDiscrepancyPages = Math.max(1, Math.ceil(filteredDiscrepancyItems.length / ITEMS_PER_PAGE));
+
+  const paginatedDiscrepancies = useMemo(() => {
+    const start = (discrepancyPage - 1) * ITEMS_PER_PAGE;
+    return filteredDiscrepancyItems.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredDiscrepancyItems, discrepancyPage]);
+
+  // 2. Filtrado y paginación para Ítems Conformes (Pantalla)
+  const filteredCompliantItems = useMemo(() => {
+    return compliantItems.filter((item) => {
+      return (
+        item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.barcode && item.barcode.includes(searchQuery)) ||
+        (item.location && item.location.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    });
+  }, [compliantItems, searchQuery]);
+
+  const totalCompliantPages = Math.max(1, Math.ceil(filteredCompliantItems.length / ITEMS_PER_PAGE));
+
+  const paginatedCompliant = useMemo(() => {
+    const start = (compliantPage - 1) * ITEMS_PER_PAGE;
+    return filteredCompliantItems.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredCompliantItems, compliantPage]);
+
+  // Resetear a página 1 cuando cambia búsqueda o filtro
+  useEffect(() => {
+    setDiscrepancyPage(1);
+    setCompliantPage(1);
+  }, [searchQuery, filterStatus]);
 
   // Cerrar y sellar sesión de inventario con SHA-256
   const handleCloseSession = async () => {
@@ -502,6 +604,10 @@ export default function ReportClient({
             page-break-before: always !important;
             break-before: page !important;
           }
+          .page-break {
+            page-break-before: always !important;
+            break-before: page !important;
+          }
         }
         @media screen {
           .print-only {
@@ -573,6 +679,189 @@ export default function ReportClient({
               />
             </div>
           )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SECCIÓN SOLO PARA IMPRESIÓN (PDF): RESUMEN DE NOVEDADES (30 ÍTEMS POR HOJA) */}
+      {/* ========================================================================= */}
+      {reportView === 'detailed' && (
+        <div className="print-only">
+          {discrepancyPrintChunks.map((chunk, pageIndex) => {
+            const startItemIdx = pageIndex * ITEMS_PER_PAGE + 1;
+            const endItemIdx = Math.min((pageIndex + 1) * ITEMS_PER_PAGE, discrepancyItems.length);
+
+            return (
+              <div
+                key={`print-discrepancy-page-${pageIndex}`}
+                className={pageIndex > 0 ? 'page-break pt-4' : 'pt-1'}
+              >
+                {/* Encabezado por Hoja de Impresión */}
+                <div className="border-b-2 border-slate-900 pb-2 mb-2">
+                  <div className="flex justify-between items-start gap-4">
+                    <div>
+                      <h2 className="text-sm font-black uppercase tracking-wider text-black">
+                        ACTA DE DISCREPANCIAS Y NOVEDADES (FALTANTES Y SOBRANTES)
+                      </h2>
+                      <p className="text-[9.5px] text-slate-600">
+                        StockSync Pro • Conciliación Oficial de Inventario ({session.title})
+                      </p>
+                    </div>
+                    <div className="text-right text-[9.5px] font-mono shrink-0">
+                      <span className="font-bold px-2 py-0.5 border border-slate-900 rounded bg-slate-100">
+                        Hoja {pageIndex + 1} de {discrepancyPrintChunks.length}
+                      </span>
+                      <div className="text-slate-500 mt-0.5">
+                        {discrepancyItems.length > 0
+                          ? `Ítems ${startItemIdx} - ${endItemIdx} de ${discrepancyItems.length}`
+                          : '0 discrepancias'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tabla de Discrepancias (Exactamente ~30 filas por hoja) */}
+                <table className="w-full text-[9px] border-collapse border border-slate-400">
+                  <thead>
+                    <tr className="bg-slate-200 text-slate-900 font-bold">
+                      <th className="border border-slate-400 p-1 text-center w-7">#</th>
+                      <th className="border border-slate-400 p-1 text-left w-20">SKU / Ubic</th>
+                      <th className="border border-slate-400 p-1 text-left">Descripción del Producto</th>
+                      <th className="border border-slate-400 p-1 text-center w-12">Factor</th>
+                      <th className="border border-slate-400 p-1 text-right w-16">Sistema</th>
+                      <th className="border border-slate-400 p-1 text-right w-16">Físico</th>
+                      <th className="border border-slate-400 p-1 text-right w-20">Diferencia</th>
+                      <th className="border border-slate-400 p-1 text-right w-16">Impacto $</th>
+                      <th className="border border-slate-400 p-1 text-center w-16">Tipo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {chunk.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={9}
+                          className="border border-slate-400 p-4 text-center text-slate-600 font-semibold text-[10px]"
+                        >
+                          100% CONCILIADO — No se registraron faltantes, sobrantes ni novedades.
+                        </td>
+                      </tr>
+                    ) : (
+                      chunk.map((item, itemIdx) => {
+                        const globalIdx = pageIndex * ITEMS_PER_PAGE + itemIdx + 1;
+                        const theoBreakdown = formatStockBreakdown(item.systemStock, item.packQuantity);
+                        const physBreakdown = formatStockBreakdown(item.totalCounted, item.packQuantity);
+                        const diffBreakdown = formatStockBreakdown(
+                          Math.abs(item.difference),
+                          item.packQuantity
+                        );
+
+                        return (
+                          <tr key={item.id} className="border-b border-slate-300">
+                            <td className="border border-slate-400 p-0.5 text-center font-mono font-bold text-slate-700">
+                              {globalIdx}
+                            </td>
+                            <td className="border border-slate-400 p-0.5 font-mono text-slate-900 leading-tight">
+                              <div className="font-bold">{item.sku}</div>
+                              {item.location && (
+                                <div className="text-[7.5px] text-slate-500">{item.location}</div>
+                              )}
+                            </td>
+                            <td className="border border-slate-400 p-0.5 text-slate-900 leading-tight">
+                              <div className="font-semibold truncate max-w-[230px]">{item.description}</div>
+                              {(item.batchNumber || item.expirationDate) && (
+                                <div className="text-[7.5px] text-slate-500 font-mono">
+                                  {item.batchNumber && <span>Lote: {item.batchNumber} </span>}
+                                  {item.expirationDate && (
+                                    <span>
+                                      Vence: {new Date(item.expirationDate).toLocaleDateString('es-ES')}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+                            <td className="border border-slate-400 p-0.5 text-center font-mono text-slate-700">
+                              1x{item.packQuantity}
+                            </td>
+                            <td className="border border-slate-400 p-0.5 text-right font-mono text-slate-900">
+                              {theoBreakdown.formatted}
+                            </td>
+                            <td className="border border-slate-400 p-0.5 text-right font-mono font-bold text-slate-900">
+                              {physBreakdown.formatted}
+                            </td>
+                            <td className="border border-slate-400 p-0.5 text-right font-mono font-bold">
+                              <span className={item.difference < 0 ? 'text-red-700' : 'text-blue-700'}>
+                                {item.difference > 0 ? '+' : '-'}
+                                {diffBreakdown.formatted}
+                              </span>
+                            </td>
+                            <td className="border border-slate-400 p-0.5 text-right font-mono font-bold">
+                              {item.costImpact === 0 ? (
+                                '$0.00'
+                              ) : item.costImpact > 0 ? (
+                                <span className="text-blue-700">+${item.costImpact.toFixed(2)}</span>
+                              ) : (
+                                <span className="text-red-700">
+                                  -${Math.abs(item.costImpact).toFixed(2)}
+                                </span>
+                              )}
+                            </td>
+                            <td className="border border-slate-400 p-0.5 text-center font-bold text-[8px]">
+                              {item.status === 'shortage' && (
+                                <span className="text-red-700 uppercase">Faltante</span>
+                              )}
+                              {item.status === 'surplus' && (
+                                <span className="text-blue-700 uppercase">Sobrante</span>
+                              )}
+                              {item.hasNovelties && (
+                                <span className="text-amber-700 uppercase">Novedad</span>
+                              )}
+                              {item.requiresRecount && (
+                                <span className="text-purple-700 uppercase">Reconteo</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+
+                {/* Subtotales en la última hoja de discrepancias */}
+                {pageIndex === discrepancyPrintChunks.length - 1 && (
+                  <div className="mt-2.5 p-2 border border-slate-400 bg-slate-50 text-[9.5px] grid grid-cols-4 gap-2 text-center">
+                    <div>
+                      <span className="block text-slate-500 font-medium">Total Faltantes:</span>
+                      <strong className="text-red-700 font-mono font-bold">
+                        {shortageCount} ítems (-${summary.totalShortageCost.toFixed(2)})
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="block text-slate-500 font-medium">Total Sobrantes:</span>
+                      <strong className="text-blue-700 font-mono font-bold">
+                        {surplusCount} ítems (+${summary.totalSurplusCost.toFixed(2)})
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="block text-slate-500 font-medium">Impacto Neto:</span>
+                      <strong
+                        className={`font-mono font-bold ${
+                          summary.netCostImpact < 0 ? 'text-red-700' : 'text-blue-700'
+                        }`}
+                      >
+                        {summary.netCostImpact >= 0 ? '+' : ''}${summary.netCostImpact.toFixed(2)}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="block text-slate-500 font-medium">Novedades / Rec.:</span>
+                      <strong className="text-amber-700 font-mono font-bold">
+                        {summary.requiresRecountCount + summary.noveltiesTotal}
+                      </strong>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -862,438 +1151,687 @@ export default function ReportClient({
             </div>
           </div>
 
-          {/* Barra de Filtros y Búsqueda */}
-          <div className="no-print bg-slate-900/80 border border-slate-800 p-4 rounded-2xl space-y-3">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-              <div className="relative flex-1 max-w-md">
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Filtrar por nombre, SKU, código de barras o ubicación..."
-                  className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                />
+          {/* ============================================================== */}
+          {/* SECCIÓN 1 (PRIMERO): RESUMEN DE NOVEDADES (FALTANTES Y SOBRANTES) */}
+          {/* ============================================================== */}
+          <div className="no-print bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-2xl space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-500/20 to-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
+                    <span>1. Resumen Ejecutivo de Novedades (Faltantes y Sobrantes)</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-cyan-300 font-mono font-bold border border-slate-700">
+                      {filteredDiscrepancyItems.length} {filteredDiscrepancyItems.length === 1 ? 'ítem' : 'ítems'}
+                    </span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Faltantes, sobrantes y registros con inconsistencia física • Paginado a 30 ítems por página
+                  </p>
+                </div>
               </div>
 
-              <div className="text-xs text-slate-400">
-                Mostrando <strong className="text-white font-mono">{filteredItems.length}</strong> de{' '}
-                <strong className="text-white font-mono">{itemsList.length}</strong> productos
+              {/* Controles rápidos de paginación superior */}
+              {totalDiscrepancyPages > 1 && (
+                <div className="flex items-center gap-2 text-xs">
+                  <button
+                    type="button"
+                    disabled={discrepancyPage <= 1}
+                    onClick={() => setDiscrepancyPage((p) => Math.max(1, p - 1))}
+                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                    title="Página Anterior"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="font-mono text-slate-300 font-bold px-2 py-1 rounded bg-slate-950 border border-slate-800">
+                    {discrepancyPage} / {totalDiscrepancyPages}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={discrepancyPage >= totalDiscrepancyPages}
+                    onClick={() => setDiscrepancyPage((p) => Math.min(totalDiscrepancyPages, p + 1))}
+                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                    title="Página Siguiente"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Barra de Filtros y Búsqueda */}
+            <div className="space-y-3">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Buscar discrepancia por SKU, producto o ubicación..."
+                    className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  />
+                </div>
+
+                <div className="text-xs text-slate-400">
+                  Mostrando{' '}
+                  <strong className="text-white font-mono">
+                    {filteredDiscrepancyItems.length > 0 ? (discrepancyPage - 1) * ITEMS_PER_PAGE + 1 : 0}
+                  </strong>{' '}
+                  -{' '}
+                  <strong className="text-white font-mono">
+                    {Math.min(discrepancyPage * ITEMS_PER_PAGE, filteredDiscrepancyItems.length)}
+                  </strong>{' '}
+                  de <strong className="text-white font-mono">{filteredDiscrepancyItems.length}</strong> discrepancias
+                </div>
+              </div>
+
+              {/* Categorías de Filtro */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setFilterStatus('all')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    filterStatus === 'all'
+                      ? 'bg-slate-700 text-white shadow-sm'
+                      : 'bg-slate-800/60 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Todas las Discrepancias ({discrepancyItems.length})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFilterStatus('shortage')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    filterStatus === 'shortage'
+                      ? 'bg-rose-600 text-white shadow-sm'
+                      : 'bg-slate-800/60 text-rose-400 hover:text-white'
+                  }`}
+                >
+                  <TrendingDown className="w-3.5 h-3.5" />
+                  Solo Faltantes ({shortageCount})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFilterStatus('surplus')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    filterStatus === 'surplus'
+                      ? 'bg-cyan-600 text-white shadow-sm'
+                      : 'bg-slate-800/60 text-cyan-400 hover:text-white'
+                  }`}
+                >
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  Solo Sobrantes ({surplusCount})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFilterStatus('recount')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    filterStatus === 'recount'
+                      ? 'bg-amber-600 text-white shadow-sm'
+                      : 'bg-slate-800/60 text-amber-400 hover:text-white'
+                  }`}
+                >
+                  <AlertOctagon className="w-3.5 h-3.5" />
+                  Requiere Reconteo ({summary.requiresRecountCount})
+                </button>
               </div>
             </div>
 
-            {/* Categorías de Filtro */}
-            <div className="flex flex-wrap items-center gap-1.5 pt-1">
-              <button
-                type="button"
-                onClick={() => setFilterStatus('all')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  filterStatus === 'all'
-                    ? 'bg-slate-700 text-white shadow-sm'
-                    : 'bg-slate-800/60 text-slate-400 hover:text-white'
-                }`}
-              >
-                Todos ({itemsList.length})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFilterStatus('novelties_only')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
-                  filterStatus === 'novelties_only'
-                    ? 'bg-amber-500/25 text-amber-300 border-amber-500/40 shadow-sm'
-                    : 'bg-slate-800/60 text-amber-400/80 border-slate-800 hover:text-amber-300'
-                }`}
-              >
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                Solo Novedades / Incidencias ({noveltiesOrDiffCount})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFilterStatus('matched')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  filterStatus === 'matched'
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'bg-slate-800/60 text-emerald-400 hover:text-white'
-                }`}
-              >
-                Coincidentes ({matchedCount})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFilterStatus('surplus')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  filterStatus === 'surplus'
-                    ? 'bg-cyan-600 text-white shadow-sm'
-                    : 'bg-slate-800/60 text-cyan-400 hover:text-white'
-                }`}
-              >
-                Sobrantes ({surplusCount})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFilterStatus('shortage')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  filterStatus === 'shortage'
-                    ? 'bg-rose-600 text-white shadow-sm'
-                    : 'bg-slate-800/60 text-rose-400 hover:text-white'
-                }`}
-              >
-                Faltantes ({shortageCount})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFilterStatus('uncounted')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  filterStatus === 'uncounted'
-                    ? 'bg-slate-600 text-white shadow-sm'
-                    : 'bg-slate-800/60 text-slate-400 hover:text-white'
-                }`}
-              >
-                No Contados ({uncountedCount})
-              </button>
-            </div>
-          </div>
-
-          {/* Tabla de Conciliación Detallada */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-950/80 text-slate-400 uppercase font-semibold border-b border-slate-800">
-                  <tr>
-                    <th className="px-4 py-3.5">Producto / SKU</th>
-                    <th className="px-3 py-3.5 text-center">Foto / Etiqueta</th>
-                    <th className="px-4 py-3.5 text-center">Factor</th>
-                    <th className="px-4 py-3.5 text-right">Stock Teórico</th>
-                    <th className="px-4 py-3.5 text-right">Físico Contado</th>
-                    <th className="px-4 py-3.5 text-right">Diferencia</th>
-                    <th className="px-4 py-3.5 text-right">Impacto $</th>
-                    <th className="px-4 py-3.5 text-center">Estado</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60 font-sans">
-                  {filteredItems.length === 0 ? (
+            {/* Tabla de Novedades y Discrepancias Paginada a 30 Ítems */}
+            <div className="bg-slate-950/70 border border-slate-800 rounded-2xl overflow-hidden shadow-inner">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
                     <tr>
-                      <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
-                        No se encontraron productos que coincidan con los filtros aplicados.
-                      </td>
+                      <th className="px-3 py-3 text-center w-10">#</th>
+                      <th className="px-4 py-3">Producto / SKU</th>
+                      <th className="px-3 py-3 text-center">Foto / Etiqueta</th>
+                      <th className="px-3 py-3 text-center">Factor</th>
+                      <th className="px-4 py-3 text-right">Stock Teórico</th>
+                      <th className="px-4 py-3 text-right">Físico Contado</th>
+                      <th className="px-4 py-3 text-right">Diferencia</th>
+                      <th className="px-4 py-3 text-right">Impacto $</th>
+                      <th className="px-3 py-3 text-center">Estado</th>
                     </tr>
-                  ) : (
-                    filteredItems.map((item) => {
-                      const theoBreakdown = formatStockBreakdown(item.systemStock, item.packQuantity);
-                      const physBreakdown = formatStockBreakdown(item.totalCounted, item.packQuantity);
-                      const diffBreakdown = formatStockBreakdown(Math.abs(item.difference), item.packQuantity);
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 font-sans">
+                    {paginatedDiscrepancies.length === 0 ? (
+                      <tr>
+                        <td colSpan={9} className="px-4 py-12 text-center text-slate-400">
+                          <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-400 mb-2 opacity-80" />
+                          <p className="font-semibold text-white">¡Sin discrepancias registradas!</p>
+                          <p className="text-xs text-slate-400 mt-1">
+                            No se encontraron faltantes, sobrantes ni novedades con los filtros aplicados.
+                          </p>
+                        </td>
+                      </tr>
+                    ) : (
+                      paginatedDiscrepancies.map((item, localIdx) => {
+                        const globalIdx = (discrepancyPage - 1) * ITEMS_PER_PAGE + localIdx + 1;
+                        const theoBreakdown = formatStockBreakdown(item.systemStock, item.packQuantity);
+                        const physBreakdown = formatStockBreakdown(item.totalCounted, item.packQuantity);
+                        const diffBreakdown = formatStockBreakdown(
+                          Math.abs(item.difference),
+                          item.packQuantity
+                        );
 
-                      return (
-                        <tr
-                          key={item.id}
-                          className={`hover:bg-slate-800/40 transition-colors ${
-                            item.requiresRecount ? 'bg-amber-500/5' : ''
+                        return (
+                          <tr
+                            key={item.id}
+                            className={`hover:bg-slate-800/40 transition-colors ${
+                              item.requiresRecount ? 'bg-amber-500/5' : ''
+                            }`}
+                          >
+                            {/* Número Correlativo */}
+                            <td className="px-3 py-3 text-center font-mono font-bold text-slate-500 text-[11px]">
+                              {globalIdx}
+                            </td>
+
+                            {/* Producto */}
+                            <td className="px-4 py-3 max-w-xs sm:max-w-md">
+                              <div className="font-bold text-white text-xs sm:text-sm leading-tight">
+                                {item.description}
+                              </div>
+                              <div className="text-[11px] text-slate-400 font-mono mt-0.5 flex flex-wrap items-center gap-2">
+                                <span>SKU: {item.sku}</span>
+                                {item.barcode && <span>• Barcode: {item.barcode}</span>}
+                                {item.location && <span>• Ubic: {item.location}</span>}
+                                {item.batchNumber && <span>• Lote: {item.batchNumber}</span>}
+                                {item.expirationDate && (
+                                  <span className="text-amber-400">
+                                    • Vence: {new Date(item.expirationDate).toLocaleDateString('es-ES')}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Badges de Alerta */}
+                              <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                {item.requiresRecount && (
+                                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                    ⚠️ Requiere Reconteo
+                                  </span>
+                                )}
+                                {item.hasNovelties && (
+                                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                    Novedad Física ({item.noveltiesCount})
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+
+                            {/* Foto / Rótulo / Etiqueta */}
+                            <td className="px-3 py-3 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                {item.imageUrl ? (
+                                  <img
+                                    src={item.imageUrl}
+                                    alt="Foto"
+                                    onClick={() =>
+                                      setViewImageModal({ url: item.imageUrl!, title: item.description })
+                                    }
+                                    className="w-9 h-9 object-cover rounded-lg border border-cyan-500/60 cursor-pointer shadow hover:opacity-80 transition-opacity"
+                                    title="Ver foto ampliada"
+                                  />
+                                ) : null}
+
+                                {!isPublicView && (
+                                  <label
+                                    className={`p-1.5 rounded-lg border cursor-pointer transition-colors ${
+                                      uploadingItemId === item.id
+                                        ? 'bg-cyan-600 text-white animate-spin border-cyan-500'
+                                        : 'bg-slate-800 hover:bg-slate-700 text-cyan-400 border-slate-700'
+                                    }`}
+                                    title="Tomar foto con cámara móvil o subir imagen desde PC"
+                                  >
+                                    <Camera className="w-3.5 h-3.5" />
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      capture="environment"
+                                      className="hidden"
+                                      disabled={uploadingItemId === item.id}
+                                      onChange={(e) => {
+                                        const f = e.target.files?.[0];
+                                        if (f) handleUploadItemImage(item.id, f);
+                                      }}
+                                    />
+                                  </label>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveLabelItem(item)}
+                                  className="p-1.5 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/60 text-indigo-300 border border-indigo-700/60 cursor-pointer transition-colors"
+                                  title="Ver / Imprimir Etiqueta de Producto"
+                                >
+                                  <Tag className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+
+                            {/* Factor */}
+                            <td className="px-3 py-3 text-center font-mono text-cyan-400">
+                              1x{item.packQuantity}
+                            </td>
+
+                            {/* Stock Teórico */}
+                            <td className="px-4 py-3 text-right">
+                              <div className="font-mono font-bold text-white text-sm">
+                                {theoBreakdown.formatted}
+                              </div>
+                              <div className="text-[10px] text-slate-400 font-mono">
+                                ({item.systemStock} fracc.)
+                              </div>
+                            </td>
+
+                            {/* Físico Contado */}
+                            <td className="px-4 py-3 text-right">
+                              {item.status === 'uncounted' ? (
+                                <span className="text-slate-400 font-mono">Sin conteo</span>
+                              ) : (
+                                <>
+                                  <div className="font-mono font-bold text-emerald-300 text-sm">
+                                    {physBreakdown.formatted}
+                                  </div>
+                                  <div className="text-[10px] text-slate-400 font-mono">
+                                    ({item.totalCounted} fracc.)
+                                  </div>
+                                </>
+                              )}
+                            </td>
+
+                            {/* Diferencia */}
+                            <td className="px-4 py-3 text-right font-mono">
+                              {item.status === 'uncounted' ? (
+                                <span className="text-slate-400">---</span>
+                              ) : item.difference === 0 ? (
+                                <span className="text-emerald-400 font-bold">0 u (Exacto)</span>
+                              ) : (
+                                <div>
+                                  <span
+                                    className={`font-bold text-sm ${
+                                      item.difference > 0 ? 'text-cyan-400' : 'text-rose-400'
+                                    }`}
+                                  >
+                                    {item.difference > 0 ? '+' : '-'}
+                                    {diffBreakdown.formatted}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 block font-normal">
+                                    ({item.difference > 0 ? '+' : ''}
+                                    {item.difference} fracc. • {item.differencePercentage}%)
+                                  </span>
+                                </div>
+                              )}
+                            </td>
+
+                            {/* Impacto $ */}
+                            <td className="px-4 py-3 text-right font-mono font-bold text-xs">
+                              {item.costImpact === 0 ? (
+                                <span className="text-slate-400">$0.00</span>
+                              ) : item.costImpact > 0 ? (
+                                <span className="text-cyan-400">+${item.costImpact.toFixed(2)}</span>
+                              ) : (
+                                <span className="text-rose-400">-${Math.abs(item.costImpact).toFixed(2)}</span>
+                              )}
+                            </td>
+
+                            {/* Estado */}
+                            <td className="px-3 py-3 text-center">
+                              <span
+                                className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${
+                                  item.status === 'matched'
+                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                                    : item.status === 'surplus'
+                                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+                                    : item.status === 'shortage'
+                                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                                    : 'bg-slate-800 text-slate-400 border-slate-700'
+                                }`}
+                              >
+                                {item.status === 'matched' && 'Exacto'}
+                                {item.status === 'surplus' && 'Sobrante'}
+                                {item.status === 'shortage' && 'Faltante'}
+                                {item.status === 'uncounted' && 'No contado'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Paginación Inferior de Sección 1 */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+              <div className="text-xs text-slate-400">
+                Página <strong className="text-white font-mono">{discrepancyPage}</strong> de{' '}
+                <strong className="text-white font-mono">{totalDiscrepancyPages}</strong> (Bloques de 30 ítems)
+              </div>
+
+              {totalDiscrepancyPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={discrepancyPage <= 1}
+                    onClick={() => setDiscrepancyPage((p) => Math.max(1, p - 1))}
+                    className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none cursor-pointer transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span>Anterior</span>
+                  </button>
+
+                  <div className="flex items-center gap-1 px-1">
+                    {Array.from({ length: totalDiscrepancyPages }, (_, i) => i + 1)
+                      .slice(
+                        Math.max(0, discrepancyPage - 3),
+                        Math.min(totalDiscrepancyPages, discrepancyPage + 2)
+                      )
+                      .map((pg) => (
+                        <button
+                          key={pg}
+                          type="button"
+                          onClick={() => setDiscrepancyPage(pg)}
+                          className={`w-8 h-8 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer ${
+                            discrepancyPage === pg
+                              ? 'bg-cyan-600 text-white'
+                              : 'bg-slate-800/80 text-slate-400 hover:text-white'
                           }`}
                         >
-                          {/* Producto */}
-                          <td className="px-4 py-3 max-w-xs sm:max-w-md">
-                            <div className="font-bold text-white text-xs sm:text-sm leading-tight">
-                              {item.description}
-                            </div>
-                            <div className="text-[11px] text-slate-400 font-mono mt-0.5 flex flex-wrap items-center gap-2">
-                              <span>SKU: {item.sku}</span>
-                              {item.barcode && <span>• Barcode: {item.barcode}</span>}
-                              {item.location && <span>• Ubic: {item.location}</span>}
-                              {item.batchNumber && <span>• Lote: {item.batchNumber}</span>}
-                              {item.expirationDate && (
-                                <span className="text-amber-400">
-                                  • Vence: {new Date(item.expirationDate).toLocaleDateString('es-ES')}
-                                </span>
-                              )}
-                            </div>
+                          {pg}
+                        </button>
+                      ))}
+                  </div>
 
-                            {/* Badges de Alerta */}
-                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                              {item.requiresRecount && (
-                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                  ⚠️ Requiere Reconteo
-                                </span>
-                              )}
-                              {item.hasNovelties && (
-                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                                  Novedad Física ({item.noveltiesCount})
-                                </span>
-                              )}
-                            </div>
-                          </td>
-
-                          {/* Foto / Rótulo / Etiqueta */}
-                          <td className="px-3 py-3 text-center">
-                            <div className="flex items-center justify-center gap-1.5">
-                              {item.imageUrl ? (
-                                <img
-                                  src={item.imageUrl}
-                                  alt="Foto"
-                                  onClick={() =>
-                                    setViewImageModal({ url: item.imageUrl!, title: item.description })
-                                  }
-                                  className="w-9 h-9 object-cover rounded-lg border border-cyan-500/60 cursor-pointer shadow hover:opacity-80 transition-opacity"
-                                  title="Ver foto ampliada"
-                                />
-                              ) : null}
-
-                              {!isPublicView && (
-                                <label
-                                  className={`p-1.5 rounded-lg border cursor-pointer transition-colors ${
-                                    uploadingItemId === item.id
-                                      ? 'bg-cyan-600 text-white animate-spin border-cyan-500'
-                                      : 'bg-slate-800 hover:bg-slate-700 text-cyan-400 border-slate-700'
-                                  }`}
-                                  title="Tomar foto con cámara móvil o subir imagen desde PC"
-                                >
-                                  <Camera className="w-3.5 h-3.5" />
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    capture="environment"
-                                    className="hidden"
-                                    disabled={uploadingItemId === item.id}
-                                    onChange={(e) => {
-                                      const f = e.target.files?.[0];
-                                      if (f) handleUploadItemImage(item.id, f);
-                                    }}
-                                  />
-                                </label>
-                              )}
-
-                              <button
-                                type="button"
-                                onClick={() => setActiveLabelItem(item)}
-                                className="p-1.5 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/60 text-indigo-300 border border-indigo-700/60 cursor-pointer transition-colors"
-                                title="Ver / Imprimir Etiqueta de Producto"
-                              >
-                                <Tag className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </td>
-
-                          {/* Factor */}
-                          <td className="px-4 py-3 text-center font-mono text-cyan-400">
-                            1x{item.packQuantity}
-                          </td>
-
-                          {/* Stock Teórico */}
-                          <td className="px-4 py-3 text-right">
-                            <div className="font-mono font-bold text-white text-sm">
-                              {theoBreakdown.formatted}
-                            </div>
-                            <div className="text-[10px] text-slate-400 font-mono">
-                              ({item.systemStock} fracc.)
-                            </div>
-                          </td>
-
-                          {/* Físico Contado */}
-                          <td className="px-4 py-3 text-right">
-                            {item.status === 'uncounted' ? (
-                              <span className="text-slate-400 font-mono">Sin conteo</span>
-                            ) : (
-                              <>
-                                <div className="font-mono font-bold text-emerald-300 text-sm">
-                                  {physBreakdown.formatted}
-                                </div>
-                                <div className="text-[10px] text-slate-400 font-mono">
-                                  ({item.totalCounted} fracc.)
-                                </div>
-                              </>
-                            )}
-                          </td>
-
-                          {/* Diferencia */}
-                          <td className="px-4 py-3 text-right font-mono">
-                            {item.status === 'uncounted' ? (
-                              <span className="text-slate-400">---</span>
-                            ) : item.difference === 0 ? (
-                              <span className="text-emerald-400 font-bold">0 u (Exacto)</span>
-                            ) : (
-                              <div>
-                                <span
-                                  className={`font-bold text-sm ${
-                                    item.difference > 0 ? 'text-cyan-400' : 'text-rose-400'
-                                  }`}
-                                >
-                                  {item.difference > 0 ? `+` : `-`}
-                                  {diffBreakdown.formatted}
-                                </span>
-                                <span className="text-[10px] text-slate-400 block font-normal">
-                                  ({item.difference > 0 ? `+` : ``}
-                                  {item.difference} fracc. • {item.differencePercentage}%)
-                                </span>
-                              </div>
-                            )}
-                          </td>
-
-                          {/* Impacto $ */}
-                          <td className="px-4 py-3 text-right font-mono font-bold text-xs">
-                            {item.costImpact === 0 ? (
-                              <span className="text-slate-400">$0.00</span>
-                            ) : item.costImpact > 0 ? (
-                              <span className="text-cyan-400">+${item.costImpact.toFixed(2)}</span>
-                            ) : (
-                              <span className="text-rose-400">-${Math.abs(item.costImpact).toFixed(2)}</span>
-                            )}
-                          </td>
-
-                          {/* Estado */}
-                          <td className="px-4 py-3 text-center">
-                            <span
-                              className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${
-                                item.status === 'matched'
-                                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                                  : item.status === 'surplus'
-                                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
-                                  : item.status === 'shortage'
-                                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                                  : 'bg-slate-800 text-slate-400 border-slate-700'
-                              }`}
-                            >
-                              {item.status === 'matched' && 'Exacto'}
-                              {item.status === 'surplus' && 'Sobrante'}
-                              {item.status === 'shortage' && 'Faltante'}
-                              {item.status === 'uncounted' && 'No contado'}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+                  <button
+                    type="button"
+                    disabled={discrepancyPage >= totalDiscrepancyPages}
+                    onClick={() => setDiscrepancyPage((p) => Math.min(totalDiscrepancyPages, p + 1))}
+                    className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none cursor-pointer transition-colors"
+                  >
+                    <span>Siguiente</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
 
-      {/* ============================================================== */}
-      {/* SECCIÓN DETALLADA DE NOVEDADES E INCIDENCIAS (ONLINE & VISTA)   */}
-      {/* ============================================================== */}
-      {novelties && novelties.length > 0 && (
-        <div className="bg-slate-900 border border-amber-500/40 rounded-3xl p-5 sm:p-7 shadow-xl space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/40 shrink-0">
-                <AlertTriangle className="w-5 h-5" />
+          {/* ============================================================== */}
+          {/* SECCIÓN 2 (DESPUÉS): DETALLE DE NOVEDADES E INCIDENCIAS         */}
+          {/* ============================================================== */}
+          <div className="no-print bg-slate-900 border border-amber-500/40 rounded-3xl p-5 sm:p-7 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/40 shrink-0">
+                  <Camera className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
+                    <span>2. Detalle de Novedades e Incidencias con Imágenes y Notas</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono font-bold border border-amber-500/30">
+                      {novelties ? novelties.length : 0} {novelties && novelties.length === 1 ? 'registro' : 'registros'}
+                    </span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Evidencia fotográfica ampliable, lote, vencimiento, cantidad física y notas del auditor
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
-                  <span>Reporte Oficial de Novedades e Incidencias</span>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono font-bold border border-amber-500/30">
-                    {novelties.length} {novelties.length === 1 ? 'novedad' : 'novedades'}
-                  </span>
-                </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Evidencia fotográfica, lote, fecha, cantidad física afectada y observaciones
+            </div>
+
+            {(!novelties || novelties.length === 0) ? (
+              <div className="p-8 text-center text-slate-400 bg-slate-950/60 rounded-2xl border border-slate-800">
+                <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2 opacity-80" />
+                <p className="font-bold text-white text-sm">Sin Novedades Físicas Especiales</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  No se registraron roturas, daños o alertas de lote durante esta sesión de conteo.
                 </p>
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {novelties.map((nov, idx) => {
+                  const matching = itemsList.find((x) => x.id === nov.itemId);
+                  const sku = matching?.sku || 'N/A';
+                  const description = matching?.description || nov.notes || 'Ítem con novedad';
+                  const img = nov.imageUrl || matching?.imageUrl;
+
+                  return (
+                    <div
+                      key={nov.id || idx}
+                      className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 hover:border-amber-500/40 transition-all shadow-md"
+                    >
+                      {/* Evidencia Fotográfica */}
+                      {img ? (
+                        <div className="shrink-0 flex flex-col items-center justify-center">
+                          <img
+                            src={img}
+                            alt="Evidencia fotográfica"
+                            onClick={() => setViewImageModal({ url: img, title: `${sku} - ${description}` })}
+                            className="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-xl border border-amber-500/40 shadow cursor-pointer hover:opacity-90 transition-opacity"
+                            title="Haz clic para ver la imagen en tamaño completo"
+                          />
+                          <span className="text-[10px] text-amber-400 font-medium mt-1 cursor-pointer">
+                            Ver foto ampliada
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-slate-400 shrink-0 text-center p-2">
+                          <Camera className="w-6 h-6 mb-1 opacity-40 text-slate-400" />
+                          <span className="text-[10px] text-slate-400">Sin foto adjunta</span>
+                        </div>
+                      )}
+
+                      {/* Datos del Ítem y Novedad */}
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div>
+                          <span className="font-mono text-[10px] text-amber-400 font-bold">
+                            SKU: {sku}
+                          </span>
+                          <h3 className="text-sm font-bold text-white leading-tight mt-0.5 break-words">
+                            {description}
+                          </h3>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+                            <span className="text-[10px] text-slate-400 block font-medium">Lote:</span>
+                            <span className="font-mono font-bold text-amber-300">
+                              {nov.batchNumber || 'N/A'}
+                            </span>
+                          </div>
+
+                          <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+                            <span className="text-[10px] text-slate-400 block font-medium">Fecha:</span>
+                            <span className="font-mono font-bold text-cyan-300">
+                              {nov.expirationDate
+                                ? new Date(nov.expirationDate).toLocaleDateString('es-ES')
+                                : 'N/A'}
+                            </span>
+                          </div>
+
+                          <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+                            <span className="text-[10px] text-slate-400 block font-medium">Cantidad:</span>
+                            <span className="font-mono font-bold text-emerald-400 text-sm">
+                              {nov.quantity} u
+                            </span>
+                          </div>
+
+                          <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
+                            <span className="text-[10px] text-slate-400 block font-medium">Tipo:</span>
+                            <span className="font-semibold text-slate-200 capitalize truncate block">
+                              {nov.noveltyType.replace('_', ' ')}
+                            </span>
+                          </div>
+                        </div>
+
+                        {nov.notes && (
+                          <div className="p-2.5 rounded-xl bg-amber-950/20 border border-amber-500/20 text-xs">
+                            <span className="text-[10px] text-amber-400 font-bold block mb-0.5">
+                              Nota / Detalle:
+                            </span>
+                            <p className="text-slate-200 whitespace-pre-wrap leading-relaxed">
+                              {nov.notes}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="text-[10px] text-slate-400 flex items-center justify-between pt-1">
+                          <span>
+                            Reportado por: <strong className="text-slate-300">{nov.reportedBy}</strong>
+                          </span>
+                          {nov.createdAt && (
+                            <span>
+                              {new Date(nov.createdAt).toLocaleTimeString('es-ES', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {novelties.map((nov, idx) => {
-              const matching = itemsList.find((x) => x.id === nov.itemId);
-              const sku = matching?.sku || 'N/A';
-              const description = matching?.description || nov.notes || 'Ítem con novedad';
-              const img = nov.imageUrl || matching?.imageUrl;
+          {/* ============================================================== */}
+          {/* SECCIÓN 3 (DESPUÉS): CATÁLOGO DE ÍTEMS CONFORMES Y CONCILIADOS */}
+          {/* ============================================================== */}
+          <div className="no-print bg-slate-900 border border-emerald-500/30 rounded-3xl overflow-hidden shadow-xl">
+            <button
+              type="button"
+              onClick={() => setShowCompliantSection(!showCompliantSection)}
+              className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 hover:bg-slate-800/40 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30 shrink-0">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <span>3. Catálogo de Ítems Conformes y Conciliados (100% Exactitud)</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold border border-emerald-500/30">
+                      {compliantItems.length} conformes
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Productos cuyo conteo físico coincide exactamente con el stock teórico del sistema
+                  </p>
+                </div>
+              </div>
 
-              return (
-                <div
-                  key={nov.id || idx}
-                  className="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 hover:border-amber-500/40 transition-all shadow-md"
-                >
-                  {/* Evidencia Fotográfica */}
-                  {img ? (
-                    <div className="shrink-0 flex flex-col items-center justify-center">
-                      <img
-                        src={img}
-                        alt="Evidencia fotográfica"
-                        onClick={() => setViewImageModal({ url: img, title: `${sku} - ${description}` })}
-                        className="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-xl border border-amber-500/40 shadow cursor-pointer hover:opacity-90 transition-opacity"
-                        title="Haz clic para ver la imagen en tamaño completo"
-                      />
-                      <span className="text-[10px] text-amber-400 font-medium mt-1 cursor-pointer">
-                        Ver foto ampliada
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center text-slate-400 shrink-0 text-center p-2">
-                      <Camera className="w-6 h-6 mb-1 opacity-40 text-slate-400" />
-                      <span className="text-[10px] text-slate-400">Sin foto adjunta</span>
-                    </div>
-                  )}
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 shrink-0">
+                <span>{showCompliantSection ? 'Ocultar Detalle' : 'Ver Detalle'}</span>
+                {showCompliantSection ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </div>
+            </button>
 
-                  {/* Datos del Ítem y Novedad */}
-                  <div className="flex-1 min-w-0 space-y-2">
-                    <div>
-                      <span className="font-mono text-[10px] text-amber-400 font-bold">
-                        SKU: {sku}
-                      </span>
-                      <h3 className="text-sm font-bold text-white leading-tight mt-0.5 break-words">
-                        {description}
-                      </h3>
-                    </div>
+            {showCompliantSection && (
+              <div className="p-5 sm:p-6 border-t border-slate-800 space-y-4">
+                <div className="bg-slate-950/70 border border-slate-800 rounded-2xl overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
+                        <tr>
+                          <th className="px-3 py-3 text-center w-10">#</th>
+                          <th className="px-4 py-3">Producto / SKU</th>
+                          <th className="px-3 py-3 text-center">Factor</th>
+                          <th className="px-4 py-3 text-right">Stock Teórico</th>
+                          <th className="px-4 py-3 text-right">Físico Contado</th>
+                          <th className="px-4 py-3 text-right">Diferencia</th>
+                          <th className="px-3 py-3 text-center">Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60 font-sans">
+                        {paginatedCompliant.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                              No hay productos conformes que coincidan con la búsqueda.
+                            </td>
+                          </tr>
+                        ) : (
+                          paginatedCompliant.map((item, localIdx) => {
+                            const globalIdx = (compliantPage - 1) * ITEMS_PER_PAGE + localIdx + 1;
+                            const theoBreakdown = formatStockBreakdown(item.systemStock, item.packQuantity);
+                            const physBreakdown = formatStockBreakdown(item.totalCounted, item.packQuantity);
 
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
-                        <span className="text-[10px] text-slate-400 block font-medium">Lote:</span>
-                        <span className="font-mono font-bold text-amber-300">
-                          {nov.batchNumber || 'N/A'}
-                        </span>
-                      </div>
-
-                      <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
-                        <span className="text-[10px] text-slate-400 block font-medium">Fecha:</span>
-                        <span className="font-mono font-bold text-cyan-300">
-                          {nov.expirationDate
-                            ? new Date(nov.expirationDate).toLocaleDateString('es-ES')
-                            : 'N/A'}
-                        </span>
-                      </div>
-
-                      <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
-                        <span className="text-[10px] text-slate-400 block font-medium">Cantidad:</span>
-                        <span className="font-mono font-bold text-emerald-400 text-sm">
-                          {nov.quantity} u
-                        </span>
-                      </div>
-
-                      <div className="bg-slate-900/80 p-2 rounded-xl border border-slate-800">
-                        <span className="text-[10px] text-slate-400 block font-medium">Tipo:</span>
-                        <span className="font-semibold text-slate-200 capitalize truncate block">
-                          {nov.noveltyType.replace('_', ' ')}
-                        </span>
-                      </div>
-                    </div>
-
-                    {nov.notes && (
-                      <div className="p-2.5 rounded-xl bg-amber-950/20 border border-amber-500/20 text-xs">
-                        <span className="text-[10px] text-amber-400 font-bold block mb-0.5">
-                          Nota / Detalle:
-                        </span>
-                        <p className="text-slate-200 whitespace-pre-wrap leading-relaxed">
-                          {nov.notes}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="text-[10px] text-slate-400 flex items-center justify-between pt-1">
-                      <span>Reportado por: <strong className="text-slate-300">{nov.reportedBy}</strong></span>
-                      {nov.createdAt && (
-                        <span>{new Date(nov.createdAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
-                      )}
-                    </div>
+                            return (
+                              <tr key={item.id} className="hover:bg-slate-800/30 transition-colors">
+                                <td className="px-3 py-3 text-center font-mono font-bold text-slate-500 text-[11px]">
+                                  {globalIdx}
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="font-bold text-white text-xs">{item.description}</div>
+                                  <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                                    SKU: {item.sku} {item.location ? `• Ubic: ${item.location}` : ''}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3 text-center font-mono text-cyan-400">
+                                  1x{item.packQuantity}
+                                </td>
+                                <td className="px-4 py-3 text-right font-mono text-white">
+                                  {theoBreakdown.formatted}
+                                </td>
+                                <td className="px-4 py-3 text-right font-mono font-bold text-emerald-300">
+                                  {physBreakdown.formatted}
+                                </td>
+                                <td className="px-4 py-3 text-right font-mono font-bold text-emerald-400">
+                                  0 u (Exacto)
+                                </td>
+                                <td className="px-3 py-3 text-center">
+                                  <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                    Conforme
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-              );
-            })}
+
+                {/* Paginación de Ítems Conformes */}
+                {totalCompliantPages > 1 && (
+                  <div className="flex items-center justify-between text-xs pt-2">
+                    <span className="text-slate-400">
+                      Página <strong className="text-white font-mono">{compliantPage}</strong> de{' '}
+                      <strong className="text-white font-mono">{totalCompliantPages}</strong>
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={compliantPage <= 1}
+                        onClick={() => setCompliantPage((p) => Math.max(1, p - 1))}
+                        className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold disabled:opacity-40 cursor-pointer"
+                      >
+                        Anterior
+                      </button>
+                      <button
+                        type="button"
+                        disabled={compliantPage >= totalCompliantPages}
+                        onClick={() => setCompliantPage((p) => Math.min(totalCompliantPages, p + 1))}
+                        className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold disabled:opacity-40 cursor-pointer"
+                      >
+                        Siguiente
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
