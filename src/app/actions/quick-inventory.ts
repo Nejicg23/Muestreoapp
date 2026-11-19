@@ -16,6 +16,7 @@ export interface QuickCountItemInput {
   originalItemId: string;
   sku: string;
   barcode: string | null;
+  internalCode?: string | null;
   description: string;
   packQuantity: number;
   unitCost: number;
@@ -77,6 +78,7 @@ export async function getItemsBySession(sessionId: string) {
         rawCost: inventoryItems.rawCost,
         unitCostCalculated: inventoryItems.unitCostCalculated,
         location: inventoryItems.location,
+        rawMetadata: inventoryItems.rawMetadata,
       })
       .from(inventoryItems)
       .where(eq(inventoryItems.sessionId, sessionId))

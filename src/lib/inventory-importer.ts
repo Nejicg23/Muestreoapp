@@ -21,6 +21,8 @@ export interface ImportIncidence {
 export interface ParsedInventoryItem {
   rowId: number;
   sku: string;
+  internalCode?: string; // Código Interno (ERP / WMS / ID de Producto)
+  barcode?: string;
   description: string;
   rawStock: string;
   packs: number;
@@ -135,9 +137,11 @@ export function processRawRow(
   idVal: string | number | undefined,
   stockVal: string | number | undefined,
   productVal: string | undefined,
-  valorVal?: string | number | undefined
+  valorVal?: string | number | undefined,
+  internalCodeVal?: string | number | undefined
 ): ParsedInventoryItem {
   const sku = String(idVal || '').trim();
+  const internalCode = internalCodeVal !== undefined ? String(internalCodeVal).trim() : (sku || undefined);
   const description = String(productVal || '').trim();
   const parsedStock = parseStockUnits(String(stockVal || ''));
   const factorInfo = extractPackagingFactor(description);
@@ -190,6 +194,8 @@ export function processRawRow(
   return {
     rowId,
     sku,
+    internalCode: internalCode || sku,
+    barcode: internalCode || sku,
     description: description || 'Sin Descripción',
     rawStock: parsedStock.rawString || '-',
     packs: parsedStock.packs,
@@ -268,6 +274,8 @@ export function parseRowsMatrix(rawRows: any[][]): ParsedInventoryItem[] {
 
   let headerRowIndex = -1;
   let idColIndex = -1;
+  let skuColIndex = -1;
+  let internalCodeColIndex = -1;
   let stockColIndex = -1;
   let productColIndex = -1;
   let valorColIndex = -1;
@@ -276,7 +284,34 @@ export function parseRowsMatrix(rawRows: any[][]): ParsedInventoryItem[] {
   for (let r = 0; r < Math.min(5, rawRows.length); r++) {
     const row = rawRows[r].map((cell) => String(cell || '').toLowerCase().trim());
 
-    // 1. ID: código o sku del producto (buscar coincidencias exactas o parciales como "id nep", "id_producto", etc.)
+    // 1. CÓDIGO INTERNO (búsqueda específica de "cod interno", "codigo interno", "id nep", etc.)
+    const internalCodeIdx = row.findIndex(
+      (c) =>
+        c.includes('interno') ||
+        c.includes('cod. int') ||
+        c.includes('cod int') ||
+        c.includes('id nep') ||
+        c.includes('idnep') ||
+        c.includes('cód. int') ||
+        c === 'cod' ||
+        c === 'cód' ||
+        c === 'codigo' ||
+        c === 'código'
+    );
+
+    // 2. SKU / CÓDIGO DE BARRAS (búsqueda específica de "sku", "barra", "barcode", "ref")
+    const skuIdx = row.findIndex(
+      (c) =>
+        c.includes('sku') ||
+        c.includes('barra') ||
+        c.includes('barcode') ||
+        c.includes('ean') ||
+        c.includes('upc') ||
+        c.includes('ref') ||
+        c.includes('referencia')
+    );
+
+    // 3. ID GENÉRICO (si no hubo distinción clara)
     const idIdx = row.findIndex(
       (c) =>
         c === 'id' ||
@@ -284,17 +319,14 @@ export function parseRowsMatrix(rawRows: any[][]): ParsedInventoryItem[] {
         c.startsWith('id_') ||
         c.startsWith('id-') ||
         c.endsWith(' id') ||
-        c === 'id nep' ||
-        c.includes('sku') ||
+        c.includes('item') ||
         c.includes('codigo') ||
         c.includes('código') ||
         c.includes('cod') ||
-        c.includes('ref') ||
-        c.includes('referencia') ||
-        c.includes('item')
+        c.includes('sku')
     );
 
-    // 2. STK-SIS: stock desplegado por el sistema (priorizar 'sis' / 'sistema' / 'teor' y EXCLUIR 'fis' / 'físico')
+    // 4. STK-SIS: stock desplegado por el sistema (priorizar 'sis' / 'sistema' / 'teor' y EXCLUIR 'fis' / 'físico')
     let stockIdx = row.findIndex(
       (c) =>
         (c.includes('stk - sis') ||
@@ -311,7 +343,7 @@ export function parseRowsMatrix(rawRows: any[][]): ParsedInventoryItem[] {
       );
     }
 
-    // 3. PRODUCTO: descripción del producto
+    // 5. PRODUCTO: descripción del producto
     const prodIdx = row.findIndex(
       (c) =>
         c.includes('producto') ||
@@ -324,7 +356,7 @@ export function parseRowsMatrix(rawRows: any[][]): ParsedInventoryItem[] {
         c.includes('medicamento')
     );
 
-    // 4. VALOR: valor monetario en dólares del total de la caja
+    // 6. VALOR: valor monetario en dólares del total de la caja
     const valorIdx = row.findIndex(
       (c) =>
         c.includes('valor') ||
@@ -338,14 +370,31 @@ export function parseRowsMatrix(rawRows: any[][]): ParsedInventoryItem[] {
         c.includes('caja')
     );
 
-    // Si encontramos al menos (id y producto) o (id y stock) o (producto y stock)
+    // Si encontramos al menos identificador y producto, o identificador y stock, o producto y stock
+    const hasIdentifier = internalCodeIdx !== -1 || skuIdx !== -1 || idIdx !== -1;
     if (
-      (idIdx !== -1 && prodIdx !== -1) ||
-      (idIdx !== -1 && stockIdx !== -1) ||
+      (hasIdentifier && prodIdx !== -1) ||
+      (hasIdentifier && stockIdx !== -1) ||
       (prodIdx !== -1 && (stockIdx !== -1 || valorIdx !== -1))
     ) {
       headerRowIndex = r;
-      idColIndex = idIdx !== -1 ? idIdx : (prodIdx === 0 ? 1 : 0);
+
+      if (skuIdx !== -1 && internalCodeIdx !== -1 && skuIdx !== internalCodeIdx) {
+        skuColIndex = skuIdx;
+        internalCodeColIndex = internalCodeIdx;
+      } else if (skuIdx !== -1) {
+        skuColIndex = skuIdx;
+        internalCodeColIndex = skuIdx;
+      } else if (internalCodeIdx !== -1) {
+        skuColIndex = internalCodeIdx;
+        internalCodeColIndex = internalCodeIdx;
+      } else {
+        const fallbackId = idIdx !== -1 ? idIdx : (prodIdx === 0 ? 1 : 0);
+        skuColIndex = fallbackId;
+        internalCodeColIndex = fallbackId;
+      }
+
+      idColIndex = skuColIndex;
       productColIndex = prodIdx !== -1 ? prodIdx : (idColIndex === 0 ? 1 : 0);
       stockColIndex = stockIdx;
       valorColIndex = valorIdx;
@@ -421,12 +470,13 @@ export function parseRowsMatrix(rawRows: any[][]): ParsedInventoryItem[] {
       continue;
     }
 
-    const idVal = idColIndex !== -1 ? row[idColIndex] : undefined;
+    const idVal = skuColIndex !== -1 ? row[skuColIndex] : (idColIndex !== -1 ? row[idColIndex] : undefined);
+    const internalCodeVal = internalCodeColIndex !== -1 ? row[internalCodeColIndex] : idVal;
     const stockVal = stockColIndex !== -1 ? row[stockColIndex] : undefined;
     const prodVal = productColIndex !== -1 ? row[productColIndex] : undefined;
     const valorVal = valorColIndex !== -1 ? row[valorColIndex] : undefined;
 
-    const item = processRawRow(i + 1, idVal, stockVal, prodVal, valorVal);
+    const item = processRawRow(i + 1, idVal, stockVal, prodVal, valorVal, internalCodeVal);
     parsedItems.push(item);
   }
 

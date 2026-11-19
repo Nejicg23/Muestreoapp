@@ -52,6 +52,7 @@ export default async function InventarioRapidoPage({ searchParams }: PageProps) 
         rawCost: inventoryItems.rawCost,
         unitCostCalculated: inventoryItems.unitCostCalculated,
         location: inventoryItems.location,
+        rawMetadata: inventoryItems.rawMetadata,
       })
       .from(inventoryItems)
       .where(eq(inventoryItems.sessionId, targetSessionId))

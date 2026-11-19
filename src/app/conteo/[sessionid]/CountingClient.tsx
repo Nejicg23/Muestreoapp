@@ -287,19 +287,26 @@ export default function CountingClient({
     focusScanner();
   }, [selectedItem]);
 
-  // Búsqueda dinámica en tiempo real por Nombre, SKU o Código de Barras con incidencias
+  // Búsqueda dinámica en tiempo real por Cód. Interno, SKU o Nombre con incidencias
   const searchQuery = scanInput.trim().toLowerCase();
 
   const dynamicMatches = useMemo(() => {
     if (!searchQuery) return [];
     return items
       .filter((item) => {
+        const itemInternal = (
+          (item as any).internalCode ||
+          (item as any).rawMetadata?.internalCode ||
+          item.barcode ||
+          ''
+        ).toLowerCase();
+        const matchInternal = itemInternal ? itemInternal.includes(searchQuery) : false;
         const matchName = item.description.toLowerCase().includes(searchQuery);
         const matchSku = item.sku.toLowerCase().includes(searchQuery);
         const matchBarcode = item.barcode
           ? item.barcode.toLowerCase().includes(searchQuery)
           : false;
-        return matchName || matchSku || matchBarcode;
+        return matchName || matchSku || matchInternal || matchBarcode;
       })
       .map((item) => {
         // Calcular incidencias y estado en vivo para este ítem
@@ -376,11 +383,21 @@ export default function CountingClient({
     const query = scanInput.trim().toLowerCase();
     if (!query) return;
 
-    // 1. Buscar coincidencia exacta por barcode o SKU
+    // 1. Buscar coincidencia exacta por Cód. Interno, barcode o SKU
     let found = items.find(
-      (item) =>
-        (item.barcode && item.barcode.toLowerCase() === query) ||
-        item.sku.toLowerCase() === query
+      (item) => {
+        const itemInternal = (
+          (item as any).internalCode ||
+          (item as any).rawMetadata?.internalCode ||
+          item.barcode ||
+          ''
+        ).toLowerCase();
+        return (
+          itemInternal === query ||
+          (item.barcode && item.barcode.toLowerCase() === query) ||
+          item.sku.toLowerCase() === query
+        );
+      }
     );
 
     // 2. Si no es exacto, seleccionar la primera coincidencia por nombre
@@ -722,12 +739,21 @@ export default function CountingClient({
   };
 
   // Filtrado modal de búsqueda manual
-  const filteredItems = items.filter(
-    (item) =>
-      item.description.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      item.sku.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      (item.barcode && item.barcode.includes(searchFilter))
-  );
+  const filteredItems = items.filter((item) => {
+    const qLower = searchFilter.toLowerCase();
+    const itemInternal = (
+      (item as any).internalCode ||
+      (item as any).rawMetadata?.internalCode ||
+      item.barcode ||
+      ''
+    ).toLowerCase();
+    return (
+      item.description.toLowerCase().includes(qLower) ||
+      item.sku.toLowerCase().includes(qLower) ||
+      itemInternal.includes(qLower) ||
+      (item.barcode && item.barcode.toLowerCase().includes(qLower))
+    );
+  });
 
   return (
     <div className="space-y-6">
@@ -849,7 +875,7 @@ export default function CountingClient({
             <label className="block text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-2 flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Barcode className="w-4 h-4" />
-                Búsqueda Dinámica por Nombre, SKU o Código de Barras
+                Búsqueda Dinámica por Cód. Interno, SKU o Nombre
               </span>
               {scanInput && (
                 <span className="text-[11px] text-slate-400 font-normal">
@@ -863,7 +889,7 @@ export default function CountingClient({
                 <input
                   ref={barcodeInputRef}
                   type="text"
-                  placeholder="Digita nombre (ej: Exforge, Daflon), SKU o escanea código..."
+                  placeholder="Buscar por Cód. Interno, SKU o Nombre (o escanea código)..."
                   value={scanInput}
                   onFocus={() => setShowSuggestions(true)}
                   onChange={(e) => {
@@ -927,8 +953,7 @@ export default function CountingClient({
                           <span>{match.description}</span>
                         </div>
                         <div className="text-[11px] font-mono text-slate-400 flex flex-wrap items-center gap-2 mt-0.5">
-                          <span className="text-cyan-300 font-bold">SKU: {match.sku}</span>
-                          {match.barcode && <span>• Barcode: {match.barcode}</span>}
+                          <span className="text-cyan-300 font-bold">Cód: {match.barcode || match.sku} • SKU: {match.sku}</span>
                           <span>• Factor: 1x{match.packQuantity} un</span>
                           {match.location && <span>• Ubic: {match.location}</span>}
                         </div>
@@ -995,13 +1020,11 @@ export default function CountingClient({
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-mono text-xs px-2.5 py-1 rounded-lg bg-cyan-950 text-cyan-300 border border-cyan-800 font-bold">
+                      Cód: {selectedItem.barcode || selectedItem.sku}
+                    </span>
+                    <span className="font-mono text-xs px-2.5 py-1 rounded-lg bg-slate-700/80 text-slate-300">
                       SKU: {selectedItem.sku}
                     </span>
-                    {selectedItem.barcode && (
-                      <span className="font-mono text-xs px-2.5 py-1 rounded-lg bg-slate-700/80 text-slate-300">
-                        {selectedItem.barcode}
-                      </span>
-                    )}
                     {selectedItem.location && (
                       <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-slate-700/40 text-slate-300">
                         <MapPin className="w-3 h-3 text-cyan-400" />
@@ -1435,7 +1458,7 @@ export default function CountingClient({
 
             <input
               type="text"
-              placeholder="Filtrar por nombre, SKU o código de barras..."
+              placeholder="Filtrar por Cód. Interno, SKU o Nombre..."
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
               className="w-full bg-slate-950 border border-slate-700 text-white px-4 py-2.5 rounded-xl text-sm outline-none focus:border-cyan-500"

@@ -320,11 +320,19 @@ export default function ReportClient({
 
   // Filtrado de items consolidados para vista general
   const filteredItems = itemsList.filter((item) => {
+    const q = searchQuery.toLowerCase();
+    const itemInternal = (
+      (item as any).internalCode ||
+      (item as any).rawMetadata?.internalCode ||
+      item.barcode ||
+      ''
+    ).toLowerCase();
     const matchesSearch =
-      item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.barcode && item.barcode.includes(searchQuery)) ||
-      (item.location && item.location.toLowerCase().includes(searchQuery.toLowerCase()));
+      item.description.toLowerCase().includes(q) ||
+      item.sku.toLowerCase().includes(q) ||
+      itemInternal.includes(q) ||
+      (item.barcode && item.barcode.toLowerCase().includes(q)) ||
+      (item.location && item.location.toLowerCase().includes(q));
 
     if (!matchesSearch) return false;
 
@@ -350,11 +358,19 @@ export default function ReportClient({
   // 1. Filtrado y paginación a 30 ítems para el Resumen de Novedades y Discrepancias (Pantalla)
   const filteredDiscrepancyItems = useMemo(() => {
     return discrepancyItems.filter((item) => {
+      const q = searchQuery.toLowerCase();
+      const itemInternal = (
+        (item as any).internalCode ||
+        (item as any).rawMetadata?.internalCode ||
+        item.barcode ||
+        ''
+      ).toLowerCase();
       const matchesSearch =
-        item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.barcode && item.barcode.includes(searchQuery)) ||
-        (item.location && item.location.toLowerCase().includes(searchQuery.toLowerCase()));
+        item.description.toLowerCase().includes(q) ||
+        item.sku.toLowerCase().includes(q) ||
+        itemInternal.includes(q) ||
+        (item.barcode && item.barcode.toLowerCase().includes(q)) ||
+        (item.location && item.location.toLowerCase().includes(q));
 
       if (!matchesSearch) return false;
       if (filterStatus === 'all' || filterStatus === 'novelties_only') return true;
@@ -375,11 +391,19 @@ export default function ReportClient({
   // 2. Filtrado y paginación para Ítems Conformes (Pantalla)
   const filteredCompliantItems = useMemo(() => {
     return compliantItems.filter((item) => {
+      const q = searchQuery.toLowerCase();
+      const itemInternal = (
+        (item as any).internalCode ||
+        (item as any).rawMetadata?.internalCode ||
+        item.barcode ||
+        ''
+      ).toLowerCase();
       return (
-        item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.barcode && item.barcode.includes(searchQuery)) ||
-        (item.location && item.location.toLowerCase().includes(searchQuery.toLowerCase()))
+        item.description.toLowerCase().includes(q) ||
+        item.sku.toLowerCase().includes(q) ||
+        itemInternal.includes(q) ||
+        (item.barcode && item.barcode.toLowerCase().includes(q)) ||
+        (item.location && item.location.toLowerCase().includes(q))
       );
     });
   }, [compliantItems, searchQuery]);
@@ -1210,7 +1234,7 @@ export default function ReportClient({
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Buscar discrepancia por SKU, producto o ubicación..."
+                    placeholder="Buscar por Cód. Interno, SKU, Nombre o Ubicación..."
                     className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   />
                 </div>
@@ -2173,7 +2197,7 @@ export default function ReportClient({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar por producto, SKU o lote..."
+                  placeholder="Buscar por Cód. Interno, SKU, Nombre o Lote..."
                   className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>

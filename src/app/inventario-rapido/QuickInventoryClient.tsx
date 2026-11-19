@@ -66,6 +66,8 @@ interface RawItem {
   sessionId?: string;
   sku: string;
   barcode: string | null;
+  internalCode?: string | null;
+  rawMetadata?: any;
   description: string;
   systemStock: string | number;
   packQuantity: number;
@@ -329,7 +331,9 @@ export default function QuickInventoryClient({
     const converted: RawItem[] = parsedPreviewItems.map((p, idx) => ({
       id: `imported-${Date.now()}-${idx}`,
       sku: p.sku,
-      barcode: null,
+      barcode: p.internalCode || p.barcode || p.sku || null,
+      internalCode: p.internalCode || p.barcode || p.sku || null,
+      rawMetadata: { internalCode: p.internalCode, sku: p.sku },
       description: p.description,
       systemStock: p.calculatedStock,
       packQuantity: p.factor,
@@ -385,10 +389,17 @@ export default function QuickInventoryClient({
     return dbItems
       .filter((item) => {
         if (alreadySelectedIds.has(item.id)) return false;
+        const itemInternal = (
+          item.internalCode ||
+          item.rawMetadata?.internalCode ||
+          item.barcode ||
+          ''
+        ).toLowerCase();
         return (
           item.description.toLowerCase().includes(q) ||
           item.sku.toLowerCase().includes(q) ||
-          (item.barcode && item.barcode.includes(q))
+          itemInternal.includes(q) ||
+          (item.barcode && item.barcode.toLowerCase().includes(q))
         );
       })
       .slice(0, 10);
@@ -402,11 +413,13 @@ export default function QuickInventoryClient({
     const rawCostNum = Number(item.rawCost) || 0;
     const unitCostNum = Number(item.unitCostCalculated) || (factor > 0 && rawCostNum > 0 ? rawCostNum / factor : 0);
     const calculatedBoxCost = rawCostNum > 0 ? rawCostNum : (unitCostNum * factor);
+    const resolvedInternal = item.internalCode || item.rawMetadata?.internalCode || item.barcode || item.sku || null;
 
     return {
       originalItemId: item.id,
       sku: item.sku,
-      barcode: item.barcode,
+      barcode: resolvedInternal,
+      internalCode: resolvedInternal,
       description: item.description,
       packQuantity: factor,
       unitCost: unitCostNum,
@@ -1022,8 +1035,8 @@ export default function QuickInventoryClient({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={
                   countMode === 'reverse'
-                    ? 'Escribe el nombre o SKU del ítem que vas a contar ahora...'
-                    : 'Buscar por nombre (ej: Copin, Abanix) o SKU...'
+                    ? 'Buscar por Cód. Interno, SKU o Nombre...'
+                    : 'Buscar por Cód. Interno, SKU o Nombre (ej: Copin, Abanix)...'
                 }
                 className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-2xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
@@ -1043,7 +1056,7 @@ export default function QuickInventoryClient({
                     <div className="min-w-0 flex-1">
                       <span className="font-bold text-white block truncate">{item.description}</span>
                       <span className="text-[10px] text-slate-400 font-mono">
-                        SKU: {item.sku} • Factor: 1x{item.packQuantity}
+                        Cód. Interno: {item.internalCode || item.barcode || item.sku} • SKU: {item.sku} • Factor: 1x{item.packQuantity}
                       </span>
                     </div>
 
@@ -1084,7 +1097,7 @@ export default function QuickInventoryClient({
                   <div className="flex items-start justify-between gap-2 border-b border-amber-500/20 pb-3">
                     <div className="min-w-0">
                       <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono text-[10px] font-bold uppercase">
-                        Registrando Novedad • SKU: {activeDraftItem.sku} (Factor 1x{factor})
+                        Registrando Novedad • Cód: {activeDraftItem.barcode || activeDraftItem.sku} • SKU: {activeDraftItem.sku} (Factor 1x{factor})
                       </span>
                       <h3 className="text-sm sm:text-base font-black text-white mt-1.5 break-words">
                         {activeDraftItem.description}
@@ -1403,7 +1416,7 @@ export default function QuickInventoryClient({
                   <div className="flex items-start justify-between gap-2 border-b border-emerald-500/20 pb-3">
                     <div className="min-w-0">
                       <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono text-[10px] font-bold uppercase">
-                        Contando Ahora • SKU: {activeDraftItem.sku} (Factor 1x{factor})
+                        Contando Ahora • Cód: {activeDraftItem.barcode || activeDraftItem.sku} • SKU: {activeDraftItem.sku} (Factor 1x{factor})
                       </span>
                       <h3 className="text-sm sm:text-base font-black text-white mt-1.5">
                         {activeDraftItem.description}
@@ -1712,7 +1725,7 @@ export default function QuickInventoryClient({
                       <div className="min-w-0 flex-1">
                         <span className="font-bold text-white block truncate">{item.description}</span>
                         <span className="text-[10px] text-slate-400 font-mono">
-                          SKU: {item.sku} • Factor: 1x{factor}
+                          Cód: {item.barcode || (item as any).internalCode || item.sku} • SKU: {item.sku} • Factor: 1x{factor}
                         </span>
                       </div>
 
@@ -1927,7 +1940,7 @@ export default function QuickInventoryClient({
                     <div className="flex items-start justify-between gap-2 border-b border-slate-800/80 pb-2.5">
                       <div className="min-w-0">
                         <span className="font-mono text-[10px] text-emerald-400 font-bold">
-                          SKU: {item.sku} • Factor: 1x{factor}
+                          Cód: {item.barcode || (item as any).internalCode || item.sku} • SKU: {item.sku} • Factor: 1x{factor}
                         </span>
                         <h3 className="text-xs font-bold text-white mt-0.5 truncate">
                           {item.description}
@@ -2218,7 +2231,7 @@ export default function QuickInventoryClient({
                     <div className="flex items-start justify-between gap-2 border-b border-slate-800/80 pb-2.5">
                       <div className="min-w-0">
                         <span className="font-mono text-[10px] text-cyan-400 font-bold">
-                          SKU: {item.sku} • Factor: 1x{factor}
+                          Cód: {item.barcode || (item as any).internalCode || item.sku} • SKU: {item.sku} • Factor: 1x{factor}
                         </span>
                         <h3 className="text-xs font-bold text-white mt-0.5 truncate">
                           {item.description}
@@ -2477,7 +2490,7 @@ export default function QuickInventoryClient({
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
                       <div className="min-w-0">
                         <span className="font-mono text-[10px] text-cyan-400 font-bold">
-                          SKU: {item.sku} • Factor: 1x{factor}
+                          Cód: {item.barcode || (item as any).internalCode || item.sku} • SKU: {item.sku} • Factor: 1x{factor}
                         </span>
                         <h3 className="text-xs sm:text-sm font-bold text-white mt-0.5 truncate">
                           {item.description}
@@ -2809,7 +2822,7 @@ export default function QuickInventoryClient({
                     <div className="flex items-start justify-between gap-2 border-b border-slate-800/80 pb-2.5">
                       <div className="min-w-0">
                         <span className="font-mono text-[10px] text-slate-400">
-                          SKU: {item.sku} • Factor: 1x{factor}
+                          Cód: {item.barcode || (item as any).internalCode || item.sku} • SKU: {item.sku} • Factor: 1x{factor}
                         </span>
                         <h3 className="text-xs font-bold text-white mt-0.5 truncate">
                           {item.description}

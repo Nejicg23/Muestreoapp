@@ -7,6 +7,8 @@ import { eq } from 'drizzle-orm';
 
 export interface ImportItemInput {
   sku: string;
+  internalCode?: string;
+  barcode?: string;
   description: string;
   systemStock: number;
   packQuantity: number;
@@ -65,10 +67,12 @@ export async function importInventoryItems(payload: {
           ? boxCostNum / safeFactor
           : 1.0;
 
+      const internalCode = item.internalCode?.trim() || item.barcode?.trim() || item.sku.trim();
+
       return {
         sessionId: targetSessionId!,
         sku: item.sku.trim(),
-        barcode: item.sku.trim(), // SKU como clave de escaneo por defecto
+        barcode: internalCode, // Almacena el Cód. Interno o Código de Barras
         description: item.description.trim(),
         systemStock: item.systemStock.toString(),
         packQuantity: safeFactor,
@@ -76,7 +80,11 @@ export async function importInventoryItems(payload: {
         rawCost: boxCostNum.toFixed(4), // Valor monetario en dólares del total de la caja
         unitCostCalculated: fractionCost.toFixed(4), // Costo calculado por fracción
         location: item.location || 'Bodega Principal',
-        rawMetadata: item.rawMetadata || null,
+        rawMetadata: {
+          ...(item.rawMetadata || {}),
+          internalCode,
+          sku: item.sku.trim(),
+        },
         requiresRecount: false,
       };
     });
