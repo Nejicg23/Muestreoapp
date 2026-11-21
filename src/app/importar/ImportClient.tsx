@@ -409,6 +409,7 @@ export default function ImportClient({ existingSessions }: Props) {
       !searchLower ||
       item.sku.toLowerCase().includes(searchLower) ||
       (item.internalCode && item.internalCode.toLowerCase().includes(searchLower)) ||
+      (item.barcode && item.barcode.toLowerCase().includes(searchLower)) ||
       item.description.toLowerCase().includes(searchLower) ||
       item.incidences.some((inc) => inc.message.toLowerCase().includes(searchLower));
 
@@ -795,7 +796,7 @@ export default function ImportClient({ existingSessions }: Props) {
                 <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Buscar por Cód. Interno, SKU, Nombre o Incidencia..."
+                  placeholder="Buscar por Cód. Id, Descripción, Código de Barras o Incidencia..."
                   value={searchFilter}
                   onChange={(e) => setSearchFilter(e.target.value)}
                   className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-8 py-1.5 text-xs text-white outline-none focus:border-cyan-500 placeholder:text-slate-400"
@@ -853,7 +854,7 @@ export default function ImportClient({ existingSessions }: Props) {
                 <thead className="sticky top-0 bg-slate-900 border-b border-slate-700 text-slate-400 uppercase font-semibold text-[11px] tracking-wider z-10">
                   <tr>
                     <th className="px-3 py-3 w-10 text-center">#</th>
-                    <th className="px-3 py-3">Cód. Interno / SKU</th>
+                    <th className="px-3 py-3">Cód. Id / Barra</th>
                     <th className="px-3 py-3">Producto</th>
                     <th className="px-3 py-3 text-center">Stock Archivo</th>
                     <th className="px-3 py-3 text-center w-20">Unids (u)</th>
@@ -889,11 +890,11 @@ export default function ImportClient({ existingSessions }: Props) {
                             {item.rowId}
                           </td>
 
-                          {/* Cód. Interno / SKU */}
+                          {/* Cód. Id / Barra */}
                           <td className="px-3 py-2.5 font-mono">
-                            <span className="text-cyan-300 font-bold block">{item.sku}</span>
-                            {item.internalCode && item.internalCode !== item.sku && (
-                              <span className="text-[10px] text-slate-400 block">Cód: {item.internalCode}</span>
+                            <span className="text-cyan-300 font-bold block">{item.internalCode || item.sku}</span>
+                            {item.barcode && item.barcode !== (item.internalCode || item.sku) && (
+                              <span className="text-[10px] text-slate-400 block font-mono">Barra: {item.barcode}</span>
                             )}
                           </td>
 

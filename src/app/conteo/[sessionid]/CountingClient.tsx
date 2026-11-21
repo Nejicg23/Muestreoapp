@@ -287,7 +287,7 @@ export default function CountingClient({
     focusScanner();
   }, [selectedItem]);
 
-  // Búsqueda dinámica en tiempo real por Cód. Interno, SKU o Nombre con incidencias
+  // Búsqueda dinámica en tiempo real por Cód. Id, Descripción o Código de Barras con incidencias
   const searchQuery = scanInput.trim().toLowerCase();
 
   const dynamicMatches = useMemo(() => {
@@ -296,16 +296,20 @@ export default function CountingClient({
       .filter((item) => {
         const itemInternal = (
           (item as any).internalCode ||
+          (item as any).rawMetadata?.codId ||
           (item as any).rawMetadata?.internalCode ||
+          item.sku ||
+          ''
+        ).toLowerCase();
+        const itemBarcode = (
           item.barcode ||
+          (item as any).rawMetadata?.barcode ||
           ''
         ).toLowerCase();
         const matchInternal = itemInternal ? itemInternal.includes(searchQuery) : false;
+        const matchBarcode = itemBarcode ? itemBarcode.includes(searchQuery) : false;
         const matchName = item.description.toLowerCase().includes(searchQuery);
         const matchSku = item.sku.toLowerCase().includes(searchQuery);
-        const matchBarcode = item.barcode
-          ? item.barcode.toLowerCase().includes(searchQuery)
-          : false;
         return matchName || matchSku || matchInternal || matchBarcode;
       })
       .map((item) => {
@@ -383,18 +387,24 @@ export default function CountingClient({
     const query = scanInput.trim().toLowerCase();
     if (!query) return;
 
-    // 1. Buscar coincidencia exacta por Cód. Interno, barcode o SKU
+    // 1. Buscar coincidencia exacta por Cód. Id, barcode o SKU
     let found = items.find(
       (item) => {
         const itemInternal = (
           (item as any).internalCode ||
+          (item as any).rawMetadata?.codId ||
           (item as any).rawMetadata?.internalCode ||
+          item.sku ||
+          ''
+        ).toLowerCase();
+        const itemBarcode = (
           item.barcode ||
+          (item as any).rawMetadata?.barcode ||
           ''
         ).toLowerCase();
         return (
           itemInternal === query ||
-          (item.barcode && item.barcode.toLowerCase() === query) ||
+          itemBarcode === query ||
           item.sku.toLowerCase() === query
         );
       }
@@ -875,7 +885,7 @@ export default function CountingClient({
             <label className="block text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-2 flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Barcode className="w-4 h-4" />
-                Búsqueda Dinámica por Cód. Interno, SKU o Nombre
+                Búsqueda Dinámica por Cód. Id, Descripción o Código de Barras
               </span>
               {scanInput && (
                 <span className="text-[11px] text-slate-400 font-normal">
@@ -889,7 +899,7 @@ export default function CountingClient({
                 <input
                   ref={barcodeInputRef}
                   type="text"
-                  placeholder="Buscar por Cód. Interno, SKU o Nombre (o escanea código)..."
+                  placeholder="Buscar por Cód. Id, Descripción o Código de Barras (o escanea código)..."
                   value={scanInput}
                   onFocus={() => setShowSuggestions(true)}
                   onChange={(e) => {
@@ -1458,7 +1468,7 @@ export default function CountingClient({
 
             <input
               type="text"
-              placeholder="Filtrar por Cód. Interno, SKU o Nombre..."
+              placeholder="Filtrar por Cód. Id, Descripción o Código de Barras..."
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
               className="w-full bg-slate-950 border border-slate-700 text-white px-4 py-2.5 rounded-xl text-sm outline-none focus:border-cyan-500"

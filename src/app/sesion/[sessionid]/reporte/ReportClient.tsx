@@ -323,15 +323,21 @@ export default function ReportClient({
     const q = searchQuery.toLowerCase();
     const itemInternal = (
       (item as any).internalCode ||
+      (item as any).rawMetadata?.codId ||
       (item as any).rawMetadata?.internalCode ||
+      item.sku ||
+      ''
+    ).toLowerCase();
+    const itemBarcode = (
       item.barcode ||
+      (item as any).rawMetadata?.barcode ||
       ''
     ).toLowerCase();
     const matchesSearch =
       item.description.toLowerCase().includes(q) ||
       item.sku.toLowerCase().includes(q) ||
       itemInternal.includes(q) ||
-      (item.barcode && item.barcode.toLowerCase().includes(q)) ||
+      itemBarcode.includes(q) ||
       (item.location && item.location.toLowerCase().includes(q));
 
     if (!matchesSearch) return false;
@@ -361,15 +367,21 @@ export default function ReportClient({
       const q = searchQuery.toLowerCase();
       const itemInternal = (
         (item as any).internalCode ||
+        (item as any).rawMetadata?.codId ||
         (item as any).rawMetadata?.internalCode ||
+        item.sku ||
+        ''
+      ).toLowerCase();
+      const itemBarcode = (
         item.barcode ||
+        (item as any).rawMetadata?.barcode ||
         ''
       ).toLowerCase();
       const matchesSearch =
         item.description.toLowerCase().includes(q) ||
         item.sku.toLowerCase().includes(q) ||
         itemInternal.includes(q) ||
-        (item.barcode && item.barcode.toLowerCase().includes(q)) ||
+        itemBarcode.includes(q) ||
         (item.location && item.location.toLowerCase().includes(q));
 
       if (!matchesSearch) return false;
@@ -394,15 +406,21 @@ export default function ReportClient({
       const q = searchQuery.toLowerCase();
       const itemInternal = (
         (item as any).internalCode ||
+        (item as any).rawMetadata?.codId ||
         (item as any).rawMetadata?.internalCode ||
+        item.sku ||
+        ''
+      ).toLowerCase();
+      const itemBarcode = (
         item.barcode ||
+        (item as any).rawMetadata?.barcode ||
         ''
       ).toLowerCase();
       return (
         item.description.toLowerCase().includes(q) ||
         item.sku.toLowerCase().includes(q) ||
         itemInternal.includes(q) ||
-        (item.barcode && item.barcode.toLowerCase().includes(q)) ||
+        itemBarcode.includes(q) ||
         (item.location && item.location.toLowerCase().includes(q))
       );
     });
@@ -1234,7 +1252,7 @@ export default function ReportClient({
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Buscar por Cód. Interno, SKU, Nombre o Ubicación..."
+                    placeholder="Buscar por Cód. Id, Descripción, Código de Barras o Ubicación..."
                     className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   />
                 </div>
@@ -2197,7 +2215,7 @@ export default function ReportClient({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar por Cód. Interno, SKU, Nombre o Lote..."
+                  placeholder="Buscar por Cód. Id, Descripción, Código de Barras o Lote..."
                   className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
               </div>

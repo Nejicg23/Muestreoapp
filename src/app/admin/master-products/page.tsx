@@ -78,9 +78,9 @@ export default function MasterProductsPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por código interno o código de barra..."
+            placeholder="Buscar por Cód. Id, Descripción o Código de Barras..."
             className="pl-10 pr-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
-            aria-label="Buscar productos por SKU o código de barras"
+            aria-label="Buscar productos por Cód. Id, Descripción o Código de Barras"
           />
         </div>
         {success && (
@@ -92,12 +92,27 @@ export default function MasterProductsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {products.map((product: any) => (
-          <div key={product.id} className="p-4 border rounded-lg border-gray-200 hover:border-blue-500 transition-colors">
-            <div className="text-sm font-medium">{product.sku}</div>
-            <div className="text-xs text-gray-500 mt-1">{product.description || '—'}</div>
-            <div className="text-right mt-2">
-              <div className="font-medium">Costo: ${product.boxCost?.toFixed(2) || '—'}</div>
-              <div className="text-xs text-gray-400">caja</div>
+          <div key={product.id} className="p-4 border rounded-2xl bg-slate-900/90 border-slate-800 hover:border-cyan-500 transition-colors shadow-lg">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-800/60 px-2 py-0.5 rounded-md">
+                Cód. Id: {product.sku}
+              </span>
+              {product.barcode && product.barcode !== product.sku && (
+                <span className="text-[11px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">
+                  Barra: {product.barcode}
+                </span>
+              )}
+            </div>
+            <div className="text-sm font-semibold text-white mt-2 line-clamp-2">{product.description || '—'}</div>
+            <div className="flex items-center justify-between text-xs mt-3 pt-2 border-t border-slate-800">
+              <div className="text-emerald-400 font-mono font-bold">
+                Costo Prom: ${Number(product.unitCostCalculated || product.boxCost || 0).toFixed(4)}
+              </div>
+              {product.boxCost && (
+                <div className="text-slate-400 font-mono text-[11px]">
+                  PVP: ${Number(product.boxCost).toFixed(2)}
+                </div>
+              )}
             </div>
             <button 
               className="mt-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-800"

@@ -67,22 +67,25 @@ export async function importInventoryItems(payload: {
           ? boxCostNum / safeFactor
           : 1.0;
 
-      const internalCode = item.internalCode?.trim() || item.barcode?.trim() || item.sku.trim();
+      const internalCode = item.internalCode?.trim() || item.sku.trim();
+      const barcodeVal = item.barcode?.trim() || internalCode;
 
       return {
         sessionId: targetSessionId!,
         sku: item.sku.trim(),
-        barcode: internalCode, // Almacena el Cód. Interno o Código de Barras
+        barcode: barcodeVal, // Almacena el Código de Barras o Cód. Interno
         description: item.description.trim(),
         systemStock: item.systemStock.toString(),
         packQuantity: safeFactor,
         costBasis: 'pack' as const,
-        rawCost: boxCostNum.toFixed(4), // Valor monetario en dólares del total de la caja
-        unitCostCalculated: fractionCost.toFixed(4), // Costo calculado por fracción
+        rawCost: boxCostNum.toFixed(4), // Valor monetario en dólares del impacto de inventario (Costo Promedio)
+        unitCostCalculated: fractionCost.toFixed(4), // Costo unitario promedio
         location: item.location || 'Bodega Principal',
         rawMetadata: {
           ...(item.rawMetadata || {}),
+          codId: internalCode,
           internalCode,
+          barcode: barcodeVal,
           sku: item.sku.trim(),
         },
         requiresRecount: false,

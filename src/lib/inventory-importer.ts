@@ -284,29 +284,38 @@ export function parseRowsMatrix(rawRows: any[][]): ParsedInventoryItem[] {
   for (let r = 0; r < Math.min(5, rawRows.length); r++) {
     const row = rawRows[r].map((cell) => String(cell || '').toLowerCase().trim());
 
-    // 1. CÓDIGO INTERNO (búsqueda específica de "cod interno", "codigo interno", "id nep", etc.)
+    // 1. CÓDIGO INTERNO (búsqueda específica de "cód.id", "cod.id", "cod id", "cód id", "cod interno", "codigo interno", "id nep", etc.)
     const internalCodeIdx = row.findIndex(
       (c) =>
         c.includes('interno') ||
+        c.includes('cód.id') ||
+        c.includes('cod.id') ||
+        c.includes('cód id') ||
+        c.includes('cod id') ||
+        c.includes('cód_id') ||
+        c.includes('cod_id') ||
         c.includes('cod. int') ||
+        c.includes('cód. int') ||
         c.includes('cod int') ||
+        c.includes('cód int') ||
         c.includes('id nep') ||
         c.includes('idnep') ||
-        c.includes('cód. int') ||
         c === 'cod' ||
         c === 'cód' ||
         c === 'codigo' ||
-        c === 'código'
+        c === 'código' ||
+        c === 'id' ||
+        (c.includes('cod') && !c.includes('barra'))
     );
 
-    // 2. SKU / CÓDIGO DE BARRAS (búsqueda específica de "sku", "barra", "barcode", "ref")
+    // 2. SKU / CÓDIGO DE BARRAS (búsqueda específica de "barra", "barcode", "ean", "upc", "sku", "ref")
     const skuIdx = row.findIndex(
       (c) =>
-        c.includes('sku') ||
         c.includes('barra') ||
         c.includes('barcode') ||
         c.includes('ean') ||
         c.includes('upc') ||
+        c.includes('sku') ||
         c.includes('ref') ||
         c.includes('referencia')
     );
@@ -356,19 +365,37 @@ export function parseRowsMatrix(rawRows: any[][]): ParsedInventoryItem[] {
         c.includes('medicamento')
     );
 
-    // 6. VALOR: valor monetario en dólares del total de la caja
-    const valorIdx = row.findIndex(
+    // 6. VALOR: costo promedio ponderado / costo interno (priorizar Costo Prom. sobre PVP o precio de venta)
+    let valorIdx = row.findIndex(
       (c) =>
-        c.includes('valor') ||
-        c.includes('costo') ||
-        c.includes('cost') ||
-        c.includes('precio') ||
-        c.includes('dolar') ||
-        c.includes('dólar') ||
-        c.includes('usd') ||
-        c.includes('total caja') ||
-        c.includes('caja')
+        c.includes('costo prom') ||
+        c.includes('costo_prom') ||
+        c.includes('promedio') ||
+        c.includes('costo int') ||
+        c.includes('cto. prom') ||
+        c.includes('cto prom')
     );
+
+    if (valorIdx === -1) {
+      valorIdx = row.findIndex(
+        (c) =>
+          c.includes('costo') ||
+          c.includes('cost') ||
+          c.includes('valor') ||
+          c.includes('total caja')
+      );
+    }
+
+    if (valorIdx === -1) {
+      valorIdx = row.findIndex(
+        (c) =>
+          c.includes('precio') ||
+          c.includes('pvp') ||
+          c.includes('usd') ||
+          c.includes('dolar') ||
+          c.includes('dólar')
+      );
+    }
 
     // Si encontramos al menos identificador y producto, o identificador y stock, o producto y stock
     const hasIdentifier = internalCodeIdx !== -1 || skuIdx !== -1 || idIdx !== -1;
@@ -470,13 +497,38 @@ export function parseRowsMatrix(rawRows: any[][]): ParsedInventoryItem[] {
       continue;
     }
 
-    const idVal = skuColIndex !== -1 ? row[skuColIndex] : (idColIndex !== -1 ? row[idColIndex] : undefined);
-    const internalCodeVal = internalCodeColIndex !== -1 ? row[internalCodeColIndex] : idVal;
+    const firstCell = String(row[0] || '').toLowerCase().trim();
+    // Ignorar filas de paginación o encabezados de reporte Crystal/SAP (ej: inInventarioAlfabetico.rpt, Página -1 de 1)
+    if (
+      firstCell.includes('.rpt') ||
+      firstCell.includes('página') ||
+      firstCell.includes('pagina') ||
+      firstCell.includes('inventarioalfabetico')
+    ) {
+      continue;
+    }
+
+    let rawInternal = internalCodeColIndex !== -1 ? String(row[internalCodeColIndex] || '').trim() : '';
+    let rawBarcode = skuColIndex !== -1 ? String(row[skuColIndex] || '').trim() : '';
+
+    // Sanitizar cadenas vacías o etiquetas nulas comunes ("NULL", "SINCODIGO")
+    if (rawBarcode === 'NULL' || rawBarcode === 'null' || rawBarcode.toUpperCase() === 'SINCODIGO') {
+      rawBarcode = '';
+    }
+
+    // Identificador principal (priorizar Cód.Id interno para garantizar unicidad, con fallback a código de barras)
+    const resolvedSku = rawInternal || rawBarcode || (idColIndex !== -1 ? String(row[idColIndex] || '').trim() : `ITEM-${i + 1}`);
+    const resolvedInternal = rawInternal || resolvedSku;
+    const resolvedBarcode = rawBarcode || resolvedInternal;
+
     const stockVal = stockColIndex !== -1 ? row[stockColIndex] : undefined;
     const prodVal = productColIndex !== -1 ? row[productColIndex] : undefined;
     const valorVal = valorColIndex !== -1 ? row[valorColIndex] : undefined;
 
-    const item = processRawRow(i + 1, idVal, stockVal, prodVal, valorVal, internalCodeVal);
+    const item = processRawRow(i + 1, resolvedSku, stockVal, prodVal, valorVal, resolvedInternal);
+    if (resolvedBarcode) {
+      item.barcode = resolvedBarcode;
+    }
     parsedItems.push(item);
   }
 

@@ -32,36 +32,40 @@ async function importMasterProducts() {
   console.log('');
   
   // Preparar datos para importación
-  const productsToImport = rows.map(row => ({
-    // Cód.Id (número entero) -> sku (varchar único)
-    sku: String(row['Cód.Id']).padStart(6, '0'),
-    
-    // Descripción -> description (texto)
-    description: String(row['Descripción']) || null,
-    
-    // Cod. Barra -> barcode (varchar)
-    barcode: String(row['Cod. Barra']) || null,
-    
-    // Costo Prom. -> unitCostCalculated (costo de inventario interno)
-    // El usuario especificó: "dejando el costo promedio como costo de inventario"
-    unitCostCalculated: typeof row['Costo Prom.'] === 'number' ? Number(row['Costo Prom.'].toFixed(4)) : null,
-    
-    // PVP -> boxCost (precio por caja completa)
-    // Si no tenemos packQuantity, establecemos boxCost = unitCostCalculated * 1 (unidad por caja)
-    // O dejamos null para que se complete después
-    boxCost: typeof row['PVP'] === 'number' ? Number(row['PVP'].toFixed(2)) : null,
-    
-    // packQuantity -> factor de empaque (por defecto 1)
-    // Los datos Excel no traen esta información, usamos 1 por defecto
-    packQuantity: 1,
-    
-    // Estado activo por defecto
-    isActive: true,
-    
-    // Timestamps
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }));
+  const productsToImport = rows
+    .filter(row => {
+      const firstVal = String(row['Cód.Id'] || row['Cód. Id'] || row['Cod Id'] || row['Cod.Id'] || '').trim();
+      return firstVal && !firstVal.includes('.rpt') && !firstVal.toLowerCase().includes('página');
+    })
+    .map(row => {
+      const rawCodId = String(row['Cód.Id'] || row['Cód. Id'] || row['Cod Id'] || row['Cod.Id'] || '').trim();
+      const rawBarcode = String(row['Cod. Barra'] || row['Cod Barra'] || row['Código de Barras'] || '').trim();
+      const cleanBarcode = (rawBarcode === 'NULL' || rawBarcode.toUpperCase() === 'SINCODIGO' || !rawBarcode) ? null : rawBarcode;
+      const sku = rawCodId || cleanBarcode;
+      const costoProm = typeof row['Costo Prom.'] === 'number' 
+        ? Number(row['Costo Prom.'].toFixed(4)) 
+        : (parseFloat(String(row['Costo Prom.'] || '0').replace(',', '.')) || 0);
+      const pvp = typeof row['PVP'] === 'number' 
+        ? Number(row['PVP'].toFixed(2)) 
+        : (parseFloat(String(row['PVP'] || '0').replace(',', '.')) || costoProm);
+
+      return {
+        // Cód.Id como SKU identificador principal único
+        sku,
+        // Descripción
+        description: String(row['Descripción'] || row['Descripcion'] || 'Sin descripción').trim(),
+        // Cod. Barra
+        barcode: cleanBarcode || rawCodId,
+        // Costo promedio como impacto de costo de inventario
+        unitCostCalculated: costoProm,
+        // PVP como costo/precio de referencia
+        boxCost: pvp > 0 ? pvp : costoProm,
+        packQuantity: 1,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+    });
   
   console.log('=== Datos preparados para importar ===');
   console.log('Muestra primer producto:', JSON.stringify(productsToImport[0], null, 2));

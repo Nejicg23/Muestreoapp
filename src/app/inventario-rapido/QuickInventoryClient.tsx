@@ -391,15 +391,21 @@ export default function QuickInventoryClient({
         if (alreadySelectedIds.has(item.id)) return false;
         const itemInternal = (
           item.internalCode ||
+          item.rawMetadata?.codId ||
           item.rawMetadata?.internalCode ||
+          item.sku ||
+          ''
+        ).toLowerCase();
+        const itemBarcode = (
           item.barcode ||
+          item.rawMetadata?.barcode ||
           ''
         ).toLowerCase();
         return (
           item.description.toLowerCase().includes(q) ||
           item.sku.toLowerCase().includes(q) ||
           itemInternal.includes(q) ||
-          (item.barcode && item.barcode.toLowerCase().includes(q))
+          itemBarcode.includes(q)
         );
       })
       .slice(0, 10);
@@ -1035,8 +1041,8 @@ export default function QuickInventoryClient({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={
                   countMode === 'reverse'
-                    ? 'Buscar por Cód. Interno, SKU o Nombre...'
-                    : 'Buscar por Cód. Interno, SKU o Nombre (ej: Copin, Abanix)...'
+                    ? 'Buscar por Cód. Id, Descripción o Código de Barras...'
+                    : 'Buscar por Cód. Id, Descripción o Código de Barras (ej: 1527, Copin, 7861...)...'
                 }
                 className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-2xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
@@ -1056,7 +1062,7 @@ export default function QuickInventoryClient({
                     <div className="min-w-0 flex-1">
                       <span className="font-bold text-white block truncate">{item.description}</span>
                       <span className="text-[10px] text-slate-400 font-mono">
-                        Cód. Interno: {item.internalCode || item.barcode || item.sku} • SKU: {item.sku} • Factor: 1x{item.packQuantity}
+                        Cód. Id: {item.internalCode || item.rawMetadata?.codId || item.sku} {item.barcode && item.barcode !== item.sku ? `• Barra: ${item.barcode}` : ''} • Factor: 1x{item.packQuantity}
                       </span>
                     </div>
 
