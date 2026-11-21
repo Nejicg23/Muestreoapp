@@ -796,23 +796,31 @@ export default function QuickInventoryClient({
                   className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                     countMode === 'reverse'
                       ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                      : countMode === 'novedades'
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                       : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
                   }`}
                 >
-                  {countMode === 'reverse' ? '⚡ Modo Conteo Inverso Activo' : '🔄 Flujo Estándar'}
+                  {countMode === 'reverse'
+                    ? '⚡ Modo Conteo Inverso Activo'
+                    : countMode === 'novedades'
+                    ? '⚠️ Modo Novedades Activo'
+                    : '🔄 Modo Conteo Estándar Activo'}
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
                 {countMode === 'reverse'
                   ? 'Paso 1: Busca el ítem, registra su conteo físico y ve por el siguiente ➔ Paso 2: Al terminar, pasa al conteo del sistema externo y pon Visto (✓).'
-                  : '1. Elige los ítems ➔ 2. Asigna stock del sistema ➔ 3. Cuenta físicamente.'}
+                  : countMode === 'novedades'
+                  ? 'Registra cantidades, fecha, lote, foto y nota por producto ➔ Al terminar, pulsa Finalizar para generar el reporte oficial.'
+                  : 'Paso 1: Elige los ítems ➔ Paso 2: Asigna stock del sistema ➔ Paso 3: Cuenta físicamente en estantería.'}
               </p>
             </div>
           </div>
         </div>
 
         {/* SELECTOR DE MODO: CONTEO INVERSO / ESTÁNDAR / NOVEDADES */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-1.5 bg-[#0a0a0a] rounded-2xl border border-[#262626]">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 bg-[#0a0a0a] rounded-2xl border border-[#262626]">
           <button
             type="button"
             onClick={() => {
@@ -833,23 +841,6 @@ export default function QuickInventoryClient({
           <button
             type="button"
             onClick={() => {
-              setCountMode('novedades');
-              setCountStage(1);
-              setAuditReason('Modo Reporte de Novedades');
-            }}
-            className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-              countMode === 'novedades'
-                ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md shadow-amber-600/25'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>Reporte de Novedades</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
               setCountMode('standard');
               setCountStage(1);
               setAuditReason('Muestreo Cíclico / Conteo Rápido');
@@ -862,6 +853,23 @@ export default function QuickInventoryClient({
           >
             <SlidersHorizontal className="w-4 h-4 shrink-0" />
             <span>Conteo Estándar (Sistema ➔ Físico)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setCountMode('novedades');
+              setCountStage(1);
+              setAuditReason('Modo Reporte de Novedades');
+            }}
+            className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              countMode === 'novedades'
+                ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md shadow-amber-600/25'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span>Reporte de Novedades</span>
           </button>
         </div>
 
@@ -903,6 +911,22 @@ export default function QuickInventoryClient({
               </span>
             </button>
           </div>
+        ) : countMode === 'novedades' ? (
+          <div className="pt-2 border-t border-slate-800/80">
+            <div className="p-2.5 rounded-2xl border bg-amber-500/20 border-amber-500/50 text-white shadow-md shadow-amber-500/10 flex items-center justify-between gap-2">
+              <div>
+                <span className="text-[9px] font-mono font-bold uppercase block text-amber-400">
+                  Modo Reporte de Novedades
+                </span>
+                <span className="text-xs font-bold block truncate mt-0.5">
+                  Registra productos con novedades y finaliza para generar PDF y vista web
+                </span>
+              </div>
+              <span className="text-xs font-mono font-bold text-amber-300 shrink-0">
+                {selectedQueue.length} {selectedQueue.length === 1 ? 'ítem' : 'ítems'}
+              </span>
+            </div>
+          </div>
         ) : (
           <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80">
             <button
@@ -932,7 +956,7 @@ export default function QuickInventoryClient({
                 Paso 2
               </span>
               <span className="text-xs font-bold block truncate mt-0.5">
-                2. Stock Sistema
+                2. Stock Sistema ({selectedQueue.length})
               </span>
             </button>
 
@@ -942,11 +966,11 @@ export default function QuickInventoryClient({
               onClick={() => setCountStage(3)}
               className={`p-2.5 rounded-2xl border text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${
                 countStage === 3
-                  ? 'bg-cyan-500/20 border-cyan-500/50 text-white shadow-md shadow-cyan-500/10'
+                  ? 'bg-emerald-500/20 border-emerald-500/50 text-white shadow-md shadow-emerald-500/10'
                   : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:text-white'
               }`}
             >
-              <span className="text-[9px] font-mono font-bold uppercase block text-cyan-400">Paso 3</span>
+              <span className="text-[9px] font-mono font-bold uppercase block text-emerald-400">Paso 3</span>
               <span className="text-xs font-bold block truncate mt-0.5">
                 3. Conteo Físico
               </span>
@@ -980,7 +1004,7 @@ export default function QuickInventoryClient({
       {/* ========================================================================= */}
       {/* PASO 1: BUSCAR ÍTEM Y REGISTRAR CONTEO (INVERSO) O ELEGIR ÍTEMS (ESTÁNDAR) */}
       {/* ========================================================================= */}
-      {countStage === 1 && (countMode === 'reverse' || countMode === 'novedades') && (
+      {countStage === 1 && (
         <div className="space-y-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
             <div className="flex items-center justify-between gap-2">
@@ -989,6 +1013,8 @@ export default function QuickInventoryClient({
                   className={`w-7 h-7 rounded-full font-bold text-xs flex items-center justify-center border shrink-0 ${
                     countMode === 'reverse'
                       ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                      : countMode === 'novedades'
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                       : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
                   }`}
                 >
@@ -998,14 +1024,16 @@ export default function QuickInventoryClient({
                   <h2 className="text-sm font-bold text-white">
                     {countMode === 'reverse'
                       ? 'Buscar Producto y Registrar su Conteo Físico'
-                      : 'Elegir Ítems a Contar'}
+                      : countMode === 'novedades'
+                      ? 'Buscar Producto y Registrar Novedad'
+                      : 'Elegir Ítems para la Auditoría'}
                   </h2>
                   <p className="text-[11px] text-slate-400">
                     {countMode === 'reverse'
                       ? 'Busca el ítem que vas a contar, registra sus cajas/fracciones y ve por el siguiente. Tú decides cuándo terminar.'
                       : countMode === 'novedades'
-                      ? 'Busca y selecciona los productos con novedad (lote, vencimiento, tipo). Cada ítem será registrado en el reporte de novedades.'
-                      : 'Busca y selecciona los productos que auditarás en esta ronda.'}
+                      ? 'Busca y selecciona los productos con novedad (lote, vencimiento, foto). Cada ítem será registrado en el reporte oficial.'
+                      : 'Busca y selecciona los productos que auditarás en esta ronda. Luego asignarás el stock del sistema en el Paso 2.'}
                   </p>
                 </div>
               </div>
@@ -1706,7 +1734,9 @@ export default function QuickInventoryClient({
                   <span>
                     {countMode === 'reverse'
                       ? `Ítems con Conteo Físico Registrado (${selectedQueue.length})`
-                      : `Ítems Seleccionados para esta Auditoría (${selectedQueue.length})`}
+                      : countMode === 'novedades'
+                      ? `Novedades Registradas (${selectedQueue.length})`
+                      : `Ítems Seleccionados para Auditar (${selectedQueue.length})`}
                   </span>
                 </h3>
                 <button
@@ -1795,6 +1825,14 @@ export default function QuickInventoryClient({
                           </span>
                           <span className="px-2 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono text-[10px] font-bold">
                             {physicalTotal} u
+                          </span>
+                        </div>
+                      )}
+
+                      {countMode === 'standard' && (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="px-2.5 py-1 rounded-lg bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-mono text-[11px] font-bold">
+                            Seleccionado ✓
                           </span>
                         </div>
                       )}
