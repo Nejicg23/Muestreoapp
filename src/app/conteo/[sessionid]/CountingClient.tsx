@@ -939,12 +939,24 @@ export default function CountingClient({
               </button>
             </form>
 
-            {/* DESPLIEGUE DINÁMICO DE DATOS E INCIDENCIAS (MATERIAL YOU FLAT LIST) */}
+            {/* DESPLIEGUE DINÁMICO DE DATOS E INCIDENCIAS (DISEÑO COMPACTO Y TÁCTIL) */}
             {showSuggestions && scanInput.trim().length > 0 && (
-              <div className="m3-list-group mt-3 max-h-80 overflow-y-auto">
-                <div className="flex items-center justify-between px-4 py-2 bg-white/[0.02] border-b border-white/[0.06] text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                  <span>Coincidencias en tiempo real</span>
-                  <span className="font-mono text-cyan-400 font-bold">{dynamicMatches.length}</span>
+              <div
+                className="m3-list-group mt-3 max-h-[55vh] touch-scroll-container shadow-2xl"
+                style={{
+                  WebkitOverflowScrolling: 'touch',
+                  overscrollBehavior: 'contain',
+                  touchAction: 'pan-y',
+                }}
+              >
+                <div className="flex items-center justify-between px-3.5 py-2 bg-white/[0.02] border-b border-white/[0.06] text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  <span className="flex items-center gap-1.5">
+                    <Search className="w-3 h-3 text-cyan-400" />
+                    <span>Coincidencias ({dynamicMatches.length})</span>
+                  </span>
+                  <span className="text-[9px] text-cyan-300 font-medium lowercase">
+                    Toca para cargar al panel
+                  </span>
                 </div>
 
                 {dynamicMatches.length === 0 ? (
@@ -956,37 +968,25 @@ export default function CountingClient({
                     <div
                       key={match.id}
                       onClick={() => selectProduct(match)}
-                      className="m3-list-item hover:bg-white/[0.04] cursor-pointer"
+                      className="m3-search-item hover:bg-white/[0.04] active:scale-[0.99] active:bg-cyan-500/10 cursor-pointer"
                     >
-                      <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-bold text-xs shrink-0">
-                        <Package className="w-5 h-5" />
-                      </div>
-
                       <div className="min-w-0 flex-1">
-                        <div className="font-bold text-white text-xs sm:text-sm hover:text-cyan-300 transition-colors">
+                        <div className="font-bold text-white text-xs sm:text-sm hover:text-cyan-300 transition-colors truncate leading-tight">
                           {match.description}
                         </div>
-                        <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[10px]">
-                          <span className="m3-inc-chip">
-                            Cód: <strong className="text-white ml-0.5">{match.barcode || match.sku}</strong>
-                          </span>
-                          <span className="m3-inc-chip">
-                            Factor: 1x{match.packQuantity}
-                          </span>
-                          {match.location && (
-                            <span className="m3-inc-chip">
-                              Ubic: {match.location}
-                            </span>
-                          )}
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-[10px] text-slate-400 font-mono">
+                          <span className="text-cyan-300 font-bold">Cód: {match.barcode || match.sku}</span>
+                          <span>• 1x{match.packQuantity}</span>
+                          {match.location && <span>• Ubic: {match.location}</span>}
                         </div>
 
                         {/* Incidencias dinámicas visuales */}
                         {match.incidences.length > 0 && (
-                          <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                          <div className="flex flex-wrap items-center gap-1 mt-1">
                             {match.incidences.map((inc, i) => (
                               <span
                                 key={i}
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border ${
+                                className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full flex items-center gap-1 border ${
                                   inc.severity === 'warning'
                                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                                     : inc.severity === 'danger'
@@ -1002,13 +1002,13 @@ export default function CountingClient({
                         )}
                       </div>
 
-                      <div className="text-right shrink-0">
-                        <span className="text-[10px] text-slate-400 block font-medium">Stock Teórico</span>
-                        <span className="text-xs sm:text-sm font-bold font-mono text-emerald-400 block">
+                      <div className="text-right shrink-0 pl-2">
+                        <span className="text-[9px] text-slate-400 block font-medium">Teórico</span>
+                        <span className="text-xs sm:text-sm font-bold font-mono text-emerald-400 block leading-tight">
                           {match.systemBreakdown.formatted}
                         </span>
-                        <span className="text-[10px] text-slate-400 block font-mono">
-                          ({match.systemStock} fracc.)
+                        <span className="text-[9px] text-slate-500 block font-mono">
+                          {match.systemStock} fracc.
                         </span>
                       </div>
                     </div>

@@ -1077,55 +1077,54 @@ export default function QuickInventoryClient({
               />
             </div>
 
-            {/* Coincidencias de Búsqueda (MATERIAL YOU FLAT LIST) */}
+            {/* Coincidencias de Búsqueda (DISEÑO COMPACTO Y TÁCTIL PARA MÓVILES) */}
             {searchResults.length > 0 && (
-              <div className="m3-list-group max-h-80 overflow-y-auto">
-                <div className="px-4 py-2.5 text-[10px] uppercase font-bold tracking-wider text-slate-400 bg-white/[0.02] border-b border-white/[0.06] flex items-center justify-between">
-                  <span>Productos encontrados</span>
-                  <span className="font-mono text-cyan-400 font-bold">{searchResults.length}</span>
+              <div
+                className="m3-list-group max-h-[55vh] touch-scroll-container shadow-2xl"
+                style={{
+                  WebkitOverflowScrolling: 'touch',
+                  overscrollBehavior: 'contain',
+                  touchAction: 'pan-y',
+                }}
+              >
+                <div className="px-3 py-2 text-[10px] uppercase font-bold tracking-wider text-slate-400 bg-white/[0.02] border-b border-white/[0.06] flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Search className="w-3 h-3 text-cyan-400" />
+                    <span>Productos encontrados ({searchResults.length})</span>
+                  </span>
+                  <span className="text-[9px] text-cyan-300 font-medium lowercase">
+                    Toca un ítem para seleccionarlo
+                  </span>
                 </div>
                 {searchResults.map((item) => {
                   const codId = item.internalCode || item.rawMetadata?.codId || item.sku;
+                  const cost = Number(item.boxCost || (item as any).cost || item.rawCost || 0);
                   return (
                     <div
                       key={item.id}
-                      className="m3-list-item hover:bg-white/[0.04]"
+                      onClick={() => handleAddItemToQueue(item)}
+                      className="m3-search-item active:scale-[0.99] active:bg-cyan-500/10 cursor-pointer"
                     >
-                      {/* Leading squircle icon */}
-                      <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-bold text-xs shrink-0">
-                        <Package className="w-5 h-5" />
-                      </div>
-
-                      {/* Content */}
+                      {/* Información Compacta en 2 Líneas */}
                       <div className="min-w-0 flex-1">
-                        <span className="font-bold text-white block text-xs sm:text-sm truncate">
+                        <span className="font-bold text-white block text-xs sm:text-sm truncate leading-tight">
                           {item.description}
                         </span>
-                        <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                          <span className="m3-inc-chip text-[10px]">
-                            Cód. Id: <strong className="text-white ml-0.5">{codId}</strong>
-                          </span>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-400 font-mono mt-0.5">
+                          <span className="text-cyan-300 font-bold">Cód: {codId}</span>
                           {item.barcode && item.barcode !== codId && (
-                            <span className="m3-inc-chip text-[10px]">
-                              Barra: <strong className="text-white ml-0.5">{item.barcode}</strong>
-                            </span>
+                            <span>• Bar: {item.barcode}</span>
                           )}
-                          <span className="m3-inc-chip text-[10px]">
-                            Factor: 1x{item.packQuantity}
-                          </span>
-                          {Number(item.boxCost || (item as any).cost || item.rawCost || 0) > 0 && (
-                            <span className="m3-inc-chip text-[10px] text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
-                              Costo: ${Number(item.boxCost || (item as any).cost || item.rawCost).toFixed(2)}
-                            </span>
+                          <span>• Factor: 1x{item.packQuantity}</span>
+                          {cost > 0 && (
+                            <span className="text-emerald-400 font-bold">• ${cost.toFixed(2)}</span>
                           )}
                         </div>
                       </div>
 
-                      {/* Trailing action pill */}
-                      <button
-                        type="button"
-                        onClick={() => handleAddItemToQueue(item)}
-                        className={`rounded-full px-4 py-2 text-white font-bold text-xs flex items-center gap-1.5 shrink-0 shadow-md cursor-pointer transition-all active:scale-95 ${
+                      {/* Botón de Acción Compacto */}
+                      <div
+                        className={`rounded-full px-2.5 py-1 text-white font-bold text-[11px] flex items-center gap-1 shrink-0 shadow-sm transition-transform active:scale-90 ${
                           countMode === 'novedades'
                             ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-600/30'
                             : countMode === 'reverse'
@@ -1133,15 +1132,15 @@ export default function QuickInventoryClient({
                             : 'bg-cyan-600 hover:bg-cyan-500 shadow-cyan-600/25'
                         }`}
                       >
-                        <Plus className="w-4 h-4" />
-                        <span>
+                        <Plus className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">
                           {countMode === 'novedades'
                             ? 'Novedad'
                             : countMode === 'reverse'
                             ? 'Contar'
                             : 'Elegir'}
                         </span>
-                      </button>
+                      </div>
                     </div>
                   );
                 })}

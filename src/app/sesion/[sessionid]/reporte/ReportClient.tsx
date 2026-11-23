@@ -167,6 +167,7 @@ export default function ReportClient({
   const [discrepancyPage, setDiscrepancyPage] = useState(1);
   const [compliantPage, setCompliantPage] = useState(1);
   const [showCompliantSection, setShowCompliantSection] = useState(false);
+  const [mobileCardMode, setMobileCardMode] = useState(true);
 
   // Conteo de discrepancias y novedades para insignias
   const noveltiesOrDiffCount = itemsList.filter(
@@ -1110,76 +1111,76 @@ export default function ReportClient({
       {/* ============================================================== */}
       {reportView === 'detailed' && (
         <div className="space-y-6">
-          {/* Tarjetas de Resumen KPI */}
-          <div className="no-print grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col justify-between">
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Package className="w-3.5 h-3.5 text-cyan-400" />
+          {/* Tarjetas de Resumen KPI (DISEÑO MÓVIL Y DESKTOP ADAPTABLE) */}
+          <div className="no-print grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
+            <div className="bg-[#141522] border border-white/[0.06] p-3 sm:p-4 rounded-2xl flex flex-col justify-between shadow-lg">
+              <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 truncate">
+                <Package className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                 Catálogo
               </span>
-              <div className="my-2 text-2xl sm:text-3xl font-black text-white">
+              <div className="my-1.5 text-xl sm:text-2xl font-black text-white">
                 {summary.totalItems}
               </div>
-              <span className="text-[10px] text-slate-400">Total productos</span>
+              <span className="text-[10px] text-slate-500">Total productos</span>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col justify-between">
-              <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5" />
+            <div className="bg-[#141522] border border-white/[0.06] p-3 sm:p-4 rounded-2xl flex flex-col justify-between shadow-lg">
+              <span className="text-[10px] sm:text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 truncate">
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                 Coincidentes
               </span>
-              <div className="my-2 text-2xl sm:text-3xl font-black text-emerald-400">
+              <div className="my-1.5 text-xl sm:text-2xl font-black text-emerald-400">
                 {matchedCount}
               </div>
-              <span className="text-[10px] text-emerald-400">100% Exactitud</span>
+              <span className="text-[10px] text-emerald-500 font-medium">100% Exactitud</span>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col justify-between">
-              <span className="text-[11px] font-semibold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
-                <TrendingUp className="w-3.5 h-3.5" />
+            <div className="bg-[#141522] border border-white/[0.06] p-3 sm:p-4 rounded-2xl flex flex-col justify-between shadow-lg">
+              <span className="text-[10px] sm:text-[11px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5 truncate">
+                <TrendingUp className="w-3.5 h-3.5 shrink-0" />
                 Sobrantes (+)
               </span>
-              <div className="my-2 text-2xl sm:text-3xl font-black text-cyan-400">
+              <div className="my-1.5 text-xl sm:text-2xl font-black text-cyan-400">
                 {surplusCount}
               </div>
-              <span className="text-[10px] text-cyan-400">
-                +${summary.totalSurplusCost.toFixed(2)} valorizado
+              <span className="text-[10px] text-cyan-400 truncate">
+                +${summary.totalSurplusCost.toFixed(2)}
               </span>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col justify-between">
-              <span className="text-[11px] font-semibold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
-                <TrendingDown className="w-3.5 h-3.5" />
+            <div className="bg-[#141522] border border-white/[0.06] p-3 sm:p-4 rounded-2xl flex flex-col justify-between shadow-lg">
+              <span className="text-[10px] sm:text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5 truncate">
+                <TrendingDown className="w-3.5 h-3.5 shrink-0" />
                 Faltantes (-)
               </span>
-              <div className="my-2 text-2xl sm:text-3xl font-black text-rose-400">
+              <div className="my-1.5 text-xl sm:text-2xl font-black text-rose-400">
                 {shortageCount}
               </div>
-              <span className="text-[10px] text-rose-400">
-                -${summary.totalShortageCost.toFixed(2)} valorizado
+              <span className="text-[10px] text-rose-400 truncate">
+                -${summary.totalShortageCost.toFixed(2)}
               </span>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col justify-between">
-              <span className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5" />
-                Novedades / Rec.
+            <div className="bg-[#141522] border border-white/[0.06] p-3 sm:p-4 rounded-2xl flex flex-col justify-between shadow-lg">
+              <span className="text-[10px] sm:text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 truncate">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                Novedades
               </span>
-              <div className="my-2 text-2xl sm:text-3xl font-black text-amber-300">
+              <div className="my-1.5 text-xl sm:text-2xl font-black text-amber-300">
                 {summary.requiresRecountCount + summary.noveltiesTotal}
               </div>
-              <span className="text-[10px] text-amber-400">
-                {summary.requiresRecountCount} reconteos • {summary.noveltiesTotal} físicas
+              <span className="text-[10px] text-amber-400 truncate">
+                {summary.requiresRecountCount} rec. • {summary.noveltiesTotal} físicas
               </span>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col justify-between">
-              <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
+            <div className="bg-[#141522] border border-white/[0.06] p-3 sm:p-4 rounded-2xl flex flex-col justify-between shadow-lg">
+              <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 truncate">
+                <DollarSign className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 Impacto Neto
               </span>
               <div
-                className={`my-2 text-2xl sm:text-3xl font-black ${
+                className={`my-1.5 text-xl sm:text-2xl font-black truncate ${
                   summary.netCostImpact === 0
                     ? 'text-white'
                     : summary.netCostImpact > 0
@@ -1189,7 +1190,7 @@ export default function ReportClient({
               >
                 {summary.netCostImpact >= 0 ? '+' : ''}${summary.netCostImpact.toFixed(2)}
               </div>
-              <span className="text-[10px] text-slate-400">Diferencia neta monetaria</span>
+              <span className="text-[10px] text-slate-500">Diferencia monetaria</span>
             </div>
           </div>
 
@@ -1215,32 +1216,58 @@ export default function ReportClient({
                 </div>
               </div>
 
-              {/* Controles rápidos de paginación superior */}
-              {totalDiscrepancyPages > 1 && (
-                <div className="flex items-center gap-2 text-xs">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Selector de Modo de Visualización: Tarjetas Móviles vs Tabla */}
+                <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
                   <button
                     type="button"
-                    disabled={discrepancyPage <= 1}
-                    onClick={() => setDiscrepancyPage((p) => Math.max(1, p - 1))}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
-                    title="Página Anterior"
+                    onClick={() => setMobileCardMode(true)}
+                    className={`px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer ${
+                      mobileCardMode ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                    }`}
+                    title="Vista en Tarjetas (Optimizado para teléfonos)"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <span>📱 Tarjetas</span>
                   </button>
-                  <span className="font-mono text-slate-300 font-bold px-2 py-1 rounded bg-slate-950 border border-slate-800">
-                    {discrepancyPage} / {totalDiscrepancyPages}
-                  </span>
                   <button
                     type="button"
-                    disabled={discrepancyPage >= totalDiscrepancyPages}
-                    onClick={() => setDiscrepancyPage((p) => Math.min(totalDiscrepancyPages, p + 1))}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
-                    title="Página Siguiente"
+                    onClick={() => setMobileCardMode(false)}
+                    className={`px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer ${
+                      !mobileCardMode ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                    }`}
+                    title="Vista de Tabla Completa"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <span>🖥️ Tabla</span>
                   </button>
                 </div>
-              )}
+
+                {/* Controles rápidos de paginación superior */}
+                {totalDiscrepancyPages > 1 && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <button
+                      type="button"
+                      disabled={discrepancyPage <= 1}
+                      onClick={() => setDiscrepancyPage((p) => Math.max(1, p - 1))}
+                      className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                      title="Página Anterior"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="font-mono text-slate-300 font-bold px-2 py-1 rounded bg-slate-950 border border-slate-800">
+                      {discrepancyPage} / {totalDiscrepancyPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={discrepancyPage >= totalDiscrepancyPages}
+                      onClick={() => setDiscrepancyPage((p) => Math.min(totalDiscrepancyPages, p + 1))}
+                      className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                      title="Página Siguiente"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Barra de Filtros y Búsqueda */}
@@ -1325,9 +1352,187 @@ export default function ReportClient({
               </div>
             </div>
 
-            {/* Tabla de Novedades y Discrepancias Paginada a 30 Ítems */}
+            {/* Contenedor de Novedades y Discrepancias: Tarjetas Móviles y Tabla Desktop */}
             <div className="bg-slate-950/70 border border-slate-800 rounded-2xl overflow-hidden shadow-inner">
-              <div className="overflow-x-auto">
+              {/* VISTA MÓVIL EN TARJETAS COMPACTAS (SIN SCROLL HORIZONTAL) */}
+              {mobileCardMode && (
+                <div className="md:hidden space-y-3 p-3">
+                  {paginatedDiscrepancies.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400 bg-slate-900/60 rounded-2xl border border-slate-800">
+                      <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-400 mb-2 opacity-80" />
+                      <p className="font-semibold text-white text-xs">¡Sin discrepancias registradas!</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        No se encontraron faltantes, sobrantes ni novedades con los filtros aplicados.
+                      </p>
+                    </div>
+                  ) : (
+                    paginatedDiscrepancies.map((item, localIdx) => {
+                      const globalIdx = (discrepancyPage - 1) * ITEMS_PER_PAGE + localIdx + 1;
+                      const theoBreakdown = formatStockBreakdown(item.systemStock, item.packQuantity);
+                      const physBreakdown = formatStockBreakdown(item.totalCounted, item.packQuantity);
+                      const diffBreakdown = formatStockBreakdown(Math.abs(item.difference), item.packQuantity);
+                      const isShort = item.difference < 0 || item.status === 'shortage';
+                      const isSurp = item.difference > 0 || item.status === 'surplus';
+                      const codId = (item as any).internalCode || item.sku;
+
+                      return (
+                        <div
+                          key={`mob-disc-${item.id}`}
+                          className={`p-3.5 rounded-2xl border transition-all ${
+                            item.requiresRecount
+                              ? 'bg-amber-950/20 border-amber-500/40'
+                              : isShort
+                              ? 'bg-rose-950/20 border-rose-500/30'
+                              : isSurp
+                              ? 'bg-cyan-950/20 border-cyan-500/30'
+                              : 'bg-slate-900 border-slate-800'
+                          }`}
+                        >
+                          {/* Fila Superior: #, Estado, Impacto $ */}
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="w-6 h-6 rounded-full bg-slate-800 text-slate-300 font-mono font-bold text-[10px] flex items-center justify-center shrink-0">
+                                {globalIdx}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                                  isShort
+                                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                                    : isSurp
+                                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+                                    : 'bg-slate-800 text-slate-300 border-slate-700'
+                                }`}
+                              >
+                                {isShort ? 'Faltante' : isSurp ? 'Sobrante' : item.status}
+                              </span>
+                              {item.requiresRecount && (
+                                <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                                  ⚠️ Reconteo
+                                </span>
+                              )}
+                              {item.hasNovelties && (
+                                <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                                  Novedad ({item.noveltiesCount})
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Impacto Monetario */}
+                            <div className="font-mono font-black text-xs shrink-0">
+                              {item.costImpact === 0 ? (
+                                <span className="text-slate-400">$0.00</span>
+                              ) : item.costImpact > 0 ? (
+                                <span className="text-cyan-400">+${item.costImpact.toFixed(2)}</span>
+                              ) : (
+                                <span className="text-rose-400">-${Math.abs(item.costImpact).toFixed(2)}</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Descripción y Metadatos */}
+                          <div className="text-xs sm:text-sm font-bold text-white leading-snug">
+                            {item.description}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-400 font-mono mt-1">
+                            <span className="text-cyan-300 font-bold">Cód: {codId}</span>
+                            {item.barcode && item.barcode !== codId && <span>• Bar: {item.barcode}</span>}
+                            <span>• Factor: 1x{item.packQuantity}</span>
+                            {item.location && <span>• Ubic: {item.location}</span>}
+                            {item.batchNumber && <span>• Lote: {item.batchNumber}</span>}
+                            {item.expirationDate && (
+                              <span className="text-amber-400">
+                                • Vto: {new Date(item.expirationDate).toLocaleDateString('es-ES')}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Grilla de Métricas Comparativas: 3 Columnas Claras */}
+                          <div className="grid grid-cols-3 gap-2 bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80 mt-2 text-center">
+                            <div>
+                              <span className="text-[9px] uppercase font-bold text-slate-500 block">Sistema</span>
+                              <span className="font-mono font-bold text-white text-xs block truncate mt-0.5">
+                                {theoBreakdown.formatted}
+                              </span>
+                              <span className="font-mono text-[9px] text-slate-500 block">
+                                {item.systemStock} f
+                              </span>
+                            </div>
+
+                            <div>
+                              <span className="text-[9px] uppercase font-bold text-slate-500 block">Contado</span>
+                              <span className="font-mono font-bold text-emerald-300 text-xs block truncate mt-0.5">
+                                {item.status === 'uncounted' ? 'Sin conteo' : physBreakdown.formatted}
+                              </span>
+                              <span className="font-mono text-[9px] text-slate-500 block">
+                                {item.status === 'uncounted' ? '---' : `${item.totalCounted} f`}
+                              </span>
+                            </div>
+
+                            <div>
+                              <span className="text-[9px] uppercase font-bold text-slate-500 block">Diferencia</span>
+                              <span
+                                className={`font-mono font-black text-xs block truncate mt-0.5 ${
+                                  item.difference > 0 ? 'text-cyan-400' : item.difference < 0 ? 'text-rose-400' : 'text-emerald-400'
+                                }`}
+                              >
+                                {item.difference > 0 ? '+' : item.difference < 0 ? '-' : ''}
+                                {diffBreakdown.formatted}
+                              </span>
+                              <span className="font-mono text-[9px] text-slate-400 block">
+                                {item.difference > 0 ? '+' : ''}{item.difference} f ({item.differencePercentage}%)
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Fila de Acciones y Fotos */}
+                          <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/[0.05]">
+                            <div className="flex items-center gap-1.5">
+                              {item.imageUrl && (
+                                <img
+                                  src={item.imageUrl}
+                                  alt="Foto"
+                                  onClick={() => setViewImageModal({ url: item.imageUrl!, title: item.description })}
+                                  className="w-7 h-7 object-cover rounded-lg border border-cyan-500/60 cursor-pointer shadow hover:opacity-80"
+                                />
+                              )}
+                              {!isPublicView && (
+                                <label className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 cursor-pointer">
+                                  <Camera className="w-3.5 h-3.5" />
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0];
+                                      if (f) handleUploadItemImage(item.id, f);
+                                    }}
+                                  />
+                                </label>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setActiveLabelItem(item)}
+                                className="p-1.5 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/60 text-indigo-300 border border-indigo-700/60 cursor-pointer"
+                                title="Etiqueta"
+                              >
+                                <Tag className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+
+                            <div className="text-[10px] text-slate-400 font-mono">
+                              Costo Unit: ${Number(item.unitCostCalculated || 0).toFixed(2)}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+
+              {/* TABLA COMPLETA TRADICIONAL (VISIBLE EN ESCRITORIO O AL DESACTIVAR TARJETAS) */}
+              <div className={`${mobileCardMode ? 'hidden md:block' : 'block'} overflow-x-auto`}>
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
                     <tr>
@@ -1781,7 +1986,55 @@ export default function ReportClient({
             {showCompliantSection && (
               <div className="p-5 sm:p-6 border-t border-slate-800 space-y-4">
                 <div className="bg-slate-950/70 border border-slate-800 rounded-2xl overflow-hidden">
-                  <div className="overflow-x-auto">
+                  {/* VISTA MÓVIL (TARJETAS COMPACTAS CONFORMES) */}
+                  {mobileCardMode && (
+                    <div className="md:hidden space-y-2.5 p-3">
+                      {paginatedCompliant.length === 0 ? (
+                        <div className="p-6 text-center text-slate-400 text-xs">
+                          No hay productos conformes que coincidan con la búsqueda.
+                        </div>
+                      ) : (
+                        paginatedCompliant.map((item, localIdx) => {
+                          const globalIdx = (compliantPage - 1) * ITEMS_PER_PAGE + localIdx + 1;
+                          const physBreakdown = formatStockBreakdown(item.totalCounted, item.packQuantity);
+
+                          return (
+                            <div
+                              key={`mob-comp-${item.id}`}
+                              className="p-3 rounded-2xl bg-slate-900 border border-emerald-500/20 flex items-center justify-between gap-3 text-xs"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-mono text-[10px] text-slate-500 font-bold shrink-0">
+                                    #{globalIdx}
+                                  </span>
+                                  <span className="font-bold text-white text-xs truncate">
+                                    {item.description}
+                                  </span>
+                                </div>
+                                <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                                  Cód: {(item as any).internalCode || item.sku} • Factor: 1x{item.packQuantity}
+                                  {item.location && ` • Ubic: ${item.location}`}
+                                </div>
+                              </div>
+
+                              <div className="text-right shrink-0">
+                                <span className="font-mono font-bold text-emerald-300 text-xs block">
+                                  {physBreakdown.formatted}
+                                </span>
+                                <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider">
+                                  Conforme ✓
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+
+                  {/* TABLA ESCRITORIO O AL DESACTIVAR TARJETAS */}
+                  <div className={`${mobileCardMode ? 'hidden md:block' : 'block'} overflow-x-auto`}>
                     <table className="w-full text-left text-xs">
                       <thead className="bg-slate-950 text-slate-400 uppercase font-semibold border-b border-slate-800">
                         <tr>

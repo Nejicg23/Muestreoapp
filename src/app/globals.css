@@ -347,6 +347,49 @@ body {
   transform: scale(0.995);
 }
 
+/* Touch-optimized scrollable container for mobile */
+.touch-scroll-container {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.touch-scroll-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.touch-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+}
+
+/* Compact search item for high-density mobile list */
+.m3-search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  background: transparent;
+  border-bottom: 1px solid var(--md-outline-variant);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 120ms ease;
+}
+
+.m3-search-item:last-child {
+  border-bottom: none;
+}
+
+.m3-search-item:hover,
+.m3-search-item:active {
+  background-color: rgba(109, 213, 250, 0.08);
+}
+
 /* Tactile numeric stepper button */
 .m3-touch-btn {
   display: flex;
