@@ -819,8 +819,8 @@ export default function QuickInventoryClient({
           </div>
         </div>
 
-        {/* SELECTOR DE MODO: CONTEO INVERSO / ESTÁNDAR / NOVEDADES */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 bg-[#0a0a0a] rounded-2xl border border-[#262626]">
+        {/* SELECTOR DE MODO: CONTEO INVERSO / ESTÁNDAR / NOVEDADES (MATERIAL YOU SEGMENTED GROUP) */}
+        <div className="m3-segmented-group flex-col sm:flex-row">
           <button
             type="button"
             onClick={() => {
@@ -828,14 +828,14 @@ export default function QuickInventoryClient({
               setCountStage(1);
               setAuditReason('Muestreo Rápido (Conteo Inverso con Visto)');
             }}
-            className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            className={`m3-segmented-btn ${
               countMode === 'reverse'
-                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/25'
-                : 'text-slate-400 hover:text-white'
+                ? '!bg-emerald-600/30 !text-emerald-300 border border-emerald-500/40 shadow-sm'
+                : ''
             }`}
           >
             <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>Conteo Inverso (Buscar y Contar ➔ Sistema ✓)</span>
+            <span>Conteo Inverso (Físico ➔ Sistema ✓)</span>
           </button>
 
           <button
@@ -845,10 +845,10 @@ export default function QuickInventoryClient({
               setCountStage(1);
               setAuditReason('Muestreo Cíclico / Conteo Rápido');
             }}
-            className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            className={`m3-segmented-btn ${
               countMode === 'standard'
-                ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 text-white shadow-md shadow-cyan-600/25'
-                : 'text-slate-400 hover:text-white'
+                ? '!bg-cyan-600/30 !text-cyan-300 border border-cyan-500/40 shadow-sm'
+                : ''
             }`}
           >
             <SlidersHorizontal className="w-4 h-4 shrink-0" />
@@ -862,10 +862,10 @@ export default function QuickInventoryClient({
               setCountStage(1);
               setAuditReason('Modo Reporte de Novedades');
             }}
-            className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+            className={`m3-segmented-btn ${
               countMode === 'novedades'
-                ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md shadow-amber-600/25'
-                : 'text-slate-400 hover:text-white'
+                ? '!bg-amber-600/30 !text-amber-300 border border-amber-500/40 shadow-sm'
+                : ''
             }`}
           >
             <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -1076,46 +1076,74 @@ export default function QuickInventoryClient({
               />
             </div>
 
-            {/* Coincidencias de Búsqueda */}
+            {/* Coincidencias de Búsqueda (MATERIAL YOU FLAT LIST) */}
             {searchResults.length > 0 && (
-              <div className="space-y-1.5 p-2 bg-slate-950/95 rounded-2xl border border-slate-800 max-h-72 overflow-y-auto">
-                <div className="px-2 py-1 text-[10px] uppercase font-bold text-slate-400">
-                  Resultados encontrados ({searchResults.length})
+              <div className="m3-list-group max-h-80 overflow-y-auto">
+                <div className="px-4 py-2.5 text-[10px] uppercase font-bold tracking-wider text-slate-400 bg-white/[0.02] border-b border-white/[0.06] flex items-center justify-between">
+                  <span>Productos encontrados</span>
+                  <span className="font-mono text-cyan-400 font-bold">{searchResults.length}</span>
                 </div>
-                {searchResults.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-3 rounded-xl bg-slate-900 hover:bg-emerald-950/30 border border-slate-800/80 hover:border-emerald-500/40 transition-all flex items-center justify-between gap-3 text-xs"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <span className="font-bold text-white block truncate">{item.description}</span>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        Cód. Id: {item.internalCode || item.rawMetadata?.codId || item.sku} {item.barcode && item.barcode !== item.sku ? `• Barra: ${item.barcode}` : ''} • Factor: 1x{item.packQuantity}
-                      </span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleAddItemToQueue(item)}
-                      className={`px-3 py-1.5 rounded-lg text-white font-bold text-[11px] flex items-center gap-1 shrink-0 shadow-md cursor-pointer ${
-                        countMode === 'novedades'
-                          ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-600/25'
-                          : countMode === 'reverse'
-                          ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/20'
-                          : 'bg-cyan-600 hover:bg-cyan-500 shadow-cyan-600/20'
-                      }`}
+                {searchResults.map((item) => {
+                  const codId = item.internalCode || item.rawMetadata?.codId || item.sku;
+                  return (
+                    <div
+                      key={item.id}
+                      className="m3-list-item hover:bg-white/[0.04]"
                     >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>
-                        {countMode === 'novedades'
-                          ? 'Reportar Novedad'
-                          : countMode === 'reverse'
-                          ? 'Contar este Ítem'
-                          : 'Seleccionar'}
-                      </span>
-                    </button>
-                  </div>
-                ))}
+                      {/* Leading squircle icon */}
+                      <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-bold text-xs shrink-0">
+                        <Package2 className="w-5 h-5" />
+                      </div>
+
+                      {/* Content */}
+                      <div className="min-w-0 flex-1">
+                        <span className="font-bold text-white block text-xs sm:text-sm truncate">
+                          {item.description}
+                        </span>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                          <span className="m3-inc-chip text-[10px]">
+                            Cód. Id: <strong className="text-white ml-0.5">{codId}</strong>
+                          </span>
+                          {item.barcode && item.barcode !== codId && (
+                            <span className="m3-inc-chip text-[10px]">
+                              Barra: <strong className="text-white ml-0.5">{item.barcode}</strong>
+                            </span>
+                          )}
+                          <span className="m3-inc-chip text-[10px]">
+                            Factor: 1x{item.packQuantity}
+                          </span>
+                          {item.boxCost > 0 && (
+                            <span className="m3-inc-chip text-[10px] text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
+                              Costo: ${item.boxCost.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Trailing action pill */}
+                      <button
+                        type="button"
+                        onClick={() => handleAddItemToQueue(item)}
+                        className={`rounded-full px-4 py-2 text-white font-bold text-xs flex items-center gap-1.5 shrink-0 shadow-md cursor-pointer transition-all active:scale-95 ${
+                          countMode === 'novedades'
+                            ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-600/30'
+                            : countMode === 'reverse'
+                            ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/25'
+                            : 'bg-cyan-600 hover:bg-cyan-500 shadow-cyan-600/25'
+                        }`}
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>
+                          {countMode === 'novedades'
+                            ? 'Novedad'
+                            : countMode === 'reverse'
+                            ? 'Contar'
+                            : 'Elegir'}
+                        </span>
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -1159,12 +1187,43 @@ export default function QuickInventoryClient({
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div>
-                        <label className="text-[10px] text-slate-400 block mb-1">
-                          Cajas Completas (u)
-                        </label>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[11px] text-slate-300 font-bold block">
+                            Cajas Completas (u)
+                          </label>
+                          <div className="flex items-center gap-1">
+                            {[1, 5, 10].map((inc) => (
+                              <button
+                                key={inc}
+                                type="button"
+                                onClick={() =>
+                                  setActiveDraftItem({
+                                    ...activeDraftItem,
+                                    countedPacks: activeDraftItem.countedPacks + inc,
+                                  })
+                                }
+                                className="m3-inc-chip"
+                              >
+                                +{inc}
+                              </button>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setActiveDraftItem({
+                                  ...activeDraftItem,
+                                  countedPacks: 0,
+                                })
+                              }
+                              className="m3-inc-chip text-rose-400"
+                            >
+                              0
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() =>
@@ -1173,7 +1232,7 @@ export default function QuickInventoryClient({
                                 countedPacks: Math.max(0, activeDraftItem.countedPacks - 1),
                               })
                             }
-                            className="w-10 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black text-base flex items-center justify-center shrink-0 cursor-pointer"
+                            className="m3-touch-btn"
                           >
                             -
                           </button>
@@ -1187,7 +1246,7 @@ export default function QuickInventoryClient({
                                 countedPacks: Math.max(0, parseInt(e.target.value) || 0),
                               })
                             }
-                            className="w-full h-11 bg-slate-900 border border-slate-700 rounded-xl text-center font-mono font-black text-white text-sm outline-none focus:border-amber-500"
+                            className="w-full h-11 bg-slate-950 border border-slate-700 rounded-2xl text-center font-mono font-black text-white text-base outline-none focus:border-amber-500"
                           />
                           <button
                             type="button"
@@ -1197,7 +1256,7 @@ export default function QuickInventoryClient({
                                 countedPacks: activeDraftItem.countedPacks + 1,
                               })
                             }
-                            className="w-10 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black text-base flex items-center justify-center shrink-0 cursor-pointer"
+                            className="m3-touch-btn text-amber-300"
                           >
                             +
                           </button>
@@ -1205,10 +1264,41 @@ export default function QuickInventoryClient({
                       </div>
 
                       <div>
-                        <label className="text-[10px] text-slate-400 block mb-1">
-                          Unidades Sueltas (f)
-                        </label>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[11px] text-slate-300 font-bold block">
+                            Unidades Sueltas (f)
+                          </label>
+                          <div className="flex items-center gap-1">
+                            {[1, 5, 10].map((inc) => (
+                              <button
+                                key={inc}
+                                type="button"
+                                onClick={() =>
+                                  setActiveDraftItem({
+                                    ...activeDraftItem,
+                                    countedLoose: activeDraftItem.countedLoose + inc,
+                                  })
+                                }
+                                className="m3-inc-chip"
+                              >
+                                +{inc}
+                              </button>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setActiveDraftItem({
+                                  ...activeDraftItem,
+                                  countedLoose: 0,
+                                })
+                              }
+                              className="m3-inc-chip text-rose-400"
+                            >
+                              0
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() =>
@@ -1217,7 +1307,7 @@ export default function QuickInventoryClient({
                                 countedLoose: Math.max(0, activeDraftItem.countedLoose - 1),
                               })
                             }
-                            className="w-10 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black text-base flex items-center justify-center shrink-0 cursor-pointer"
+                            className="m3-touch-btn"
                           >
                             -
                           </button>
@@ -1231,7 +1321,7 @@ export default function QuickInventoryClient({
                                 countedLoose: Math.max(0, parseInt(e.target.value) || 0),
                               })
                             }
-                            className="w-full h-11 bg-slate-900 border border-slate-700 rounded-xl text-center font-mono font-black text-white text-sm outline-none focus:border-amber-500"
+                            className="w-full h-11 bg-slate-950 border border-slate-700 rounded-2xl text-center font-mono font-black text-white text-base outline-none focus:border-amber-500"
                           />
                           <button
                             type="button"
@@ -1241,7 +1331,7 @@ export default function QuickInventoryClient({
                                 countedLoose: activeDraftItem.countedLoose + 1,
                               })
                             }
-                            className="w-10 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black text-base flex items-center justify-center shrink-0 cursor-pointer"
+                            className="m3-touch-btn text-amber-300"
                           >
                             +
                           </button>
@@ -1466,13 +1556,44 @@ export default function QuickInventoryClient({
                     </button>
                   </div>
 
-                  {/* Controles de Cajas y Fracciones Físicas */}
-                  <div className="grid grid-cols-2 gap-3 text-xs">
+                  {/* Controles de Cajas y Fracciones Físicas (MATERIAL YOU TACTILE STEPPERS & INCREMENTS) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     <div>
-                      <label className="text-[11px] text-emerald-300 block mb-1.5 font-bold">
-                        Cajas Físicas (u)
-                      </label>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-[11px] text-emerald-300 block font-bold">
+                          Cajas Físicas (u)
+                        </label>
+                        <div className="flex items-center gap-1">
+                          {[1, 5, 10].map((inc) => (
+                            <button
+                              key={inc}
+                              type="button"
+                              onClick={() =>
+                                setActiveDraftItem({
+                                  ...activeDraftItem,
+                                  countedPacks: activeDraftItem.countedPacks + inc,
+                                })
+                              }
+                              className="m3-inc-chip"
+                            >
+                              +{inc}
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveDraftItem({
+                                ...activeDraftItem,
+                                countedPacks: 0,
+                              })
+                            }
+                            className="m3-inc-chip text-rose-400"
+                          >
+                            0
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() =>
@@ -1481,7 +1602,7 @@ export default function QuickInventoryClient({
                               countedPacks: Math.max(0, activeDraftItem.countedPacks - 1),
                             })
                           }
-                          className="w-10 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black text-base flex items-center justify-center shrink-0"
+                          className="m3-touch-btn"
                         >
                           -
                         </button>
@@ -1495,7 +1616,7 @@ export default function QuickInventoryClient({
                               countedPacks: Math.max(0, parseInt(e.target.value) || 0),
                             })
                           }
-                          className="w-full h-11 px-2 bg-slate-900 border-2 border-emerald-500/50 rounded-xl text-white font-mono font-black text-center outline-none focus:border-emerald-400"
+                          className="w-full h-11 px-2 bg-slate-950 border border-slate-700 rounded-2xl text-white font-mono font-black text-center text-base outline-none focus:border-emerald-400"
                         />
                         <button
                           type="button"
@@ -1505,7 +1626,7 @@ export default function QuickInventoryClient({
                               countedPacks: activeDraftItem.countedPacks + 1,
                             })
                           }
-                          className="w-10 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black text-base flex items-center justify-center shrink-0"
+                          className="m3-touch-btn text-emerald-300"
                         >
                           +
                         </button>
@@ -1517,13 +1638,44 @@ export default function QuickInventoryClient({
                         <label className="text-[11px] text-emerald-300 block font-bold">
                           Fracciones Físicas (f)
                         </label>
+                        {factor > 1 && (
+                          <div className="flex items-center gap-1">
+                            {[1, 5, 10].map((inc) => (
+                              <button
+                                key={inc}
+                                type="button"
+                                onClick={() =>
+                                  setActiveDraftItem({
+                                    ...activeDraftItem,
+                                    countedLoose: activeDraftItem.countedLoose + inc,
+                                  })
+                                }
+                                className="m3-inc-chip"
+                              >
+                                +{inc}
+                              </button>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setActiveDraftItem({
+                                  ...activeDraftItem,
+                                  countedLoose: 0,
+                                })
+                              }
+                              className="m3-inc-chip text-rose-400"
+                            >
+                              0
+                            </button>
+                          </div>
+                        )}
                         {factor <= 1 && (
                           <span className="text-[9px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20">
                             1x1
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
                           disabled={factor <= 1}
@@ -1533,7 +1685,7 @@ export default function QuickInventoryClient({
                               countedLoose: Math.max(0, activeDraftItem.countedLoose - 1),
                             })
                           }
-                          className="w-10 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-black text-base flex items-center justify-center shrink-0"
+                          className="m3-touch-btn disabled:opacity-30 disabled:pointer-events-none"
                         >
                           -
                         </button>
@@ -1548,7 +1700,7 @@ export default function QuickInventoryClient({
                               countedLoose: Math.max(0, parseInt(e.target.value) || 0),
                             })
                           }
-                          className="w-full h-11 px-2 bg-slate-900 border-2 border-emerald-500/50 disabled:border-slate-800 disabled:bg-slate-950/60 rounded-xl text-white font-mono font-black text-center outline-none focus:border-emerald-400"
+                          className="w-full h-11 px-2 bg-slate-950 border border-slate-700 disabled:border-slate-800 disabled:bg-slate-900/50 rounded-2xl text-white font-mono font-black text-center text-base outline-none focus:border-emerald-400"
                         />
                         <button
                           type="button"
@@ -1559,7 +1711,7 @@ export default function QuickInventoryClient({
                               countedLoose: activeDraftItem.countedLoose + 1,
                             })
                           }
-                          className="w-10 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-white font-black text-base flex items-center justify-center shrink-0"
+                          className="m3-touch-btn text-emerald-300 disabled:opacity-30 disabled:pointer-events-none"
                         >
                           +
                         </button>
@@ -1748,82 +1900,98 @@ export default function QuickInventoryClient({
                 </button>
               </div>
 
-              <div className="space-y-2.5 max-h-96 overflow-y-auto pr-1">
+              {/* MATERIAL YOU FLAT LIST FOR QUEUED ITEMS */}
+              <div className="m3-list-group max-h-96 overflow-y-auto">
                 {selectedQueue.map((item, idx) => {
                   const factor = Math.max(1, item.packQuantity || 1);
                   const physicalTotal = item.countedPacks * factor + item.countedLoose;
+                  const codId = item.barcode || (item as any).internalCode || item.sku;
 
                   return (
                     <div
                       key={`${item.originalItemId}-${idx}`}
-                      className="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                      className="m3-list-item flex-col sm:flex-row !items-start sm:!items-center gap-3 hover:bg-white/[0.03]"
                     >
-                      <div className="min-w-0 flex-1">
-                        <span className="font-bold text-white block truncate">{item.description}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">
-                          Cód: {item.barcode || (item as any).internalCode || item.sku} • SKU: {item.sku} • Factor: 1x{factor}
-                        </span>
+                      <div className="flex items-center gap-3 min-w-0 flex-1 w-full">
+                        <div className="w-9 h-9 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-slate-300 font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                          {idx + 1}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className="font-bold text-white block text-xs sm:text-sm truncate">
+                            {item.description}
+                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                            <span className="m3-inc-chip text-[10px]">
+                              Cód: <strong className="text-white ml-0.5">{codId}</strong>
+                            </span>
+                            <span className="m3-inc-chip text-[10px]">
+                              Factor: 1x{factor}
+                            </span>
+                          </div>
+                        </div>
                       </div>
 
                       {countMode === 'reverse' && (
-                        <div className="flex items-center gap-2 shrink-0">
-                          <div className="flex items-center gap-1 bg-slate-900 border border-emerald-500/30 rounded-xl px-2 py-1">
-                            <span className="text-[10px] text-emerald-400 font-bold">Cajas:</span>
-                            <input
-                              type="number"
-                              min="0"
-                              value={item.countedPacks}
-                              onChange={(e) =>
-                                handleUpdateQueueItem(
-                                  idx,
-                                  'countedPacks',
-                                  Math.max(0, parseInt(e.target.value) || 0)
-                                )
-                              }
-                              className="w-12 bg-transparent text-white font-mono font-bold text-center outline-none"
-                            />
-                          </div>
-                          {factor > 1 && (
-                            <div className="flex items-center gap-1 bg-slate-900 border border-emerald-500/30 rounded-xl px-2 py-1">
-                              <span className="text-[10px] text-emerald-400 font-bold">Fracc:</span>
+                        <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-white/[0.04]">
+                          <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1 bg-slate-950 border border-emerald-500/30 rounded-xl px-2 py-1">
+                              <span className="text-[10px] text-emerald-400 font-bold">Cajas:</span>
                               <input
                                 type="number"
                                 min="0"
-                                value={item.countedLoose}
+                                value={item.countedPacks}
                                 onChange={(e) =>
                                   handleUpdateQueueItem(
                                     idx,
-                                    'countedLoose',
+                                    'countedPacks',
                                     Math.max(0, parseInt(e.target.value) || 0)
                                   )
                                 }
-                                className="w-12 bg-transparent text-white font-mono font-bold text-center outline-none"
+                                className="w-10 bg-transparent text-white font-mono font-bold text-center outline-none"
                               />
                             </div>
-                          )}
-                          <span className="px-2 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono text-[10px] font-bold">
+                            {factor > 1 && (
+                              <div className="flex items-center gap-1 bg-slate-950 border border-emerald-500/30 rounded-xl px-2 py-1">
+                                <span className="text-[10px] text-emerald-400 font-bold">Fracc:</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={item.countedLoose}
+                                  onChange={(e) =>
+                                    handleUpdateQueueItem(
+                                      idx,
+                                      'countedLoose',
+                                      Math.max(0, parseInt(e.target.value) || 0)
+                                    )
+                                  }
+                                  className="w-10 bg-transparent text-white font-mono font-bold text-center outline-none"
+                                />
+                              </div>
+                            )}
+                          </div>
+                          <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono text-[10px] font-bold">
                             {physicalTotal} fracc.
                           </span>
                         </div>
                       )}
 
                       {countMode === 'novedades' && (
-                        <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        <div className="flex flex-wrap items-center gap-2 shrink-0 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-white/[0.04]">
                           {item.imageUrl && (
                             <img
                               src={item.imageUrl}
                               alt="Foto"
                               onClick={() => setViewImageModal({ url: item.imageUrl!, title: item.description })}
-                              className="w-10 h-10 object-cover rounded-lg border border-amber-500/50 cursor-pointer shadow hover:opacity-80"
+                              className="w-10 h-10 object-cover rounded-xl border border-amber-500/50 cursor-pointer shadow hover:opacity-80 shrink-0"
                             />
                           )}
-                          <span className="px-2 py-1 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono text-[10px] font-bold">
+                          <span className="px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono text-[10px] font-bold">
                             Lote: {item.batchNumber}
                           </span>
-                          <span className="px-2 py-1 rounded-lg bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-mono text-[10px] font-bold">
+                          <span className="px-2.5 py-1 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-mono text-[10px] font-bold">
                             {item.expirationDate}
                           </span>
-                          <span className="px-2 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono text-[10px] font-bold">
+                          <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono text-[10px] font-bold">
                             {physicalTotal} u
                           </span>
                         </div>
@@ -1831,7 +1999,7 @@ export default function QuickInventoryClient({
 
                       {countMode === 'standard' && (
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="px-2.5 py-1 rounded-lg bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-mono text-[11px] font-bold">
+                          <span className="px-3 py-1 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-mono text-[11px] font-bold">
                             Seleccionado ✓
                           </span>
                         </div>
@@ -1840,7 +2008,7 @@ export default function QuickInventoryClient({
                       <button
                         type="button"
                         onClick={() => handleRemoveFromQueue(idx)}
-                        className="p-1.5 text-slate-500 hover:text-rose-400 self-end sm:self-center"
+                        className="p-1.5 text-slate-500 hover:text-rose-400 self-end sm:self-center transition-colors cursor-pointer"
                         title="Quitar ítem (no se incluirá en el informe)"
                       >
                         <Trash2 className="w-4 h-4" />

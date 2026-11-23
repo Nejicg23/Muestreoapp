@@ -243,17 +243,17 @@ export default function HomeClient({
   return (
     <div className="space-y-8">
       {/* Banner Principal / Hero Material Design Dark */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#121212] via-[#1a1a1a] to-[#121212] border border-[#2c2c2c] rounded-3xl p-5 sm:p-8 shadow-2xl">
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#13141F] via-[#101726] to-[#0D1017] border border-cyan-500/20 rounded-3xl p-6 sm:p-8 shadow-2xl">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
-          <div className="max-w-2xl space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-800/80 text-cyan-400 text-[11px] sm:text-xs font-semibold">
+          <div className="max-w-2xl space-y-2.5">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/25 text-cyan-300 text-[11px] sm:text-xs font-bold">
               <Sparkles className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">Conteo Físico • Offline First • Conciliación</span>
             </div>
-            <h1 className="text-xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
               Control de Inventario y Conteo Físico
             </h1>
-            <p className="text-slate-300 text-xs sm:text-base leading-relaxed">
+            <p className="text-[#A5A8B6] text-xs sm:text-base leading-relaxed">
               Captura inventarios con escáner de código de barras o manual, desglosa cajas y fracciones al instante, almacena sin conexión con Dexie y sincroniza automáticamente con PostgreSQL.
             </p>
           </div>
@@ -261,15 +261,15 @@ export default function HomeClient({
           <div className="grid grid-cols-1 sm:flex sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0">
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold px-5 py-3.5 sm:py-3 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30 transition-all active:scale-98 text-xs sm:text-sm cursor-pointer"
+              className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black px-5 py-3.5 sm:py-3 rounded-full flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition-all active:scale-95 text-xs sm:text-sm cursor-pointer"
             >
-              <Plus className="w-4 h-4 shrink-0" />
+              <Plus className="w-4 h-4 shrink-0 stroke-[3]" />
               <span>Nueva Sesión con Base de Datos</span>
             </button>
 
             <Link
               href="/inventario-rapido"
-              className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold px-4 py-3.5 sm:py-3 rounded-2xl flex items-center justify-center gap-2 transition-all text-xs sm:text-sm"
+              className="bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-bold px-4 py-3.5 sm:py-3 rounded-full flex items-center justify-center gap-2 transition-all active:scale-95 text-xs sm:text-sm"
             >
               <Smartphone className="w-4 h-4 text-amber-400 shrink-0" />
               <span>Inventario Rápido Móvil</span>
@@ -278,30 +278,30 @@ export default function HomeClient({
         </div>
       </div>
 
-      {/* Tarjetas KPI */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
-          <span className="text-xs font-medium text-slate-400 block mb-1">Sesiones Activas</span>
+      {/* Tarjetas KPI Material You */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-[#141522] border border-white/[0.06] rounded-3xl p-4 sm:p-5 shadow-lg">
+          <span className="text-[11px] uppercase font-bold tracking-wider text-[#8E9099] block mb-1">Sesiones Activas</span>
           <div className="text-2xl sm:text-3xl font-black text-cyan-400">{activeCount}</div>
-          <span className="text-[11px] text-slate-400 mt-1 block">En proceso de conteo</span>
+          <span className="text-[10px] sm:text-[11px] text-[#8E9099] mt-1 block">En proceso de conteo</span>
         </div>
 
-        <div className="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
-          <span className="text-xs font-medium text-slate-400 block mb-1">Sesiones Cerradas</span>
+        <div className="bg-[#141522] border border-white/[0.06] rounded-3xl p-4 sm:p-5 shadow-lg">
+          <span className="text-[11px] uppercase font-bold tracking-wider text-[#8E9099] block mb-1">Sesiones Cerradas</span>
           <div className="text-2xl sm:text-3xl font-black text-emerald-400">{closedCount}</div>
-          <span className="text-[11px] text-slate-400 mt-1 block">Con sello SHA-256</span>
+          <span className="text-[10px] sm:text-[11px] text-[#8E9099] mt-1 block">Con sello SHA-256</span>
         </div>
 
-        <div className="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
-          <span className="text-xs font-medium text-slate-400 block mb-1">Conteos Registrados</span>
+        <div className="bg-[#141522] border border-white/[0.06] rounded-3xl p-4 sm:p-5 shadow-lg">
+          <span className="text-[11px] uppercase font-bold tracking-wider text-[#8E9099] block mb-1">Conteos Registrados</span>
           <div className="text-2xl sm:text-3xl font-black text-white">{totalCounts.toLocaleString()}</div>
-          <span className="text-[11px] text-slate-400 mt-1 block">Físicos capturados</span>
+          <span className="text-[10px] sm:text-[11px] text-[#8E9099] mt-1 block">Físicos capturados</span>
         </div>
 
-        <div className="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
-          <span className="text-xs font-medium text-slate-400 block mb-1">Base de Datos</span>
+        <div className="bg-[#141522] border border-white/[0.06] rounded-3xl p-4 sm:p-5 shadow-lg">
+          <span className="text-[11px] uppercase font-bold tracking-wider text-[#8E9099] block mb-1">Base de Datos</span>
           <div className="text-2xl sm:text-3xl font-black text-indigo-400">PostgreSQL</div>
-          <span className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1 font-medium">
+          <span className="text-[10px] sm:text-[11px] text-emerald-400 mt-1 flex items-center gap-1 font-medium">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             Drizzle ORM Sincronizado
           </span>
@@ -344,60 +344,80 @@ export default function HomeClient({
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredSessions.map((session) => (
-              <div
-                key={session.id}
-                className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 transition-all shadow-lg flex flex-col justify-between"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-bold text-white text-base leading-snug">{session.title}</h3>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 border ${
-                        session.status === 'closed'
-                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                          : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+          <div className="m3-list-group">
+            {/* MATERIAL YOU FLAT LIST FOR SESSIONS */}
+            {filteredSessions.map((session) => {
+              const isClosed = session.status === 'closed';
+              return (
+                <div
+                  key={session.id}
+                  className="m3-list-item flex-col md:flex-row !items-start md:!items-center gap-4 hover:bg-white/[0.03] p-4 sm:p-5"
+                >
+                  {/* Leading squircle avatar */}
+                  <div className="flex items-center gap-3.5 min-w-0 flex-1 w-full">
+                    <div
+                      className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
+                        isClosed
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'
                       }`}
                     >
-                      {session.status === 'closed' ? 'Sellada' : 'En Curso'}
-                    </span>
-                  </div>
+                      <Package2 className="w-6 h-6" />
+                    </div>
 
-                  <div className="space-y-1 text-xs text-slate-400">
-                    <div>Auditor: <strong className="text-slate-300">{session.createdBy}</strong></div>
-                    <div>Fecha: {new Date(session.createdAt).toLocaleDateString('es-ES')}</div>
-                    <div className="text-cyan-400 font-mono font-medium">
-                      {session.itemsCount} productos • {session.countsCount} conteos
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-bold text-white text-sm sm:text-base leading-snug">
+                          {session.title}
+                        </h3>
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                            isClosed
+                              ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                              : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
+                          }`}
+                        >
+                          {isClosed ? 'Sellada ✓' : 'En Curso'}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-[#8E9099]">
+                        <span>Auditor: <strong className="text-white ml-0.5">{session.createdBy}</strong></span>
+                        <span>•</span>
+                        <span>{new Date(session.createdAt).toLocaleDateString('es-ES')}</span>
+                        <span>•</span>
+                        <span className="font-mono text-cyan-400 font-semibold">
+                          {session.itemsCount} productos • {session.countsCount} conteos
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center gap-2">
-                  <Link
-                    href={`/conteo/${session.id}`}
-                    className="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 text-center transition-all"
-                  >
-                    Conteo Físico
-                  </Link>
-                  <Link
-                    href={`/sesion/${session.id}/reporte`}
-                    className="flex-1 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold text-center transition-all shadow-md shadow-cyan-600/20"
-                  >
-                    Reporte
-                  </Link>
-                  <button
-                    onClick={() => handleDuplicateSession(session.id, session.title)}
-                    disabled={duplicatingSessionId === session.id}
-                    className="flex-1 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold text-center transition-all shadow-md shadow-amber-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {duplicatingSessionId === session.id
-                      ? 'Duplicando...'
-                      : 'Duplicar'}
-                  </button>
+                  {/* Trailing action pills */}
+                  <div className="flex items-center gap-2 w-full md:w-auto justify-end pt-2 md:pt-0 border-t md:border-t-0 border-white/[0.04] shrink-0">
+                    <Link
+                      href={`/conteo/${session.id}`}
+                      className="px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition-all active:scale-95 text-center flex-1 md:flex-initial"
+                    >
+                      Conteo Físico
+                    </Link>
+                    <Link
+                      href={`/sesion/${session.id}/reporte`}
+                      className="px-4 py-2 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all shadow-md shadow-cyan-600/25 active:scale-95 text-center flex-1 md:flex-initial"
+                    >
+                      Reporte
+                    </Link>
+                    <button
+                      onClick={() => handleDuplicateSession(session.id, session.title)}
+                      disabled={duplicatingSessionId === session.id}
+                      className="px-4 py-2 rounded-full bg-amber-600/80 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-md shadow-amber-600/20 active:scale-95 text-center flex-1 md:flex-initial disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      {duplicatingSessionId === session.id ? 'Duplicando...' : 'Duplicar'}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

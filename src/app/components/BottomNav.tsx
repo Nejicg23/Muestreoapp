@@ -27,35 +27,35 @@ export default function BottomNav() {
     >
       <div className="flex items-center justify-around h-16 px-2">
         {navItems.map(({ href, icon: Icon, label }) => {
-          const isActive = pathname === href;
+          const isActive = href === "/" ? pathname === "/" : pathname?.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
               className={`
-                flex flex-col items-center justify-center gap-0.5 flex-1 h-full px-1 py-1
+                flex flex-col items-center justify-center gap-1 flex-1 h-full px-1 py-1
                 transition-all duration-200 ease-out select-none
-                ${isActive ? "" : "text-slate-500 hover:text-slate-300"}
+                ${isActive ? "" : "text-[#8E9099] hover:text-[#C4C7C5]"}
               `}
             >
               <div
                 className={`
-                  relative flex items-center justify-center w-14 h-7 rounded-full transition-all duration-200 ease-out
-                  ${isActive ? "bg-[#004D61]" : "hover:bg-white/5 rounded-2xl"}
+                  relative flex items-center justify-center w-14 h-8 rounded-full transition-all duration-200 ease-out
+                  ${isActive ? "bg-cyan-500/20 text-cyan-300 shadow-sm" : "hover:bg-white/5"}
                 `}
               >
                 <Icon
                   size={20}
                   className={`transition-colors duration-200 ease-out ${
-                    isActive ? "text-cyan-300" : ""
+                    isActive ? "text-cyan-300 scale-105" : "text-[#8E9099]"
                   }`}
                 />
               </div>
               <span
-                className={`text-[10px] leading-tight transition-all duration-200 ease-out ${
+                className={`text-[11px] tracking-tight leading-tight transition-all duration-200 ease-out ${
                   isActive
-                    ? "text-cyan-200 font-semibold"
-                    : "text-slate-500"
+                    ? "text-cyan-300 font-bold"
+                    : "text-[#8E9099] font-medium"
                 }`}
               >
                 {label}

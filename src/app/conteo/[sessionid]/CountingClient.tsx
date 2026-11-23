@@ -939,12 +939,12 @@ export default function CountingClient({
               </button>
             </form>
 
-            {/* DESPLIEGUE DINÁMICO DE DATOS E INCIDENCIAS MIENTRAS EL USUARIO DIGITA */}
+            {/* DESPLIEGUE DINÁMICO DE DATOS E INCIDENCIAS (MATERIAL YOU FLAT LIST) */}
             {showSuggestions && scanInput.trim().length > 0 && (
-              <div className="mt-3 bg-slate-900/95 border border-cyan-500/50 rounded-xl p-3 shadow-2xl space-y-2 max-h-72 overflow-y-auto">
-                <div className="flex items-center justify-between pb-1.5 border-b border-slate-800 text-[11px] text-slate-400 font-semibold">
-                  <span>RESULTADOS DINÁMICOS MIENTRAS DIGITAS</span>
-                  <span>Presiona ENTER para elegir el primero o haz clic</span>
+              <div className="m3-list-group mt-3 max-h-80 overflow-y-auto">
+                <div className="flex items-center justify-between px-4 py-2 bg-white/[0.02] border-b border-white/[0.06] text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  <span>Coincidencias en tiempo real</span>
+                  <span className="font-mono text-cyan-400 font-bold">{dynamicMatches.length}</span>
                 </div>
 
                 {dynamicMatches.length === 0 ? (
@@ -956,25 +956,37 @@ export default function CountingClient({
                     <div
                       key={match.id}
                       onClick={() => selectProduct(match)}
-                      className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-cyan-950/60 border border-slate-700 hover:border-cyan-500 cursor-pointer transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                      className="m3-list-item hover:bg-white/[0.04] cursor-pointer"
                     >
-                      <div className="min-w-0">
-                        <div className="font-bold text-white text-xs hover:text-cyan-300 transition-colors flex items-center gap-2">
-                          <span>{match.description}</span>
+                      <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-bold text-xs shrink-0">
+                        <Package2 className="w-5 h-5" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-white text-xs sm:text-sm hover:text-cyan-300 transition-colors">
+                          {match.description}
                         </div>
-                        <div className="text-[11px] font-mono text-slate-400 flex flex-wrap items-center gap-2 mt-0.5">
-                          <span className="text-cyan-300 font-bold">Cód: {match.barcode || match.sku} • SKU: {match.sku}</span>
-                          <span>• Factor: 1x{match.packQuantity} un</span>
-                          {match.location && <span>• Ubic: {match.location}</span>}
+                        <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[10px]">
+                          <span className="m3-inc-chip">
+                            Cód: <strong className="text-white ml-0.5">{match.barcode || match.sku}</strong>
+                          </span>
+                          <span className="m3-inc-chip">
+                            Factor: 1x{match.packQuantity}
+                          </span>
+                          {match.location && (
+                            <span className="m3-inc-chip">
+                              Ubic: {match.location}
+                            </span>
+                          )}
                         </div>
 
                         {/* Incidencias dinámicas visuales */}
                         {match.incidences.length > 0 && (
-                          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                          <div className="flex flex-wrap items-center gap-1 mt-1.5">
                             {match.incidences.map((inc, i) => (
                               <span
                                 key={i}
-                                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 border ${
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border ${
                                   inc.severity === 'warning'
                                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                                     : inc.severity === 'danger'
@@ -992,7 +1004,7 @@ export default function CountingClient({
 
                       <div className="text-right shrink-0">
                         <span className="text-[10px] text-slate-400 block font-medium">Stock Teórico</span>
-                        <span className="text-sm font-bold font-mono text-emerald-400 block">
+                        <span className="text-xs sm:text-sm font-bold font-mono text-emerald-400 block">
                           {match.systemBreakdown.formatted}
                         </span>
                         <span className="text-[10px] text-slate-400 block font-mono">
@@ -1201,23 +1213,30 @@ export default function CountingClient({
                 </div>
               </div>
 
-              {/* Entrada de Cantidad con Steppers Rápidos */}
+              {/* Entrada de Cantidad con Steppers Táctiles Material You y Chips de Incremento */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
                     Cantidad Contada ({unitMode === 'pack' ? 'Unidades' : 'Fracciones'})
                   </label>
-                  <div className="flex gap-1.5">
+                  <div className="flex items-center gap-1">
                     {[1, 5, 10, 20].map((increment) => (
                       <button
                         key={increment}
                         type="button"
                         onClick={() => setQuantity((q) => q + increment)}
-                        className="text-xs bg-slate-700/60 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded-lg font-mono transition-colors"
+                        className="m3-inc-chip"
                       >
                         +{increment}
                       </button>
                     ))}
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(1)}
+                      className="m3-inc-chip text-rose-400"
+                    >
+                      Reset 1
+                    </button>
                   </div>
                 </div>
 
@@ -1225,7 +1244,7 @@ export default function CountingClient({
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="w-12 h-12 rounded-xl bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-white text-xl font-bold transition-colors"
+                    className="m3-touch-btn"
                   >
                     <Minus className="w-5 h-5" />
                   </button>
@@ -1235,12 +1254,12 @@ export default function CountingClient({
                     step="any"
                     value={quantity}
                     onChange={(e) => setQuantity(Math.max(1, parseFloat(e.target.value) || 1))}
-                    className="flex-1 bg-slate-900 border-2 border-slate-700 focus:border-cyan-500 text-center font-mono text-2xl font-bold text-white py-2 rounded-xl outline-none"
+                    className="flex-1 bg-slate-950 border border-slate-700 focus:border-cyan-400 text-center font-mono text-2xl font-black text-white py-2 rounded-2xl outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => q + 1)}
-                    className="w-12 h-12 rounded-xl bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-white text-xl font-bold transition-colors"
+                    className="m3-touch-btn text-cyan-300"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
