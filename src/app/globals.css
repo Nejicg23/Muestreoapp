@@ -308,3 +308,135 @@ body {
 
 .animate-fade-in  { animation: fade-in  200ms ease-out both; }
 .animate-scale-in { animation: scale-in 200ms ease-out both; }
+
+/* =============================================
+   MATERIAL YOU (M3) FLAT LIST & TOUCH CONTROLS
+   ============================================= */
+
+/* Flat list container */
+.m3-list-group {
+  display: flex;
+  flex-direction: column;
+  background: var(--md-surface-container);
+  border-radius: 1.5rem;
+  border: 1px solid var(--md-outline-variant);
+  overflow: hidden;
+}
+
+.m3-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  background: transparent;
+  border-bottom: 1px solid var(--md-outline-variant);
+  transition: background-color 150ms ease, transform 100ms ease;
+}
+
+.m3-list-item:last-child {
+  border-bottom: none;
+}
+
+.m3-list-item:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.m3-list-item:active {
+  background-color: rgba(255, 255, 255, 0.06);
+  transform: scale(0.995);
+}
+
+/* Tactile numeric stepper button */
+.m3-touch-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border-radius: 1rem;
+  background: var(--md-surface-container-high);
+  color: var(--md-on-surface);
+  border: 1px solid var(--md-outline-variant);
+  font-weight: 700;
+  font-size: 1.125rem;
+  user-select: none;
+  cursor: pointer;
+  transition: all 120ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.m3-touch-btn:hover {
+  background: var(--md-surface-container-highest);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.m3-touch-btn:active {
+  transform: scale(0.92);
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+
+/* Quick increment pill chips */
+.m3-inc-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-family: var(--font-mono), monospace;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--md-on-surface-variant);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  user-select: none;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.m3-inc-chip:hover {
+  background: rgba(109, 213, 250, 0.15);
+  color: var(--md-primary);
+  border-color: rgba(109, 213, 250, 0.3);
+}
+
+.m3-inc-chip:active {
+  transform: scale(0.94);
+}
+
+/* Material You segmented button */
+.m3-segmented-group {
+  display: flex;
+  background: var(--md-surface-container-lowest);
+  border-radius: 1.25rem;
+  padding: 0.25rem;
+  border: 1px solid var(--md-outline-variant);
+  gap: 0.25rem;
+}
+
+.m3-segmented-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: all 180ms cubic-bezier(0.2, 0, 0, 1);
+  color: var(--md-on-surface-variant);
+  user-select: none;
+  cursor: pointer;
+}
+
+.m3-segmented-btn:hover {
+  color: var(--md-on-surface);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.m3-segmented-btn-active {
+  background: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
