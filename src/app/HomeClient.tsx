@@ -362,7 +362,7 @@ export default function HomeClient({
                           : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'
                       }`}
                     >
-                      <Package2 className="w-6 h-6" />
+                      <Package className="w-6 h-6" />
                     </div>
 
                     <div className="min-w-0 flex-1">

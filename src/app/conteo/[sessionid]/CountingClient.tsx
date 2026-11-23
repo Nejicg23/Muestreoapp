@@ -959,7 +959,7 @@ export default function CountingClient({
                       className="m3-list-item hover:bg-white/[0.04] cursor-pointer"
                     >
                       <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-bold text-xs shrink-0">
-                        <Package2 className="w-5 h-5" />
+                        <Package className="w-5 h-5" />
                       </div>
 
                       <div className="min-w-0 flex-1">

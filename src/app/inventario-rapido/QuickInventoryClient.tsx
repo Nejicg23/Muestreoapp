@@ -77,6 +77,7 @@ interface RawItem {
   batchNumber?: string | null;
   expirationDate?: string | Date | null;
   imageUrl?: string | null;
+  boxCost?: number | string | null;
 }
 
 interface Props {
@@ -1092,7 +1093,7 @@ export default function QuickInventoryClient({
                     >
                       {/* Leading squircle icon */}
                       <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-bold text-xs shrink-0">
-                        <Package2 className="w-5 h-5" />
+                        <Package className="w-5 h-5" />
                       </div>
 
                       {/* Content */}
@@ -1112,9 +1113,9 @@ export default function QuickInventoryClient({
                           <span className="m3-inc-chip text-[10px]">
                             Factor: 1x{item.packQuantity}
                           </span>
-                          {item.boxCost > 0 && (
+                          {Number(item.boxCost || (item as any).cost || item.rawCost || 0) > 0 && (
                             <span className="m3-inc-chip text-[10px] text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
-                              Costo: ${item.boxCost.toFixed(2)}
+                              Costo: ${Number(item.boxCost || (item as any).cost || item.rawCost).toFixed(2)}
                             </span>
                           )}
                         </div>
