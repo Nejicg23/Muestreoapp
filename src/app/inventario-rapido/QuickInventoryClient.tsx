@@ -656,70 +656,70 @@ export default function QuickInventoryClient({
   // VOUCHER / COMPROBANTE FINAL
   if (completedVoucher) {
     return (
-      <div className="max-w-xl mx-auto space-y-6 pb-20">
-        <div className="bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
-            <CheckCircle2 className="w-9 h-9" />
+      <div className="max-w-xl mx-auto space-y-5 pb-20">
+        <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-6 sm:p-7 space-y-5 text-center">
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-7 h-7" />
           </div>
 
           <div>
-            <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            <span className="px-2.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               Conteo Rápido Asentado & Certificado
             </span>
-            <h1 className="text-2xl font-black text-white mt-2">
+            <h1 className="text-xl font-bold text-white mt-2">
               Comprobante Formal de Inventario
             </h1>
-            <p className="text-xs text-slate-400 mt-1">
-              Operador: <strong className="text-slate-200">{operatorName}</strong> • {new Date().toLocaleString('es-ES')}
+            <p className="text-xs text-[#71717A] mt-1">
+              Operador: <strong className="text-[#D4D4D8] font-medium">{operatorName}</strong> • {new Date().toLocaleString('es-ES')}
             </p>
           </div>
 
           {/* Sello SHA-256 */}
-          <div className="p-3 bg-slate-950 rounded-2xl border border-slate-800 text-left space-y-1">
-            <div className="flex items-center justify-between text-[11px] text-slate-400">
-              <span className="flex items-center gap-1 font-semibold text-emerald-400">
+          <div className="p-3 bg-[#111113] rounded-xl border border-white/[0.08] text-left space-y-1">
+            <div className="flex items-center justify-between text-[11px] text-[#71717A]">
+              <span className="flex items-center gap-1 font-medium text-emerald-400">
                 <ShieldCheck className="w-4 h-4" />
-                Sello Criptográfico Legal (SHA-256)
+                Sello Criptográfico (SHA-256)
               </span>
               <span className="font-mono text-[9px]">Inmutable</span>
             </div>
-            <div className="font-mono text-[10px] text-slate-300 break-all select-all">
+            <div className="font-mono text-[10px] text-[#A1A1AA] break-all select-all">
               {completedVoucher.closedHash}
             </div>
           </div>
 
           {/* Resumen */}
           <div className="grid grid-cols-3 gap-2">
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-              <span className="text-[10px] text-slate-400 block uppercase font-medium">Ítems Auditados</span>
-              <span className="text-xl font-black text-white font-mono mt-0.5 block">
+            <div className="p-3 rounded-xl bg-[#111113] border border-white/[0.08]">
+              <span className="text-[10px] text-[#71717A] block uppercase font-medium">Auditados</span>
+              <span className="text-xl font-semibold text-white font-mono mt-0.5 block">
                 {completedVoucher.summary.totalItems}
               </span>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-              <span className="text-[10px] text-emerald-400 block uppercase font-medium">Exactos (OK)</span>
-              <span className="text-xl font-black text-emerald-400 font-mono mt-0.5 block">
+            <div className="p-3 rounded-xl bg-[#111113] border border-white/[0.08]">
+              <span className="text-[10px] text-emerald-400 block uppercase font-medium">Exactos</span>
+              <span className="text-xl font-semibold text-emerald-400 font-mono mt-0.5 block">
                 {completedVoucher.summary.matchedCount}
               </span>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
+            <div className="p-3 rounded-xl bg-[#111113] border border-white/[0.08]">
               <span className="text-[10px] text-rose-400 block uppercase font-medium">Diferencias</span>
-              <span className="text-xl font-black text-rose-400 font-mono mt-0.5 block">
+              <span className="text-xl font-semibold text-rose-400 font-mono mt-0.5 block">
                 {completedVoucher.summary.discrepantCount}
               </span>
             </div>
           </div>
 
           {/* Acciones */}
-          <div className="space-y-2.5 pt-2">
+          <div className="space-y-2 pt-2">
             {/* BOTÓN IMPRIMIR / GENERAR PDF */}
             <a
               href={`/sesion/${completedVoucher.sessionId}/reporte?print=true`}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-cyan-600/25 cursor-pointer"
+              className="w-full py-2.5 px-4 rounded-lg bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
             >
               <Printer className="w-4 h-4" />
               <span>Generar / Imprimir PDF Oficial</span>
@@ -781,40 +781,40 @@ export default function QuickInventoryClient({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-24">
-      {/* Encabezado Material Dark */}
-      <div className="bg-gradient-to-r from-[#121212] via-[#1a1a1a] to-[#121212] p-4 sm:p-6 rounded-3xl border border-[#2c2c2c] shadow-xl space-y-4">
+      {/* Encabezado Industrial */}
+      <div className="bg-[#141416] p-4 sm:p-5 rounded-2xl border border-white/[0.08] space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/25 shrink-0">
-              <Smartphone className="w-6 h-6" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white shrink-0">
+              <Smartphone className="w-5 h-5 text-[#A1A1AA]" />
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
                   Inventario Rápido
                 </h1>
                 <span
-                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                  className={`px-2 py-0.5 rounded text-[10px] font-medium border ${
                     countMode === 'reverse'
-                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                       : countMode === 'novedades'
-                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                      : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+                      ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                      : 'bg-white/[0.06] text-[#A1A1AA] border-white/[0.08]'
                   }`}
                 >
                   {countMode === 'reverse'
-                    ? '⚡ Modo Conteo Inverso Activo'
+                    ? 'Conteo Inverso Activo'
                     : countMode === 'novedades'
-                    ? '⚠️ Modo Novedades Activo'
-                    : '🔄 Modo Conteo Estándar Activo'}
+                    ? 'Modo Novedades Activo'
+                    : 'Conteo Estándar Activo'}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-[#71717A] mt-0.5">
                 {countMode === 'reverse'
-                  ? 'Paso 1: Busca el ítem, registra su conteo físico y ve por el siguiente ➔ Paso 2: Al terminar, pasa al conteo del sistema externo y pon Visto (✓).'
+                  ? 'Paso 1: Registra el conteo físico ➔ Paso 2: Valida contra el stock del sistema (✓).'
                   : countMode === 'novedades'
-                  ? 'Registra cantidades, fecha, lote, foto y nota por producto ➔ Al terminar, pulsa Finalizar para generar el reporte oficial.'
-                  : 'Paso 1: Elige los ítems ➔ Paso 2: Asigna stock del sistema ➔ Paso 3: Cuenta físicamente en estantería.'}
+                  ? 'Registra cantidades, lote, fecha, foto y observaciones por producto.'
+                  : 'Paso 1: Elige ítems ➔ Paso 2: Asigna stock del sistema ➔ Paso 3: Cuenta físicamente.'}
               </p>
             </div>
           </div>
@@ -1007,7 +1007,7 @@ export default function QuickInventoryClient({
       {/* ========================================================================= */}
       {countStage === 1 && (
         <div className="space-y-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+          <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-5 space-y-4">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5">
                 <span
@@ -1155,13 +1155,13 @@ export default function QuickInventoryClient({
               const physicalTotal = (activeDraftItem.countedPacks * factor) + activeDraftItem.countedLoose;
 
               return (
-                <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-b from-amber-950/40 via-slate-950 to-slate-950 border-2 border-amber-500/60 shadow-2xl shadow-amber-950/40 space-y-4">
-                  <div className="flex items-start justify-between gap-2 border-b border-amber-500/20 pb-3">
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#17171A] border border-amber-500/30 space-y-4">
+                  <div className="flex items-start justify-between gap-2 border-b border-white/[0.08] pb-3">
                     <div className="min-w-0">
-                      <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono text-[10px] font-bold uppercase">
+                      <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono text-[10px] font-medium uppercase">
                         Registrando Novedad • Cód: {activeDraftItem.barcode || activeDraftItem.sku} • SKU: {activeDraftItem.sku} (Factor 1x{factor})
                       </span>
-                      <h3 className="text-sm sm:text-base font-black text-white mt-1.5 break-words">
+                      <h3 className="text-sm sm:text-base font-semibold text-white mt-1.5 break-words">
                         {activeDraftItem.description}
                       </h3>
                     </div>
@@ -1246,7 +1246,7 @@ export default function QuickInventoryClient({
                                 countedPacks: Math.max(0, parseInt(e.target.value) || 0),
                               })
                             }
-                            className="w-full h-11 bg-slate-950 border border-slate-700 rounded-2xl text-center font-mono font-black text-white text-base outline-none focus:border-amber-500"
+                            className="w-full h-11 bg-slate-950 border border-slate-700 rounded-2xl text-center font-mono font-semibold text-white text-base outline-none focus:border-amber-500"
                           />
                           <button
                             type="button"
@@ -1321,7 +1321,7 @@ export default function QuickInventoryClient({
                                 countedLoose: Math.max(0, parseInt(e.target.value) || 0),
                               })
                             }
-                            className="w-full h-11 bg-slate-950 border border-slate-700 rounded-2xl text-center font-mono font-black text-white text-base outline-none focus:border-amber-500"
+                            className="w-full h-11 bg-slate-950 border border-slate-700 rounded-2xl text-center font-mono font-semibold text-white text-base outline-none focus:border-amber-500"
                           />
                           <button
                             type="button"
@@ -1518,10 +1518,10 @@ export default function QuickInventoryClient({
                           searchInputRef.current?.focus();
                         }, 100);
                       }}
-                      className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-amber-500 hover:from-amber-500 hover:to-orange-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-xl shadow-amber-600/30 transition-all cursor-pointer"
+                      className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
                     >
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>Guardar Novedad y Registrar Siguiente Ítem ➔</span>
+                      <span>Guardar Novedad y Siguiente Ítem</span>
                     </button>
                   </div>
                 </div>
@@ -1536,13 +1536,13 @@ export default function QuickInventoryClient({
               const physicalTotal = activeDraftItem.countedPacks * factor + activeDraftItem.countedLoose;
 
               return (
-                <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-b from-emerald-950/40 to-slate-950 border-2 border-emerald-500/60 shadow-2xl shadow-emerald-950/40 space-y-4">
-                  <div className="flex items-start justify-between gap-2 border-b border-emerald-500/20 pb-3">
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#17171A] border border-emerald-500/30 space-y-4">
+                  <div className="flex items-start justify-between gap-2 border-b border-white/[0.08] pb-3">
                     <div className="min-w-0">
-                      <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono text-[10px] font-bold uppercase">
+                      <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-mono text-[10px] font-medium uppercase">
                         Contando Ahora • Cód: {activeDraftItem.barcode || activeDraftItem.sku} • SKU: {activeDraftItem.sku} (Factor 1x{factor})
                       </span>
-                      <h3 className="text-sm sm:text-base font-black text-white mt-1.5">
+                      <h3 className="text-sm sm:text-base font-semibold text-white mt-1.5">
                         {activeDraftItem.description}
                       </h3>
                     </div>
@@ -1616,7 +1616,7 @@ export default function QuickInventoryClient({
                               countedPacks: Math.max(0, parseInt(e.target.value) || 0),
                             })
                           }
-                          className="w-full h-11 px-2 bg-slate-950 border border-slate-700 rounded-2xl text-white font-mono font-black text-center text-base outline-none focus:border-emerald-400"
+                          className="w-full h-11 px-2 bg-slate-950 border border-slate-700 rounded-2xl text-white font-mono font-semibold text-center text-base outline-none focus:border-emerald-400"
                         />
                         <button
                           type="button"
@@ -1700,7 +1700,7 @@ export default function QuickInventoryClient({
                               countedLoose: Math.max(0, parseInt(e.target.value) || 0),
                             })
                           }
-                          className="w-full h-11 px-2 bg-slate-950 border border-slate-700 disabled:border-slate-800 disabled:bg-slate-900/50 rounded-2xl text-white font-mono font-black text-center text-base outline-none focus:border-emerald-400"
+                          className="w-full h-11 px-2 bg-slate-950 border border-slate-700 disabled:border-slate-800 disabled:bg-slate-900/50 rounded-2xl text-white font-mono font-semibold text-center text-base outline-none focus:border-emerald-400"
                         />
                         <button
                           type="button"
@@ -1825,10 +1825,10 @@ export default function QuickInventoryClient({
                     <button
                       type="button"
                       onClick={handleSaveDraftCountAndNext}
-                      className="px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 cursor-pointer transition-all"
+                      className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
                     >
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>Guardar Conteo e Ir por el Siguiente Producto</span>
+                      <span>Guardar Conteo y Siguiente Producto</span>
                     </button>
                   </div>
                 </div>
@@ -1879,7 +1879,7 @@ export default function QuickInventoryClient({
 
           {/* LISTA DE ÍTEMS YA CONTADOS (MODO INVERSO) O SELECCIONADOS (MODO ESTÁNDAR) */}
           {selectedQueue.length > 0 && (
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+            <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
                   <ClipboardCheck className="w-4 h-4 text-emerald-400" />
@@ -2062,38 +2062,38 @@ export default function QuickInventoryClient({
                       type="button"
                       disabled={isSubmitting || selectedQueue.length === 0}
                       onClick={handleSubmitQuickAudit}
-                      className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-amber-500 hover:from-amber-500 hover:to-orange-500 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl shadow-amber-600/30 transition-all cursor-pointer disabled:opacity-50"
+                      className="w-full py-3 px-4 rounded-lg bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
                     >
                       {isSubmitting ? (
                         <>
                           <RefreshCw className="w-4 h-4 animate-spin" />
-                          <span>Generando Reporte Oficial y PDF...</span>
+                          <span>Generando Reporte Oficial...</span>
                         </>
                       ) : (
                         <>
                           <ShieldCheck className="w-4 h-4" />
-                          <span>Finalizar y Sellar Reporte de Novedades ({selectedQueue.length} ítems) ➔</span>
+                          <span>Finalizar y Sellar Novedades ({selectedQueue.length} ítems)</span>
                         </>
                       )}
                     </button>
                   </div>
                 ) : countMode === 'reverse' ? (
                   <>
-                    <div className="p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/20 text-[11px] text-emerald-300 flex items-center justify-between gap-2">
+                    <div className="p-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-[11px] text-[#A1A1AA] flex items-center justify-between gap-2">
                       <span>
-                        ✓ Puedes seguir buscando y contando más productos arriba, o terminar ahora.
+                        Puedes seguir buscando y contando más productos arriba, o avanzar.
                       </span>
-                      <span className="font-mono font-bold shrink-0">
-                        Solo estos {selectedQueue.length} ítems irán al informe
+                      <span className="font-mono text-[#D4D4D8] shrink-0 font-medium">
+                        {selectedQueue.length} ítems seleccionados
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={handleFinishReverseCounting}
-                      className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all cursor-pointer"
+                      className="w-full py-3 px-4 rounded-lg bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
                     >
                       <span>
-                        Terminar de Registrar Conteos ➔ Pasar al Conteo del Sistema Externo ({selectedQueue.length} ítems)
+                        Validar contra Stock del Sistema ({selectedQueue.length} ítems)
                       </span>
                       <ArrowRight className="w-4 h-4" />
                     </button>
@@ -2102,7 +2102,7 @@ export default function QuickInventoryClient({
                   <button
                     type="button"
                     onClick={() => setCountStage(2)}
-                    className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30 transition-all cursor-pointer"
+                    className="w-full py-3 px-4 rounded-lg bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
                   >
                     <span>Continuar al Paso 2: Asignar Stock del Sistema</span>
                     <ArrowRight className="w-4 h-4" />
@@ -2119,7 +2119,7 @@ export default function QuickInventoryClient({
       {/* ========================================================================= */}
       {countStage === 2 && countMode === 'reverse' && (
         <div className="space-y-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+          <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-xs flex items-center justify-center border border-emerald-500/30">
@@ -2394,9 +2394,9 @@ export default function QuickInventoryClient({
               <button
                 type="button"
                 onClick={() => setCountStage(3)}
-                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all cursor-pointer"
+                className="px-4 py-2.5 rounded-lg bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
               >
-                <span>Continuar al Paso 3: Comparar con Sistema y Poner Visto (✓)</span>
+                <span>Continuar al Paso 3: Validar contra Sistema (✓)</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -2409,7 +2409,7 @@ export default function QuickInventoryClient({
       {/* ========================================================================= */}
       {countStage === 2 && countMode === 'standard' && (
         <div className="space-y-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+          <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 font-bold text-xs flex items-center justify-center border border-cyan-500/30">
@@ -2633,7 +2633,7 @@ export default function QuickInventoryClient({
               <button
                 type="button"
                 onClick={() => setCountStage(3)}
-                className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-cyan-600/30 transition-all cursor-pointer"
+                className="px-4 py-2.5 rounded-lg bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] font-semibold text-xs flex items-center gap-2 transition-colors cursor-pointer"
               >
                 <span>Continuar al Paso 3: Conteo Físico Real</span>
                 <ArrowRight className="w-4 h-4" />
@@ -2648,7 +2648,7 @@ export default function QuickInventoryClient({
       {/* ========================================================================= */}
       {countStage === 3 && countMode === 'reverse' && (
         <div className="space-y-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+          <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-5 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2.5">
                 <span className="w-7 h-7 rounded-full bg-cyan-500/20 text-cyan-300 font-bold text-xs flex items-center justify-center border border-cyan-500/30 shrink-0">
@@ -2739,7 +2739,7 @@ export default function QuickInventoryClient({
                           <Check className="w-5 h-5 stroke-[3]" />
                         </div>
                         <div>
-                          <span className="block font-black">
+                          <span className="block font-semibold">
                             {isCheckedMatch
                               ? '✓ VISTO APLICADO: Concuerda con el Sistema Externo'
                               : 'Marcar Visto (✓) si concuerda con tu Sistema Externo'}
@@ -2975,7 +2975,7 @@ export default function QuickInventoryClient({
                   type="button"
                   disabled={isSubmitting || selectedQueue.length === 0}
                   onClick={handleSubmitQuickAudit}
-                  className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-xl shadow-emerald-600/30 transition-all disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2.5 rounded-lg bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] font-semibold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>
@@ -2985,7 +2985,7 @@ export default function QuickInventoryClient({
                   ) : (
                     <>
                       <ShieldCheck className="w-4 h-4" />
-                      <span>Finalizar & Sellar Conteo Inverso</span>
+                      <span>Finalizar y Sellar Conteo Inverso</span>
                     </>
                   )}
                 </button>
@@ -3000,7 +3000,7 @@ export default function QuickInventoryClient({
       {/* ========================================================================= */}
       {countStage === 3 && countMode === 'standard' && (
         <div className="space-y-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+          <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-xs flex items-center justify-center border border-emerald-500/30">
@@ -3370,24 +3370,24 @@ export default function QuickInventoryClient({
                         const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
                         if (diffDays <= 0) {
                           return (
-                            <div className="p-2 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold flex items-center gap-1.5">
+                            <div className="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium flex items-center gap-1.5">
                               <AlertOctagon className="w-4 h-4 shrink-0 text-rose-400" />
-                              <span>🔴 PRODUCTO VENCIDO (Venció hace {Math.abs(diffDays)} días)</span>
+                              <span>Producto vencido (hace {Math.abs(diffDays)} días)</span>
                             </div>
                           );
                         }
                         if (diffDays <= 90) {
                           return (
-                            <div className="p-2.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-2 animate-pulse">
+                            <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-medium flex items-center gap-2">
                               <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
-                              <span>⚠️ PRÓXIMO A VENCER ({diffDays} DÍAS / &lt; 3 MESES) - MARCAR PARA CUSTODIA O CUARENTENA</span>
+                              <span>Próximo a vencer ({diffDays} días restantes / &lt; 3 meses) — Marcar para custodia</span>
                             </div>
                           );
                         }
                         return (
-                          <div className="p-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[11px] font-semibold flex items-center gap-1.5">
+                          <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-medium flex items-center gap-1.5">
                             <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
-                            <span>🟢 Vigente ({diffDays} días restantes)</span>
+                            <span>Vigente ({diffDays} días restantes)</span>
                           </div>
                         );
                       })()}
@@ -3485,17 +3485,17 @@ export default function QuickInventoryClient({
                   type="button"
                   disabled={isSubmitting || selectedQueue.length === 0}
                   onClick={handleSubmitQuickAudit}
-                  className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-xl shadow-emerald-600/30 transition-all disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2.5 rounded-lg bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] font-semibold text-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Selleando...</span>
+                      <span>Sellando...</span>
                     </>
                   ) : (
                     <>
                       <ShieldCheck className="w-4 h-4" />
-                      <span>Finalizar & Sellar Inventario Rápido</span>
+                      <span>Finalizar y Sellar Inventario Rápido</span>
                     </>
                   )}
                 </button>
@@ -3508,7 +3508,7 @@ export default function QuickInventoryClient({
       {/* MODAL CAMBIAR / CARGAR BASE DE DATOS */}
       {showDbSelector && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 max-w-lg w-full space-y-4 shadow-2xl relative">
+          <div className="bg-[#17171A] border border-white/[0.08] rounded-2xl p-5 sm:p-6 max-w-lg w-full space-y-4 shadow-xl relative">
             {activeDb && (
               <button
                 type="button"
@@ -3651,7 +3651,7 @@ export default function QuickInventoryClient({
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <form
             onSubmit={handleSaveManualItem}
-            className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 max-w-md w-full space-y-4 shadow-2xl relative"
+            className="bg-[#17171A] border border-white/[0.08] rounded-2xl p-5 sm:p-6 max-w-md w-full space-y-4 shadow-xl relative"
           >
             <div className="flex items-center justify-between">
               <h2 className="text-base font-bold text-white">Agregar Ítem Manual</h2>
@@ -3772,7 +3772,7 @@ export default function QuickInventoryClient({
       {/* MODAL: VISOR DE FOTO / EVIDENCIA */}
       {viewImageModal && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-4 space-y-3 relative shadow-2xl">
+          <div className="bg-[#17171A] border border-white/[0.08] rounded-2xl max-w-lg w-full p-4 space-y-3 relative shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2">
               <span className="text-xs font-bold text-white truncate max-w-[280px]">
                 {viewImageModal.title}

@@ -6,38 +6,38 @@
    ============================================= */
 
 :root {
-  /* MD3 Color Roles — Dark scheme */
-  --md-primary:            #6DD5FA;
-  --md-on-primary:         #003547;
-  --md-primary-container:  #004D61;
-  --md-on-primary-container: #B8EAFF;
+  /* Graphite Industrial Ramp — Unslop Craft System */
+  --md-primary:            #E4E4E7;
+  --md-on-primary:         #0C0C0E;
+  --md-primary-container:  #27272A;
+  --md-on-primary-container: #FAFAFA;
 
-  --md-secondary:          #80CBC4;
-  --md-on-secondary:       #003733;
-  --md-secondary-container: #004F4A;
-  --md-on-secondary-container: #9EF2EB;
+  --md-secondary:          #38BDF8;
+  --md-on-secondary:       #082F49;
+  --md-secondary-container: #0C4A6E;
+  --md-on-secondary-container: #E0F2FE;
 
-  --md-error:              #FFB4AB;
-  --md-on-error:           #690005;
-  --md-error-container:    #93000A;
-  --md-on-error-container: #FFDAD6;
+  --md-error:              #F87171;
+  --md-on-error:           #450A0A;
+  --md-error-container:    #7F1D1D;
+  --md-on-error-container: #FEE2E2;
 
-  --md-surface-dim:         #0C0C12;
-  --md-surface:             #0F0F17;
-  --md-surface-container-lowest: #0A0A10;
-  --md-surface-container-low:    #141420;
-  --md-surface-container:        #181824;
-  --md-surface-container-high:   #1E1E2E;
-  --md-surface-container-highest:#232336;
+  --md-surface-dim:         #09090B;
+  --md-surface:             #0C0C0E;
+  --md-surface-container-lowest: #09090B;
+  --md-surface-container-low:    #111113;
+  --md-surface-container:        #17171A;
+  --md-surface-container-high:   #1F1F23;
+  --md-surface-container-highest:#27272B;
 
-  --md-on-surface:         #E3E1EC;
-  --md-on-surface-variant: #9490A5;
-  --md-outline:            #514E62;
+  --md-on-surface:         #EDEDF0;
+  --md-on-surface-variant: #A1A1AA;
+  --md-outline:            #3F3F46;
   --md-outline-variant:    rgba(255,255,255,0.08);
 
-  --md-inverse-surface:    #E3E1EC;
-  --md-inverse-on-surface: #1A1824;
-  --md-inverse-primary:    #005D77;
+  --md-inverse-surface:    #FAFAFA;
+  --md-inverse-on-surface: #18181B;
+  --md-inverse-primary:    #27272A;
 
   --background: var(--md-surface);
   --foreground: var(--md-on-surface);
@@ -50,23 +50,23 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* Surface scale remapped to MD3 */
-  --color-slate-950: #0A0A10;
-  --color-slate-900: #0F0F17;
-  --color-slate-800: #1E1E2E;
-  --color-slate-700: #232336;
-  --color-slate-600: #3A3A52;
-  --color-slate-500: #6B6880;
-  --color-slate-400: #9490A5;
-  --color-slate-300: #C5C3D6;
-  --color-slate-200: #E3E1EC;
-  --color-slate-100: #F4F2FF;
+  /* Surface scale remapped to Graphite */
+  --color-slate-950: #0C0C0E;
+  --color-slate-900: #111113;
+  --color-slate-800: #17171A;
+  --color-slate-700: #222226;
+  --color-slate-600: #38383E;
+  --color-slate-500: #71717A;
+  --color-slate-400: #A1A1AA;
+  --color-slate-300: #D4D4D8;
+  --color-slate-200: #E4E4E7;
+  --color-slate-100: #F4F4F5;
 
-  /* Primary accent (cyan-teal) */
-  --color-cyan-400: #6DD5FA;
-  --color-cyan-300: #9DE8FF;
-  --color-cyan-500: #3BBFE8;
-  --color-cyan-600: #0098C5;
+  /* Primary accent */
+  --color-cyan-400: #38BDF8;
+  --color-cyan-300: #7DD3FC;
+  --color-cyan-500: #0EA5E9;
+  --color-cyan-600: #0284C7;
 }
 
 html {
@@ -143,7 +143,9 @@ body {
   position: relative;
   overflow: hidden;
 }
-.md-btn-filled:hover { box-shadow: 0 1px 8px rgba(109,213,250,0.3); }
+.md-btn-filled:hover {
+  background: #FFFFFF;
+}
 
 .md-btn-tonal {
   background: var(--md-secondary-container);
@@ -387,7 +389,7 @@ body {
 
 .m3-search-item:hover,
 .m3-search-item:active {
-  background-color: rgba(109, 213, 250, 0.08);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 /* Tactile numeric stepper button */
@@ -397,26 +399,25 @@ body {
   justify-content: center;
   min-width: 2.75rem;
   min-height: 2.75rem;
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   background: var(--md-surface-container-high);
   color: var(--md-on-surface);
   border: 1px solid var(--md-outline-variant);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 1.125rem;
   user-select: none;
   cursor: pointer;
-  transition: all 120ms cubic-bezier(0.2, 0, 0, 1);
+  transition: all 120ms ease;
 }
 
 .m3-touch-btn:hover {
   background: var(--md-surface-container-highest);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .m3-touch-btn:active {
-  transform: scale(0.92);
-  background: var(--md-primary-container);
-  color: var(--md-on-primary-container);
+  transform: scale(0.96);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 /* Quick increment pill chips */
@@ -427,9 +428,9 @@ body {
   padding: 0.25rem 0.625rem;
   border-radius: 9999px;
   font-size: 0.6875rem;
-  font-weight: 700;
+  font-weight: 600;
   font-family: var(--font-mono), monospace;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
   color: var(--md-on-surface-variant);
   border: 1px solid rgba(255, 255, 255, 0.08);
   user-select: none;
@@ -438,20 +439,20 @@ body {
 }
 
 .m3-inc-chip:hover {
-  background: rgba(109, 213, 250, 0.15);
-  color: var(--md-primary);
-  border-color: rgba(109, 213, 250, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--md-on-surface);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .m3-inc-chip:active {
-  transform: scale(0.94);
+  transform: scale(0.96);
 }
 
 /* Material You segmented button */
 .m3-segmented-group {
   display: flex;
   background: var(--md-surface-container-lowest);
-  border-radius: 1.25rem;
+  border-radius: 0.75rem;
   padding: 0.25rem;
   border: 1px solid var(--md-outline-variant);
   gap: 0.25rem;
@@ -463,11 +464,11 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.625rem 0.75rem;
-  border-radius: 1rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
   font-size: 0.75rem;
-  font-weight: 700;
-  transition: all 180ms cubic-bezier(0.2, 0, 0, 1);
+  font-weight: 600;
+  transition: all 150ms ease;
   color: var(--md-on-surface-variant);
   user-select: none;
   cursor: pointer;
@@ -479,7 +480,6 @@ body {
 }
 
 .m3-segmented-btn-active {
-  background: var(--md-secondary-container);
-  color: var(--md-on-secondary-container);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
 }

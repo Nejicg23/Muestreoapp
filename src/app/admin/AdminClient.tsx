@@ -233,7 +233,7 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
           ),
         }));
         setSecurityBannerMsg(
-          `✅ Contraseña actualizada y protección restablecida para @${passwordTargetUser.username}`
+          `Contraseña actualizada y protección restablecida para @${passwordTargetUser.username}`
         );
         setPasswordTargetUser(null);
         setCustomNewPassword('');
@@ -258,7 +258,7 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
             u.id === userId ? { ...u, failedAttempts: 0, lockedUntil: null } : u
           ),
         }));
-        setSecurityBannerMsg(`🔓 Cuenta @${username} desbloqueada exitosamente.`);
+        setSecurityBannerMsg(`Cuenta @${username} desbloqueada exitosamente.`);
         setTimeout(() => setSecurityBannerMsg(null), 5000);
       } else {
         alert(res.error || 'No se pudo desbloquear la cuenta');
@@ -312,21 +312,21 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
 
   return (
     <div className="space-y-8 pb-12">
-      {/* Top Header Material Dark */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-[#121212] via-[#18181b] to-[#121212] p-5 sm:p-6 rounded-3xl border border-[#2c2c2c] shadow-xl">
+      {/* Top Header Industrial */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#141416] p-5 sm:p-6 rounded-2xl border border-white/[0.08]">
         <div className="flex items-center gap-3.5 sm:gap-4">
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 shrink-0">
-            <Shield className="w-6 h-6 sm:w-7 sm:h-7" />
+          <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white shrink-0">
+            <Shield className="w-5 h-5 text-[#A1A1AA]" />
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">Panel de Administración</h1>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Panel de Administración</h1>
+              <span className="px-2.5 py-0.5 rounded text-[10px] sm:text-[11px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20">
                 Rol: Administrador
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-1 truncate">
-              Sesión activa de <strong className="text-slate-200">{data.currentUser.fullName}</strong> (@{data.currentUser.username})
+            <p className="text-xs text-[#71717A] mt-1 truncate">
+              Sesión activa de <strong className="text-[#D4D4D8] font-medium">{data.currentUser.fullName}</strong> (@{data.currentUser.username})
             </p>
           </div>
         </div>
@@ -334,9 +334,9 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3">
           <Link
             href="/onboarding"
-            className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-xs font-bold text-white flex items-center justify-center gap-2 transition-all shadow-md shadow-cyan-600/20"
+            className="px-3.5 py-2 rounded-lg bg-white hover:bg-[#E4E4E7] text-xs font-semibold text-[#0C0C0E] flex items-center justify-center gap-2 transition-colors"
           >
-            <Sparkles className="w-4 h-4 shrink-0" />
+            <Shield className="w-4 h-4 shrink-0" />
             <span className="truncate">Onboarding</span>
           </Link>
           <Link
@@ -371,7 +371,7 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
             <span className="text-xs font-medium">Sesiones de Inventario</span>
             <ClipboardList className="w-4 h-4 text-cyan-400" />
           </div>
-          <div className="text-2xl font-black text-white">{data.metrics.totalSessions}</div>
+          <div className="text-2xl font-semibold text-white">{data.metrics.totalSessions}</div>
           <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-2">
             <span className="text-emerald-400 font-semibold">{data.metrics.activeSessions} en progreso</span>
             <span>•</span>
@@ -384,7 +384,7 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
             <span className="text-xs font-medium">Ítems en Catálogo</span>
             <Layers className="w-4 h-4 text-indigo-400" />
           </div>
-          <div className="text-2xl font-black text-white">{data.metrics.totalItems.toLocaleString()}</div>
+          <div className="text-2xl font-semibold text-white">{data.metrics.totalItems.toLocaleString()}</div>
           <div className="text-[11px] text-indigo-300 mt-1">Con factor de empaque y costo</div>
         </div>
 
@@ -393,7 +393,7 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
             <span className="text-xs font-medium">Conteos Registrados</span>
             <TrendingUp className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-black text-white">{data.metrics.totalCounts.toLocaleString()}</div>
+          <div className="text-2xl font-semibold text-white">{data.metrics.totalCounts.toLocaleString()}</div>
           <div className="text-[11px] text-emerald-300 mt-1">Capturados vía lector / teclado</div>
         </div>
 
@@ -402,7 +402,7 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
             <span className="text-xs font-medium">Novedades Reportadas</span>
             <AlertTriangle className="w-4 h-4 text-amber-400" />
           </div>
-          <div className="text-2xl font-black text-white">{data.metrics.totalNovelties.toLocaleString()}</div>
+          <div className="text-2xl font-semibold text-white">{data.metrics.totalNovelties.toLocaleString()}</div>
           <div className="text-[11px] text-amber-300 mt-1">Averías, vencimientos y reconteos</div>
         </div>
       </div>
@@ -556,9 +556,9 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
                                 : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                             }`}
                           >
-                            {user.role === 'admin' && '👑 Administrador'}
-                            {user.role === 'auditor' && '🔍 Auditor'}
-                            {user.role === 'operator' && '📦 Operador'}
+                            {user.role === 'admin' && 'Administrador'}
+                            {user.role === 'auditor' && 'Auditor'}
+                            {user.role === 'operator' && 'Operador'}
                           </span>
                         </td>
                         <td className="px-5 py-3.5">
@@ -566,22 +566,22 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
                             {isLocked ? (
                               <span className="inline-flex items-center gap-1.5 text-rose-400 font-bold text-[11px]">
                                 <Lock className="w-3.5 h-3.5 text-rose-400" />
-                                Bloqueado (Fuerza Bruta)
+                                Bloqueado
                               </span>
                             ) : user.isActive ? (
-                              <span className="inline-flex items-center gap-1.5 text-emerald-400 font-semibold text-[11px]">
-                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                              <span className="inline-flex items-center gap-1.5 text-emerald-400 font-medium text-[11px]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                 Activo
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 text-rose-400 font-semibold text-[11px]">
-                                <span className="w-2 h-2 rounded-full bg-rose-400"></span>
+                              <span className="inline-flex items-center gap-1.5 text-[#71717A] font-medium text-[11px]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#71717A]"></span>
                                 Inactivo
                               </span>
                             )}
                             {failedCount > 0 && !isLocked && (
                               <span className="text-[10px] text-amber-400 font-mono">
-                                ⚠️ {failedCount}/5 intentos fallidos
+                                {failedCount}/5 intentos fallidos
                               </span>
                             )}
                           </div>
@@ -602,7 +602,7 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
                                 onClick={() => handleUnlockUser(user.id, user.username)}
                                 className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-all cursor-pointer"
                               >
-                                🔓 Desbloquear
+                                Desbloquear
                               </button>
                             )}
 
@@ -840,10 +840,10 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
                                 : 'bg-slate-800 text-slate-300 border-slate-700'
                             }`}
                           >
-                            {mod.actionType === 'recount_adjustment' && '🔄 Reconteo de Auditoría'}
-                            {mod.actionType === 'cost_updated' && '💲 Ajuste de Costo Estimado'}
-                            {mod.actionType === 'cross_check_requested' && '🔀 Revisión de Cruce'}
-                            {mod.actionType === 'novelty_reported' && '⚠️ Novedad Registrada'}
+                            {mod.actionType === 'recount_adjustment' && 'Reconteo de Auditoría'}
+                            {mod.actionType === 'cost_updated' && 'Ajuste de Costo Estimado'}
+                            {mod.actionType === 'cross_check_requested' && 'Revisión de Cruce'}
+                            {mod.actionType === 'novelty_reported' && 'Novedad Registrada'}
                           </span>
                         </td>
                         <td className="px-4 py-3 max-w-[200px]">
@@ -974,7 +974,7 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
                 <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30">
                   Zona de Peligro Administrativa
                 </span>
-                <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
+                <h2 className="text-xl sm:text-2xl font-semibold text-white mt-1">
                   Borrado Total del Sistema & Reinicio para Nueva Base de Datos
                 </h2>
                 <p className="text-xs text-slate-400 mt-1">
@@ -1088,7 +1088,7 @@ export default function AdminClient({ initialData }: { initialData: AdminData })
                 <button
                   type="submit"
                   disabled={isWiping || wipeConfirmation.trim().toUpperCase() !== 'BORRAR TODO'}
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-black transition-all flex items-center justify-center gap-2 shadow-lg shadow-rose-600/30 cursor-pointer"
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-rose-600/30 cursor-pointer"
                 >
                   {isWiping ? (
                     <>

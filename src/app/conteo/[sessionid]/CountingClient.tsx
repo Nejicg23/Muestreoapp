@@ -562,7 +562,7 @@ export default function CountingClient({
             )
           );
           setFeedbackMsg({
-            text: `⚠️ Solicitud de revisión de cruce enviada al Administrador. Ítem marcado para reconteo.`,
+            text: `Solicitud de revisión de cruce enviada al Administrador. Ítem marcado para reconteo.`,
             type: 'success',
           });
         } else {
@@ -768,11 +768,11 @@ export default function CountingClient({
   return (
     <div className="space-y-6">
       {/* Barra superior de sesión y conectividad */}
-      <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl shadow-black/20">
+      <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link
             href="/"
-            className="p-2 rounded-xl bg-slate-700/60 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+            className="p-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-[#A1A1AA] hover:text-white transition-colors"
             title="Volver a sesiones"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -783,7 +783,7 @@ export default function CountingClient({
                 {session.title}
               </h1>
               <span
-                className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
+                className={`text-xs px-2.5 py-0.5 rounded font-medium ${
                   session.status === 'in_progress'
                     ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                     : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
@@ -792,8 +792,8 @@ export default function CountingClient({
                 {session.status === 'in_progress' ? 'En Curso' : 'Cerrada'}
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Creada por: <span className="text-slate-300">{session.createdBy}</span> • {items.length} productos en catálogo
+            <p className="text-xs text-[#71717A] mt-0.5">
+              Creada por: <span className="text-[#D4D4D8] font-medium">{session.createdBy}</span> • {items.length} productos en catálogo
             </p>
           </div>
         </div>
@@ -801,16 +801,16 @@ export default function CountingClient({
         {/* Indicadores de sincronización y estado de red */}
         <div className="flex flex-wrap items-center gap-3">
           <div
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border ${
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border ${
               isOnline
-                ? 'bg-emerald-950/40 text-emerald-400 border-emerald-800/60'
-                : 'bg-rose-950/40 text-rose-400 border-rose-800/60 animate-pulse'
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
             }`}
           >
             {isOnline ? (
               <>
                 <Wifi className="w-4 h-4" />
-                <span>ONLINE (Servidor Activo)</span>
+                <span>ONLINE</span>
               </>
             ) : (
               <>
@@ -1036,20 +1036,20 @@ export default function CountingClient({
 
           {/* Ficha del Producto Seleccionado y Captura de Conteo */}
           {selectedItem ? (
-            <div className="bg-slate-800/80 border border-cyan-500/30 rounded-2xl p-5 sm:p-6 shadow-xl space-y-5">
+            <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-5 sm:p-6 space-y-4">
               {/* Encabezado del Producto */}
-              <div className="flex items-start justify-between gap-4 border-b border-slate-700/80 pb-4">
+              <div className="flex items-start justify-between gap-4 border-b border-white/[0.08] pb-4">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-xs px-2.5 py-1 rounded-lg bg-cyan-950 text-cyan-300 border border-cyan-800 font-bold">
+                    <span className="font-mono text-xs px-2.5 py-1 rounded-md bg-white/[0.05] text-[#D4D4D8] border border-white/[0.08] font-medium">
                       Cód: {selectedItem.barcode || selectedItem.sku}
                     </span>
-                    <span className="font-mono text-xs px-2.5 py-1 rounded-lg bg-slate-700/80 text-slate-300">
+                    <span className="font-mono text-xs px-2.5 py-1 rounded-md bg-white/[0.03] text-[#A1A1AA] border border-white/[0.06]">
                       SKU: {selectedItem.sku}
                     </span>
                     {selectedItem.location && (
-                      <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-slate-700/40 text-slate-300">
-                        <MapPin className="w-3 h-3 text-cyan-400" />
+                      <span className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-white/[0.03] text-[#A1A1AA]">
+                        <MapPin className="w-3 h-3 text-[#A1A1AA]" />
                         {selectedItem.location}
                       </span>
                     )}
@@ -1060,14 +1060,14 @@ export default function CountingClient({
 
                   {/* Advertencia: Conteo Duplicado en Otra Ubicación */}
                   {isDuplicateCount && (
-                    <div className="mt-2 p-2.5 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center gap-2 animate-pulse">
+                    <div className="mt-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                      <div className="text-xs sm:text-sm text-amber-300 font-semibold leading-tight">
-                        <span className="block">Este producto ya fue contado en:</span>
+                      <div className="text-xs text-amber-300 font-medium leading-tight">
+                        <span className="block font-semibold">Este producto ya fue contado en:</span>
                         <span className="block font-mono text-[11px] mt-0.5">
                           {existingLocations.join(' › ')}
                         </span>
-                        <span className="block mt-0.5 text-[10px] opacity-90">
+                        <span className="block mt-0.5 text-[10px] opacity-80">
                           Este conteo se consolidará con los previos en el reporte final.
                         </span>
                       </div>
@@ -1119,13 +1119,13 @@ export default function CountingClient({
 
               {/* PANEL DE CONTROL DE AUDITORÍA Y RECONTEO (Solo Auditores y Administradores) */}
               {isAuditorOrAdmin ? (
-                <div className="bg-gradient-to-r from-amber-500/10 via-indigo-500/10 to-slate-900 border border-amber-500/30 p-3.5 rounded-xl space-y-2">
+                <div className="bg-[#17171A] border border-white/[0.08] p-3.5 rounded-xl space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                      <Shield className="w-4 h-4 text-amber-400" />
-                      Herramientas de Auditoría (Trazabilidad Legal)
+                    <span className="text-xs font-semibold text-[#D4D4D8] flex items-center gap-1.5">
+                      <Shield className="w-4 h-4 text-[#A1A1AA]" />
+                      Herramientas de Auditoría
                     </span>
-                    <span className="text-[10px] font-mono text-slate-400">
+                    <span className="text-[10px] font-mono text-[#71717A]">
                       Rol: {userRole.toUpperCase()}
                     </span>
                   </div>
@@ -1254,7 +1254,7 @@ export default function CountingClient({
                     step="any"
                     value={quantity}
                     onChange={(e) => setQuantity(Math.max(1, parseFloat(e.target.value) || 1))}
-                    className="flex-1 bg-slate-950 border border-slate-700 focus:border-cyan-400 text-center font-mono text-2xl font-black text-white py-2 rounded-2xl outline-none"
+                    className="flex-1 bg-slate-950 border border-slate-700 focus:border-cyan-400 text-center font-mono text-2xl font-semibold text-white py-2 rounded-2xl outline-none"
                   />
                   <button
                     type="button"
@@ -1267,44 +1267,44 @@ export default function CountingClient({
               </div>
 
               {/* Preview del Desglose Automático */}
-              <div className="bg-gradient-to-r from-cyan-950/40 to-blue-950/40 border border-cyan-800/60 p-4 rounded-xl flex items-center justify-between">
+              <div className="bg-[#111113] border border-white/[0.08] p-4 rounded-xl flex items-center justify-between">
                 <div>
-                  <span className="text-xs text-cyan-400 font-semibold block">
+                  <span className="text-xs text-[#A1A1AA] font-medium block">
                     DESGLOSE AUTOMÁTICO CALCULADO
                   </span>
-                  <div className="flex items-center gap-2 text-white font-mono text-lg font-bold mt-1">
+                  <div className="flex items-center gap-2 text-white font-mono text-lg font-semibold mt-1">
                     <span>{breakdown.countedPacks} Unidades (u)</span>
-                    <span className="text-slate-400">+</span>
+                    <span className="text-[#71717A]">+</span>
                     <span>{breakdown.countedLoose} Fracciones (f)</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs text-slate-400 block">Total Fracciones Base</span>
-                  <span className="text-cyan-300 font-mono text-2xl font-black">
+                  <span className="text-xs text-[#71717A] block">Total Fracciones Base</span>
+                  <span className="text-white font-mono text-2xl font-bold">
                     {breakdown.countedQuantity}
                   </span>
                 </div>
               </div>
 
               {/* Lote y Fecha de Vencimiento Opcional con Alerta de Cuarentena */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-900/50 p-3.5 rounded-xl border border-slate-700/60">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-[#111113] p-3.5 rounded-xl border border-white/[0.08]">
                 <div>
-                  <label className="text-slate-400 block mb-1">Lote / Batch (opcional):</label>
+                  <label className="text-[#A1A1AA] block mb-1">Lote / Batch (opcional):</label>
                   <input
                     type="text"
                     placeholder="Ej: L-48920"
                     value={directBatch}
                     onChange={(e) => setDirectBatch(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white font-mono outline-none focus:border-cyan-500"
+                    className="w-full bg-[#17171A] border border-white/[0.08] rounded-lg px-3 py-1.5 text-white font-mono outline-none focus:border-white/20"
                   />
                 </div>
                 <div>
-                  <label className="text-slate-400 block mb-1">Fecha de Vencimiento (opcional):</label>
+                  <label className="text-[#A1A1AA] block mb-1">Fecha de Vencimiento (opcional):</label>
                   <input
                     type="date"
                     value={directExpiry}
                     onChange={(e) => setDirectExpiry(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white font-mono outline-none focus:border-cyan-500"
+                    className="w-full bg-[#17171A] border border-white/[0.08] rounded-lg px-3 py-1.5 text-white font-mono outline-none focus:border-white/20"
                   />
                 </div>
 
@@ -1313,24 +1313,24 @@ export default function CountingClient({
                   const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
                   if (diffDays <= 0) {
                     return (
-                      <div className="sm:col-span-2 p-2 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold flex items-center gap-1.5">
+                      <div className="sm:col-span-2 p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium flex items-center gap-1.5">
                         <AlertOctagon className="w-4 h-4 shrink-0 text-rose-400" />
-                        <span>🔴 PRODUCTO VENCIDO (Venció hace {Math.abs(diffDays)} días)</span>
+                        <span>Producto vencido (hace {Math.abs(diffDays)} días)</span>
                       </div>
                     );
                   }
                   if (diffDays <= 90) {
                     return (
-                      <div className="sm:col-span-2 p-2.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-2 animate-pulse">
+                      <div className="sm:col-span-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-medium flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
-                        <span>⚠️ PRÓXIMO A VENCER ({diffDays} DÍAS / &lt; 3 MESES) - MARCAR PARA CUSTODIA O CUARENTENA</span>
+                        <span>Próximo a vencer ({diffDays} días restantes / &lt; 3 meses) — Marcar para custodia</span>
                       </div>
                     );
                   }
                   return (
-                    <div className="sm:col-span-2 p-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[11px] font-semibold flex items-center gap-1.5">
+                    <div className="sm:col-span-2 p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-medium flex items-center gap-1.5">
                       <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
-                      <span>🟢 Vigente ({diffDays} días restantes)</span>
+                      <span>Vigente ({diffDays} días restantes)</span>
                     </div>
                   );
                 })()}
@@ -1339,27 +1339,27 @@ export default function CountingClient({
               {/* Datos de Auditoría / Operador */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div>
-                  <label className="text-slate-400 block mb-1">Nombre Operador / Conteo:</label>
+                  <label className="text-[#A1A1AA] block mb-1">Nombre Operador / Conteo:</label>
                   <div className="relative">
-                    <User className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
+                    <User className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[#71717A]" />
                     <input
                       type="text"
                       value={operatorName}
                       onChange={(e) => setOperatorName(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-slate-200 outline-none focus:border-cyan-500"
+                      className="w-full bg-[#111113] border border-white/[0.08] rounded-lg pl-8 pr-3 py-1.5 text-white outline-none focus:border-white/20"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="text-slate-400 block mb-1">Ubicación Física Escaneada:</label>
+                  <label className="text-[#A1A1AA] block mb-1">Ubicación Física Escaneada:</label>
                   <div className="relative">
-                    <MapPin className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
+                    <MapPin className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[#71717A]" />
                     <input
                       type="text"
                       placeholder="Ej: Pasillo A, Estante 2"
                       value={scanLocation}
                       onChange={(e) => setScanLocation(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-slate-200 outline-none focus:border-cyan-500"
+                      className="w-full bg-[#111113] border border-white/[0.08] rounded-lg pl-8 pr-3 py-1.5 text-white outline-none focus:border-white/20"
                     />
                   </div>
                 </div>
@@ -1371,13 +1371,13 @@ export default function CountingClient({
                   type="button"
                   onClick={handleRegisterCount}
                   disabled={isSubmitting}
-                  className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/25 transition-all text-base disabled:opacity-50"
+                  className="flex-1 bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] font-semibold py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm sm:text-base disabled:opacity-50 cursor-pointer"
                 >
                   <ClipboardCheck className="w-5 h-5" />
                   <span>
                     {isSubmitting
                       ? 'Registrando...'
-                      : `REGISTRAR CONTEO (+${breakdown.countedQuantity} FRACCIONES)`}
+                      : `Registrar Conteo (+${breakdown.countedQuantity} fracciones)`}
                   </span>
                 </button>
                 <button
@@ -1567,10 +1567,10 @@ export default function CountingClient({
                 onChange={(e) => setNoveltyType(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-700 text-white px-3.5 py-2.5 rounded-xl text-xs outline-none focus:border-amber-500"
               >
-                <option value="cruce_mercancia">🔀 Solicitar al Administrador Revisión de Cruce</option>
-                <option value="mal_estado_averia">⚠️ Reportar Mal Estado o Avería Física</option>
-                <option value="proxima_vencer">📅 Reportar Fecha Próxima a Vencer</option>
-                <option value="otro">📝 Otra Novedad de Inventario</option>
+                <option value="cruce_mercancia">Solicitar Revisión de Cruce al Administrador</option>
+                <option value="mal_estado_averia">Reportar Mal Estado o Avería Física</option>
+                <option value="proxima_vencer">Reportar Fecha Próxima a Vencer</option>
+                <option value="otro">Otra Novedad de Inventario</option>
               </select>
 
               {noveltyType === 'cruce_mercancia' && (
@@ -1810,17 +1810,17 @@ export default function CountingClient({
                 const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
                 if (diffDays <= 0) {
                   return (
-                    <div className="col-span-2 p-2 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold flex items-center gap-1.5">
+                    <div className="col-span-2 p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium flex items-center gap-1.5">
                       <AlertOctagon className="w-4 h-4 shrink-0 text-rose-400" />
-                      <span>🔴 PRODUCTO VENCIDO (Venció hace {Math.abs(diffDays)} días)</span>
+                      <span>Producto vencido (hace {Math.abs(diffDays)} días)</span>
                     </div>
                   );
                 }
                 if (diffDays <= 90) {
                   return (
-                    <div className="col-span-2 p-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1.5">
+                    <div className="col-span-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-medium flex items-center gap-1.5">
                       <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
-                      <span>⚠️ PRÓXIMO A VENCER ({diffDays} DÍAS / &lt; 3 MESES) - MARCAR PARA CUSTODIA O CUARENTENA</span>
+                      <span>Próximo a vencer ({diffDays} días restantes / &lt; 3 meses) — Marcar para custodia</span>
                     </div>
                   );
                 }
@@ -1831,7 +1831,7 @@ export default function CountingClient({
             {/* Vista previa del total de reconteo */}
             <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs">
               <span className="text-slate-300 font-medium">Nuevo Conteo Físico Base:</span>
-              <span className="font-mono font-black text-amber-300 text-sm">
+              <span className="font-mono font-semibold text-amber-300 text-sm">
                 {(recountPacks * selectedItem.packQuantity) + recountLoose} fracciones ({recountPacks} u {recountLoose} f)
               </span>
             </div>
@@ -1945,7 +1945,7 @@ export default function CountingClient({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-white font-bold">Costo Estimado por Unidad/Fracción:</span>
-                <span className="font-mono font-black text-emerald-400 text-base">
+                <span className="font-mono font-semibold text-emerald-400 text-base">
                   ${boxCostInput && Number(boxCostInput) > 0 ? (Number(boxCostInput) / boxFactorInput).toFixed(4) : '0.0000'}
                 </span>
               </div>

@@ -15,7 +15,6 @@ import {
   Layers,
   ArrowRight,
   ShieldCheck,
-  Sparkles,
   Search,
   Upload,
   Clipboard,
@@ -241,176 +240,174 @@ export default function HomeClient({
   const totalCounts = sessions.reduce((acc, s) => acc + (s.countsCount || 0), 0);
 
   return (
-    <div className="space-y-8">
-      {/* Banner Principal / Hero Material Design Dark */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#13141F] via-[#101726] to-[#0D1017] border border-cyan-500/20 rounded-3xl p-6 sm:p-8 shadow-2xl">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
-          <div className="max-w-2xl space-y-2.5">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/25 text-cyan-300 text-[11px] sm:text-xs font-bold">
-              <Sparkles className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">Conteo Físico • Offline First • Conciliación</span>
+    <div className="space-y-6">
+      {/* Banner Principal Industrial */}
+      <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-5 sm:p-7">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
+          <div className="max-w-2xl space-y-2">
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/[0.08] text-[#A1A1AA] text-xs font-medium">
+              <Database className="w-3.5 h-3.5 text-white/70 shrink-0" />
+              <span>Conteo Físico • Offline First • Conciliación</span>
             </div>
-            <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight leading-snug">
               Control de Inventario y Conteo Físico
             </h1>
-            <p className="text-[#A5A8B6] text-xs sm:text-base leading-relaxed">
-              Captura inventarios con escáner de código de barras o manual, desglosa cajas y fracciones al instante, almacena sin conexión con Dexie y sincroniza automáticamente con PostgreSQL.
+            <p className="text-[#A1A1AA] text-xs sm:text-sm leading-relaxed">
+              Captura inventarios con escáner de código de barras o manual, desglosa cajas y fracciones, opera sin conexión y concilia diferencias con precisión.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:flex sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 shrink-0">
+          <div className="grid grid-cols-1 sm:flex sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black px-5 py-3.5 sm:py-3 rounded-full flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 transition-all active:scale-95 text-xs sm:text-sm cursor-pointer"
+              className="bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] font-semibold px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors text-xs sm:text-sm cursor-pointer"
             >
-              <Plus className="w-4 h-4 shrink-0 stroke-[3]" />
-              <span>Nueva Sesión con Base de Datos</span>
+              <Plus className="w-4 h-4 shrink-0 stroke-[2.5]" />
+              <span>Nueva Sesión</span>
             </button>
 
             <Link
               href="/inventario-rapido"
-              className="bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-bold px-4 py-3.5 sm:py-3 rounded-full flex items-center justify-center gap-2 transition-all active:scale-95 text-xs sm:text-sm"
+              className="bg-white/[0.06] hover:bg-white/[0.1] text-white border border-white/[0.08] font-medium px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors text-xs sm:text-sm"
             >
-              <Smartphone className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>Inventario Rápido Móvil</span>
+              <Smartphone className="w-4 h-4 text-[#A1A1AA] shrink-0" />
+              <span>Inventario Rápido</span>
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Tarjetas KPI Material You */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-[#141522] border border-white/[0.06] rounded-3xl p-4 sm:p-5 shadow-lg">
-          <span className="text-[11px] uppercase font-bold tracking-wider text-[#8E9099] block mb-1">Sesiones Activas</span>
-          <div className="text-2xl sm:text-3xl font-black text-cyan-400">{activeCount}</div>
-          <span className="text-[10px] sm:text-[11px] text-[#8E9099] mt-1 block">En proceso de conteo</span>
+      {/* Tarjetas KPI Industrial Graphite */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-4">
+          <span className="text-xs font-medium text-[#71717A] block mb-1">Sesiones Activas</span>
+          <div className="text-2xl font-semibold text-white tracking-tight">{activeCount}</div>
+          <span className="text-[11px] text-[#71717A] mt-1 block">En proceso de conteo</span>
         </div>
 
-        <div className="bg-[#141522] border border-white/[0.06] rounded-3xl p-4 sm:p-5 shadow-lg">
-          <span className="text-[11px] uppercase font-bold tracking-wider text-[#8E9099] block mb-1">Sesiones Cerradas</span>
-          <div className="text-2xl sm:text-3xl font-black text-emerald-400">{closedCount}</div>
-          <span className="text-[10px] sm:text-[11px] text-[#8E9099] mt-1 block">Con sello SHA-256</span>
+        <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-4">
+          <span className="text-xs font-medium text-[#71717A] block mb-1">Sesiones Cerradas</span>
+          <div className="text-2xl font-semibold text-emerald-400 tracking-tight">{closedCount}</div>
+          <span className="text-[11px] text-[#71717A] mt-1 block">Con sello SHA-256</span>
         </div>
 
-        <div className="bg-[#141522] border border-white/[0.06] rounded-3xl p-4 sm:p-5 shadow-lg">
-          <span className="text-[11px] uppercase font-bold tracking-wider text-[#8E9099] block mb-1">Conteos Registrados</span>
-          <div className="text-2xl sm:text-3xl font-black text-white">{totalCounts.toLocaleString()}</div>
-          <span className="text-[10px] sm:text-[11px] text-[#8E9099] mt-1 block">Físicos capturados</span>
+        <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-4">
+          <span className="text-xs font-medium text-[#71717A] block mb-1">Conteos Registrados</span>
+          <div className="text-2xl font-semibold text-white tracking-tight">{totalCounts.toLocaleString()}</div>
+          <span className="text-[11px] text-[#71717A] mt-1 block">Físicos capturados</span>
         </div>
 
-        <div className="bg-[#141522] border border-white/[0.06] rounded-3xl p-4 sm:p-5 shadow-lg">
-          <span className="text-[11px] uppercase font-bold tracking-wider text-[#8E9099] block mb-1">Base de Datos</span>
-          <div className="text-2xl sm:text-3xl font-black text-indigo-400">PostgreSQL</div>
-          <span className="text-[10px] sm:text-[11px] text-emerald-400 mt-1 flex items-center gap-1 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            Drizzle ORM Sincronizado
+        <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-4">
+          <span className="text-xs font-medium text-[#71717A] block mb-1">Base de Datos</span>
+          <div className="text-2xl font-semibold text-white tracking-tight">PostgreSQL</div>
+          <span className="text-[11px] text-emerald-400 mt-1 flex items-center gap-1.5 font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            Sincronización Activa
           </span>
         </div>
       </div>
 
       {/* Listado de Sesiones Existentes */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-xl font-bold text-white tracking-tight">Sesiones de Inventario</h2>
-            <p className="text-xs text-slate-400">Historial de inventarios formales y muestreos rápidos.</p>
+            <h2 className="text-base font-semibold text-white tracking-tight">Sesiones de Inventario</h2>
+            <p className="text-xs text-[#71717A]">Historial de inventarios formales y muestreos rápidos.</p>
           </div>
 
-          <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#71717A] pointer-events-none" />
             <input
               type="text"
               placeholder="Buscar sesión o auditor..."
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              className="w-full pl-9 pr-3 py-1.5 bg-[#17171A] border border-white/[0.08] rounded-lg text-xs text-white placeholder-[#71717A] focus:outline-none focus:border-white/20 transition-colors"
             />
           </div>
         </div>
 
         {filteredSessions.length === 0 ? (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
-            <ClipboardList className="w-12 h-12 text-slate-500 mx-auto" />
-            <h3 className="text-base font-bold text-white">No hay sesiones de inventario</h3>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+          <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-10 text-center space-y-3">
+            <ClipboardList className="w-10 h-10 text-[#71717A] mx-auto" />
+            <h3 className="text-sm font-semibold text-white">No hay sesiones de inventario</h3>
+            <p className="text-xs text-[#71717A] max-w-sm mx-auto">
               Crea tu primera sesión cargando tu archivo de base de datos Excel o CSV.
             </p>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl inline-flex items-center gap-1.5 transition-all shadow-md shadow-cyan-600/20"
+              className="px-3.5 py-2 bg-white text-[#0C0C0E] hover:bg-[#E4E4E7] font-semibold text-xs rounded-lg inline-flex items-center gap-1.5 transition-colors"
             >
               <Plus className="w-4 h-4" />
               <span>Crear Nueva Sesión</span>
             </button>
           </div>
         ) : (
-          <div className="m3-list-group">
-            {/* MATERIAL YOU FLAT LIST FOR SESSIONS */}
+          <div className="bg-[#141416] border border-white/[0.08] rounded-xl divide-y divide-white/[0.06] overflow-hidden">
             {filteredSessions.map((session) => {
               const isClosed = session.status === 'closed';
               return (
                 <div
                   key={session.id}
-                  className="m3-list-item flex-col md:flex-row !items-start md:!items-center gap-4 hover:bg-white/[0.03] p-4 sm:p-5"
+                  className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 hover:bg-white/[0.02] transition-colors"
                 >
-                  {/* Leading squircle avatar */}
-                  <div className="flex items-center gap-3.5 min-w-0 flex-1 w-full">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div
-                      className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
+                      className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border ${
                         isClosed
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                          : 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20'
+                          : 'bg-white/[0.05] text-[#A1A1AA] border-white/[0.08]'
                       }`}
                     >
-                      <Package className="w-6 h-6" />
+                      <Package className="w-4 h-4" />
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-bold text-white text-sm sm:text-base leading-snug">
+                        <h3 className="font-semibold text-white text-sm leading-snug">
                           {session.title}
                         </h3>
                         <span
-                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                          className={`px-2 py-0.5 rounded text-[10px] font-medium border ${
                             isClosed
-                              ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                              : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                              : 'bg-sky-500/10 text-sky-400 border-sky-500/20'
                           }`}
                         >
-                          {isClosed ? 'Sellada ✓' : 'En Curso'}
+                          {isClosed ? 'Sellada' : 'En Curso'}
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-[#8E9099]">
-                        <span>Auditor: <strong className="text-white ml-0.5">{session.createdBy}</strong></span>
+                      <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-[#71717A]">
+                        <span>Auditor: <strong className="text-[#D4D4D8] font-medium">{session.createdBy}</strong></span>
                         <span>•</span>
                         <span>{new Date(session.createdAt).toLocaleDateString('es-ES')}</span>
                         <span>•</span>
-                        <span className="font-mono text-cyan-400 font-semibold">
+                        <span className="font-mono text-[#A1A1AA]">
                           {session.itemsCount} productos • {session.countsCount} conteos
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Trailing action pills */}
-                  <div className="flex items-center gap-2 w-full md:w-auto justify-end pt-2 md:pt-0 border-t md:border-t-0 border-white/[0.04] shrink-0">
+                  {/* Botones de acción sobrios */}
+                  <div className="flex items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-white/[0.06] shrink-0">
                     <Link
                       href={`/conteo/${session.id}`}
-                      className="px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.1] text-xs font-bold text-white transition-all active:scale-95 text-center flex-1 md:flex-initial"
+                      className="px-3 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs font-medium text-white border border-white/[0.08] transition-colors text-center"
                     >
                       Conteo Físico
                     </Link>
                     <Link
                       href={`/sesion/${session.id}/reporte`}
-                      className="px-4 py-2 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all shadow-md shadow-cyan-600/25 active:scale-95 text-center flex-1 md:flex-initial"
+                      className="px-3 py-1.5 rounded-lg bg-white text-[#0C0C0E] hover:bg-[#E4E4E7] text-xs font-semibold transition-colors text-center"
                     >
                       Reporte
                     </Link>
                     <button
                       onClick={() => handleDuplicateSession(session.id, session.title)}
                       disabled={duplicatingSessionId === session.id}
-                      className="px-4 py-2 rounded-full bg-amber-600/80 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-md shadow-amber-600/20 active:scale-95 text-center flex-1 md:flex-initial disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs font-medium text-[#A1A1AA] hover:text-white border border-white/[0.08] transition-colors text-center disabled:opacity-50 cursor-pointer"
                     >
                       {duplicatingSessionId === session.id ? 'Duplicando...' : 'Duplicar'}
                     </button>
@@ -424,25 +421,25 @@ export default function HomeClient({
 
       {/* MODAL: CREAR NUEVA SESIÓN CON CARGA FLEXIBLE DE BASE DE DATOS */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <form
             onSubmit={handleCreateSession}
-            className="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto"
+            className="bg-[#17171A] border border-white/[0.08] rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto"
           >
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-cyan-600/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-white/[0.06] text-white flex items-center justify-center border border-white/[0.08]">
                   <Plus className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-base">Nueva Sesión de Inventario</h3>
-                  <span className="text-[10px] text-slate-400">Carga flexible de base de datos para conteo</span>
+                  <h3 className="font-semibold text-white text-sm sm:text-base">Nueva Sesión de Inventario</h3>
+                  <span className="text-[11px] text-[#71717A]">Carga de base de datos para conteo</span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-[#71717A] hover:text-white transition-colors"
               >
                 ✕
               </button>
@@ -450,16 +447,16 @@ export default function HomeClient({
 
             {/* Título de la Sesión */}
             <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-1">
+              <label className="text-xs font-medium text-[#D4D4D8] block mb-1">
                 Título de la Sesión <span className="text-rose-400">*</span>
               </label>
               <input
                 type="text"
-                placeholder="Ej: Conteo Farmacia Central - Octubre"
+                placeholder="Ej: Conteo Farmacia Central - Noviembre"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                className="w-full px-3 py-2 bg-[#111113] border border-white/[0.08] rounded-lg text-white text-xs focus:border-white/30 focus:outline-none"
                 autoFocus
               />
             </div>
@@ -467,60 +464,60 @@ export default function HomeClient({
             {/* Auditor y Tipo de Conteo */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                <label className="text-xs font-medium text-[#D4D4D8] block mb-1">
                   Responsable
                 </label>
                 <input
                   type="text"
                   value={createdBy}
                   onChange={(e) => setCreatedBy(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                  className="w-full px-3 py-2 bg-[#111113] border border-white/[0.08] rounded-lg text-white text-xs focus:border-white/30 focus:outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                <label className="text-xs font-medium text-[#D4D4D8] block mb-1">
                   Modalidad de Conteo
                 </label>
                 <select
                   value={sessionType}
                   onChange={(e) => setSessionType(e.target.value as any)}
-                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                  className="w-full px-3 py-2 bg-[#111113] border border-white/[0.08] rounded-lg text-white text-xs focus:border-white/30 focus:outline-none"
                 >
-                  <option value="formal">🎯 Conteo Formal (Escáner & Auditoría)</option>
-                  <option value="quick">⚡ Inventario Rápido (Móvil / Spot)</option>
+                  <option value="formal">Conteo Formal (Auditoría & Escáner)</option>
+                  <option value="quick">Inventario Rápido (Móvil / Muestreo)</option>
                 </select>
               </div>
             </div>
 
             {/* SELECCIÓN Y CARGA DE LA BASE DE DATOS */}
-            <div className="space-y-2 pt-2 border-t border-slate-800">
-              <label className="text-xs font-bold text-white flex items-center justify-between">
-                <span>Base de Datos de Productos para el Conteo</span>
-                <span className="text-[10px] text-cyan-400 font-normal">Detecta: id, stk-sis, producto, valor</span>
+            <div className="space-y-2.5 pt-2 border-t border-white/[0.08]">
+              <label className="text-xs font-semibold text-white flex items-center justify-between">
+                <span>Base de Datos de Productos</span>
+                <span className="text-[10px] text-[#A1A1AA] font-mono">ID • Stk-Sis • Producto • Costo</span>
               </label>
 
               {/* Selector de Pestañas de Carga */}
-              <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800 text-[11px] font-semibold">
+              <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#111113] rounded-lg border border-white/[0.08] text-xs font-medium">
                 <button
                   type="button"
                   onClick={() => setDbSource('upload')}
-                  className={`py-1.5 rounded-lg transition-all ${
+                  className={`py-1.5 rounded-md transition-colors ${
                     dbSource === 'upload'
-                      ? 'bg-cyan-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-white/10 text-white font-semibold'
+                      : 'text-[#71717A] hover:text-white'
                   }`}
                 >
-                  Subir Excel/CSV
+                  Subir Archivo
                 </button>
                 <button
                   type="button"
                   onClick={() => setDbSource('paste')}
-                  className={`py-1.5 rounded-lg transition-all ${
+                  className={`py-1.5 rounded-md transition-colors ${
                     dbSource === 'paste'
-                      ? 'bg-cyan-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-white/10 text-white font-semibold'
+                      : 'text-[#71717A] hover:text-white'
                   }`}
                 >
                   Pegar Texto
@@ -532,10 +529,10 @@ export default function HomeClient({
                     setParsedItems([]);
                     setFileName(null);
                   }}
-                  className={`py-1.5 rounded-lg transition-all ${
+                  className={`py-1.5 rounded-md transition-colors ${
                     dbSource === 'demo'
-                      ? 'bg-cyan-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-white/10 text-white font-semibold'
+                      : 'text-[#71717A] hover:text-white'
                   }`}
                 >
                   Usar Demo
@@ -545,19 +542,19 @@ export default function HomeClient({
               {/* SUBIR ARCHIVO */}
               {dbSource === 'upload' && (
                 <div className="space-y-2">
-                  <div className="border-2 border-dashed border-slate-700 hover:border-cyan-500/60 rounded-2xl p-4 text-center cursor-pointer transition-colors relative bg-slate-950/60">
+                  <div className="border border-dashed border-white/[0.15] hover:border-white/30 rounded-xl p-4 text-center cursor-pointer transition-colors relative bg-[#111113]/60">
                     <input
                       type="file"
                       accept=".xlsx,.xls,.csv"
                       onChange={handleFileUpload}
                       className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                     />
-                    <Upload className="w-7 h-7 text-cyan-400 mx-auto mb-1.5" />
-                    <span className="text-xs font-bold text-white block">
+                    <Upload className="w-6 h-6 text-[#A1A1AA] mx-auto mb-1" />
+                    <span className="text-xs font-medium text-white block">
                       {fileName ? fileName : 'Selecciona o arrastra el archivo Excel (.xlsx / .csv)'}
                     </span>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">
-                      Detecta automáticamente: 1. ID ➔ 2. Stk-Sis ➔ 3. Producto ➔ 4. Valor Total Caja
+                    <span className="text-[10px] text-[#71717A] block mt-0.5 font-mono">
+                      Columnas: Cód ID, Descripción, Stock Sistema, Costo
                     </span>
                   </div>
                 </div>
@@ -571,12 +568,12 @@ export default function HomeClient({
                     value={pastedText}
                     onChange={(e) => setPastedText(e.target.value)}
                     rows={3}
-                    className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs font-mono focus:ring-1 focus:ring-cyan-500 outline-none"
+                    className="w-full p-2.5 bg-[#111113] border border-white/[0.08] rounded-lg text-white text-xs font-mono focus:border-white/30 outline-none"
                   />
                   <button
                     type="button"
                     onClick={handleParsePastedText}
-                    className="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 text-xs font-bold transition-colors"
+                    className="w-full py-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-white text-xs font-medium border border-white/[0.08] transition-colors"
                   >
                     Interpretar Datos Pegados
                   </button>
@@ -585,31 +582,31 @@ export default function HomeClient({
 
               {/* USAR BASE DEMO */}
               {dbSource === 'demo' && (
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-1">
-                  <span className="font-bold text-white block">8 Artículos de Muestra Farmacéuticos</span>
-                  <p className="text-[11px] text-slate-400">
-                    Incluye medicamentos con factores de empaque (ej. x30, x10, x50), códigos de barra y costos para realizar pruebas inmediatas sin subir archivo.
+                <div className="p-3 rounded-lg bg-[#111113] border border-white/[0.08] text-xs space-y-1">
+                  <span className="font-semibold text-white block">8 Artículos de Muestra Farmacéuticos</span>
+                  <p className="text-[11px] text-[#71717A]">
+                    Incluye factores de empaque (x30, x10, x50), códigos de barra y costos de impacto para pruebas inmediatas.
                   </p>
                 </div>
               )}
 
               {/* Resumen en vivo de detección */}
               {parsedItems.length > 0 && (
-                <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between">
+                <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>
-                      <strong>{parsedItems.length} productos detectados</strong> (con factor y valor por caja).
+                      <strong>{parsedItems.length} productos detectados</strong> (con factor y valor).
                     </span>
                   </div>
-                  <span className="font-mono text-[10px] font-bold text-emerald-400">
+                  <span className="font-mono text-[10px] font-semibold text-emerald-400">
                     {parsedItems.filter((i) => i.boxCost > 0).length} valorizados
                   </span>
                 </div>
               )}
 
               {parseError && (
-                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+                <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
                   <span>{parseError}</span>
                 </div>
@@ -621,20 +618,20 @@ export default function HomeClient({
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="w-full sm:w-auto px-4 py-3 sm:py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700"
+                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-white/[0.06] text-[#A1A1AA] hover:text-white text-xs font-medium transition-colors"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold transition-all shadow-lg shadow-cyan-600/30 disabled:opacity-50 cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-white text-[#0C0C0E] hover:bg-[#E4E4E7] text-xs font-semibold transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting
-                  ? 'Importando y Creando...'
+                  ? 'Importando...'
                   : sessionType === 'quick'
-                  ? 'Crear e Ir a Inventario Rápido'
-                  : 'Crear y Comenzar Conteo Formal'}
+                  ? 'Iniciar Inventario Rápido'
+                  : 'Iniciar Conteo Formal'}
               </button>
             </div>
           </form>

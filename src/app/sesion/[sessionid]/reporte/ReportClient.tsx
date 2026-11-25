@@ -33,7 +33,6 @@ import {
   Check,
   X,
   ShieldAlert,
-  Sparkles,
   Tag,
   Shield,
   FileText,
@@ -44,6 +43,8 @@ import {
   ExternalLink,
   Copy,
   Globe,
+  LayoutGrid,
+  Table as TableIcon,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import {
@@ -700,7 +701,7 @@ export default function ReportClient({
           {publicShareUrl && (
             <div className="mt-3 p-3 rounded-xl border-2 border-cyan-700 bg-cyan-50/60 flex items-center justify-between gap-4">
               <div className="space-y-1 text-left">
-                <div className="text-[10px] font-black uppercase tracking-wider text-cyan-900">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-cyan-900">
                   🌐 VERSIÓN INTERACTIVA EN LÍNEA (VERCEL + SUPABASE CLOUD)
                 </div>
                 <p className="text-[10px] text-slate-700">
@@ -743,7 +744,7 @@ export default function ReportClient({
                 <div className="border-b-2 border-slate-900 pb-2 mb-2">
                   <div className="flex justify-between items-start gap-4">
                     <div>
-                      <h2 className="text-sm font-black uppercase tracking-wider text-black">
+                      <h2 className="text-sm font-semibold uppercase tracking-wider text-black">
                         ACTA DE DISCREPANCIAS Y NOVEDADES (FALTANTES Y SOBRANTES)
                       </h2>
                       <p className="text-[9.5px] text-slate-600">
@@ -910,22 +911,22 @@ export default function ReportClient({
 
       {/* BANNER SUPERIOR DE MODO PÚBLICO / ESTÁTICO EN LÍNEA */}
       {isPublicView && (
-        <div className="no-print bg-gradient-to-r from-cyan-950/80 via-[#121212] to-indigo-950/80 border border-cyan-500/40 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+        <div className="no-print bg-[#141416] border border-white/[0.08] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shrink-0">
-              <Globe className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-lg bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white shrink-0">
+              <Globe className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm font-black text-white">
+                <span className="text-xs sm:text-sm font-semibold text-white">
                   Informe Oficial Interactivo en Línea (Solo Lectura)
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  Verificado por Supabase
+                <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Verificado
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300 mt-0.5">
-                Puedes filtrar productos, consultar faltantes/sobrantes, ver fotografías de evidencia, cambiar a vista A6 o descargar el Excel.
+              <p className="text-[11px] text-[#A1A1AA] mt-0.5">
+                Consulta faltantes/sobrantes, fotografías de evidencia, vista A6 y descarga de datos.
               </p>
             </div>
           </div>
@@ -935,42 +936,42 @@ export default function ReportClient({
       {/* ============================================================== */}
       {/* ENCABEZADO INTERACTIVO DE PANTALLA */}
       {/* ============================================================== */}
-      <div className="no-print bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-8 shadow-xl">
+      <div className="no-print bg-[#141416] border border-white/[0.08] rounded-2xl p-5 sm:p-7">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               {!isPublicView && (
                 <Link
                   href="/reportes"
-                  className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors"
+                  className="w-8 h-8 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-[#A1A1AA] hover:text-white flex items-center justify-center transition-colors"
                   title="Volver al Centro de Reportes"
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </Link>
               )}
-              <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                 Reporte de Conciliación
               </h1>
               <span
-                className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                className={`px-2.5 py-0.5 rounded text-xs font-medium border ${
                   session.status === 'closed'
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                    : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                    : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
                 }`}
               >
                 {session.status === 'closed' ? 'Sellada' : 'En Progreso'}
               </span>
             </div>
 
-            <p className="text-sm text-slate-300 font-medium">{session.title}</p>
+            <p className="text-sm text-[#D4D4D8] font-medium">{session.title}</p>
 
-            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+            <div className="flex flex-wrap items-center gap-4 text-xs text-[#71717A]">
               <span className="flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-slate-400" />
-                Auditor: <strong className="text-slate-200">{session.createdBy}</strong>
+                <User className="w-3.5 h-3.5 text-[#71717A]" />
+                Auditor: <strong className="text-[#D4D4D8] font-medium">{session.createdBy}</strong>
               </span>
               <span className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                <Calendar className="w-3.5 h-3.5 text-[#71717A]" />
                 {new Date(session.createdAt).toLocaleDateString('es-ES', { dateStyle: 'long' })}
               </span>
               {session.closedHash && (
@@ -988,10 +989,10 @@ export default function ReportClient({
               <button
                 type="button"
                 onClick={() => setIsShareModalOpen(true)}
-                className="col-span-2 sm:col-span-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg shadow-cyan-600/25"
+                className="col-span-2 sm:col-span-1 px-4 py-2 rounded-lg bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
               >
                 <Share2 className="w-4 h-4 shrink-0" />
-                <span className="truncate">PDF con Link en Línea</span>
+                <span className="truncate">Compartir Reporte</span>
               </button>
             )}
 
@@ -1065,14 +1066,14 @@ export default function ReportClient({
           <button
             type="button"
             onClick={() => setReportView('quick_a6')}
-            className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            className={`px-4 py-2.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 cursor-pointer ${
               reportView === 'quick_a6'
-                ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
+                ? 'bg-white/10 text-white font-semibold'
+                : 'text-[#71717A] hover:text-white hover:bg-white/[0.04]'
             }`}
           >
-            <Printer className="w-4 h-4 text-cyan-300" />
-            <span>Reporte Rápido (Formato A6 / Factura)</span>
+            <Printer className="w-4 h-4 text-[#A1A1AA]" />
+            <span>Reporte Rápido (Formato A6)</span>
           </button>
 
           <button
@@ -1087,7 +1088,7 @@ export default function ReportClient({
             <AlertTriangle className="w-4 h-4 text-amber-300" />
             <span>Productos por Vencer / Cuarentena</span>
             {quarantineCount > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[10px]">
+              <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-semibold text-[10px]">
                 {quarantineCount}
               </span>
             )}
@@ -1118,7 +1119,7 @@ export default function ReportClient({
                 <Package className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                 Catálogo
               </span>
-              <div className="my-1.5 text-xl sm:text-2xl font-black text-white">
+              <div className="my-1.5 text-xl sm:text-2xl font-semibold text-white">
                 {summary.totalItems}
               </div>
               <span className="text-[10px] text-slate-500">Total productos</span>
@@ -1129,7 +1130,7 @@ export default function ReportClient({
                 <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                 Coincidentes
               </span>
-              <div className="my-1.5 text-xl sm:text-2xl font-black text-emerald-400">
+              <div className="my-1.5 text-xl sm:text-2xl font-semibold text-emerald-400">
                 {matchedCount}
               </div>
               <span className="text-[10px] text-emerald-500 font-medium">100% Exactitud</span>
@@ -1140,7 +1141,7 @@ export default function ReportClient({
                 <TrendingUp className="w-3.5 h-3.5 shrink-0" />
                 Sobrantes (+)
               </span>
-              <div className="my-1.5 text-xl sm:text-2xl font-black text-cyan-400">
+              <div className="my-1.5 text-xl sm:text-2xl font-semibold text-cyan-400">
                 {surplusCount}
               </div>
               <span className="text-[10px] text-cyan-400 truncate">
@@ -1153,7 +1154,7 @@ export default function ReportClient({
                 <TrendingDown className="w-3.5 h-3.5 shrink-0" />
                 Faltantes (-)
               </span>
-              <div className="my-1.5 text-xl sm:text-2xl font-black text-rose-400">
+              <div className="my-1.5 text-xl sm:text-2xl font-semibold text-rose-400">
                 {shortageCount}
               </div>
               <span className="text-[10px] text-rose-400 truncate">
@@ -1166,7 +1167,7 @@ export default function ReportClient({
                 <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                 Novedades
               </span>
-              <div className="my-1.5 text-xl sm:text-2xl font-black text-amber-300">
+              <div className="my-1.5 text-xl sm:text-2xl font-semibold text-amber-300">
                 {summary.requiresRecountCount + summary.noveltiesTotal}
               </div>
               <span className="text-[10px] text-amber-400 truncate">
@@ -1180,7 +1181,7 @@ export default function ReportClient({
                 Impacto Neto
               </span>
               <div
-                className={`my-1.5 text-xl sm:text-2xl font-black truncate ${
+                className={`my-1.5 text-xl sm:text-2xl font-semibold truncate ${
                   summary.netCostImpact === 0
                     ? 'text-white'
                     : summary.netCostImpact > 0
@@ -1197,47 +1198,49 @@ export default function ReportClient({
           {/* ============================================================== */}
           {/* SECCIÓN 1 (PRIMERO): RESUMEN DE NOVEDADES (FALTANTES Y SOBRANTES) */}
           {/* ============================================================== */}
-          <div className="no-print bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-2xl space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div className="no-print bg-[#141416] border border-white/[0.08] rounded-2xl p-5 sm:p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.08] pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-500/20 to-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
-                  <AlertTriangle className="w-5 h-5 text-amber-400" />
+                <div className="w-9 h-9 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-[#A1A1AA] shrink-0">
+                  <AlertTriangle className="w-4 h-4 text-amber-400" />
                 </div>
                 <div>
-                  <h2 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
+                  <h2 className="text-base font-semibold text-white tracking-tight flex items-center gap-2">
                     <span>1. Resumen Ejecutivo de Novedades (Faltantes y Sobrantes)</span>
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-cyan-300 font-mono font-bold border border-slate-700">
+                    <span className="text-xs px-2.5 py-0.5 rounded bg-white/[0.05] text-[#D4D4D8] font-mono font-medium border border-white/[0.08]">
                       {filteredDiscrepancyItems.length} {filteredDiscrepancyItems.length === 1 ? 'ítem' : 'ítems'}
                     </span>
                   </h2>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Faltantes, sobrantes y registros con inconsistencia física • Paginado a 30 ítems por página
+                  <p className="text-xs text-[#71717A] mt-0.5">
+                    Faltantes, sobrantes y registros con inconsistencia física • 30 ítems por página
                   </p>
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 {/* Selector de Modo de Visualización: Tarjetas Móviles vs Tabla */}
-                <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+                <div className="flex items-center gap-1 bg-[#111113] p-1 rounded-lg border border-white/[0.08] text-xs">
                   <button
                     type="button"
                     onClick={() => setMobileCardMode(true)}
-                    className={`px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer ${
-                      mobileCardMode ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                    className={`px-2.5 py-1 rounded-md font-medium text-[11px] flex items-center gap-1.5 transition-colors cursor-pointer ${
+                      mobileCardMode ? 'bg-white/10 text-white font-semibold' : 'text-[#71717A] hover:text-white'
                     }`}
-                    title="Vista en Tarjetas (Optimizado para teléfonos)"
+                    title="Vista en Tarjetas"
                   >
-                    <span>📱 Tarjetas</span>
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span>Tarjetas</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setMobileCardMode(false)}
-                    className={`px-2.5 py-1 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer ${
-                      !mobileCardMode ? 'bg-cyan-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                    className={`px-2.5 py-1 rounded-md font-medium text-[11px] flex items-center gap-1.5 transition-colors cursor-pointer ${
+                      !mobileCardMode ? 'bg-white/10 text-white font-semibold' : 'text-[#71717A] hover:text-white'
                     }`}
                     title="Vista de Tabla Completa"
                   >
-                    <span>🖥️ Tabla</span>
+                    <TableIcon className="w-3.5 h-3.5" />
+                    <span>Tabla</span>
                   </button>
                 </div>
 
@@ -1406,8 +1409,8 @@ export default function ReportClient({
                                 {isShort ? 'Faltante' : isSurp ? 'Sobrante' : item.status}
                               </span>
                               {item.requiresRecount && (
-                                <span className="px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                                  ⚠️ Reconteo
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                                  Reconteo
                                 </span>
                               )}
                               {item.hasNovelties && (
@@ -1418,7 +1421,7 @@ export default function ReportClient({
                             </div>
 
                             {/* Impacto Monetario */}
-                            <div className="font-mono font-black text-xs shrink-0">
+                            <div className="font-mono font-semibold text-xs shrink-0">
                               {item.costImpact === 0 ? (
                                 <span className="text-slate-400">$0.00</span>
                               ) : item.costImpact > 0 ? (
@@ -1471,7 +1474,7 @@ export default function ReportClient({
                             <div>
                               <span className="text-[9px] uppercase font-bold text-slate-500 block">Diferencia</span>
                               <span
-                                className={`font-mono font-black text-xs block truncate mt-0.5 ${
+                                className={`font-mono font-semibold text-xs block truncate mt-0.5 ${
                                   item.difference > 0 ? 'text-cyan-400' : item.difference < 0 ? 'text-rose-400' : 'text-emerald-400'
                                 }`}
                               >
@@ -1600,8 +1603,8 @@ export default function ReportClient({
                               {/* Badges de Alerta */}
                               <div className="flex flex-wrap items-center gap-1.5 mt-1">
                                 {item.requiresRecount && (
-                                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                                    ⚠️ Requiere Reconteo
+                                  <span className="px-2 py-0.5 rounded text-[9px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                                    Requiere Reconteo
                                   </span>
                                 )}
                                 {item.hasNovelties && (
@@ -1821,7 +1824,7 @@ export default function ReportClient({
                   <Camera className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight flex items-center gap-2">
                     <span>2. Detalle de Novedades e Incidencias con Imágenes y Notas</span>
                     <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono font-bold border border-amber-500/30">
                       {novelties ? novelties.length : 0} {novelties && novelties.length === 1 ? 'registro' : 'registros'}
@@ -2162,7 +2165,7 @@ export default function ReportClient({
                 <span className="text-[10px] font-bold tracking-widest uppercase text-rose-700 bg-rose-100 px-2.5 py-0.5 rounded-full inline-block">
                   HOJA 1 DE 2 • FORMATO A6
                 </span>
-                <h2 className="text-base font-black uppercase tracking-tight text-slate-900">
+                <h2 className="text-base font-semibold uppercase tracking-tight text-slate-900">
                   ACTA DE AJUSTE: FALTANTES
                 </h2>
                 <p className="text-[10px] text-slate-500">
@@ -2233,7 +2236,7 @@ export default function ReportClient({
                   <span>Ítems con Faltante:</span>
                   <span className="font-mono font-bold">{shortageItems.length}</span>
                 </div>
-                <div className="flex justify-between text-sm font-black text-rose-700 pt-1">
+                <div className="flex justify-between text-sm font-semibold text-rose-700 pt-1">
                   <span>TOTAL PÉRDIDA:</span>
                   <span className="font-mono">-${summary.totalShortageCost.toFixed(2)} USD</span>
                 </div>
@@ -2287,7 +2290,7 @@ export default function ReportClient({
                 <span className="text-[10px] font-bold tracking-widest uppercase text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full inline-block">
                   HOJA 2 DE 2 • FORMATO A6
                 </span>
-                <h2 className="text-base font-black uppercase tracking-tight text-slate-900">
+                <h2 className="text-base font-semibold uppercase tracking-tight text-slate-900">
                   ACTA DE AJUSTE: SOBRANTES
                 </h2>
                 <p className="text-[10px] text-slate-500">
@@ -2358,7 +2361,7 @@ export default function ReportClient({
                   <span>Ítems con Sobrante:</span>
                   <span className="font-mono font-bold">{surplusItems.length}</span>
                 </div>
-                <div className="flex justify-between text-sm font-black text-emerald-700 pt-1">
+                <div className="flex justify-between text-sm font-semibold text-emerald-700 pt-1">
                   <span>TOTAL EXCEDENTE:</span>
                   <span className="font-mono">+${summary.totalSurplusCost.toFixed(2)} USD</span>
                 </div>
@@ -2418,7 +2421,7 @@ export default function ReportClient({
                 <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">
                   Próximos a Vencer (&lt; 3 Meses)
                 </span>
-                <span className="text-2xl font-black text-amber-300 font-mono mt-1 block">
+                <span className="text-2xl font-semibold text-amber-300 font-mono mt-1 block">
                   {quarantineCount}
                 </span>
                 <span className="text-[10px] text-amber-400/80">Marcar para custodia / cuarentena</span>
@@ -2433,7 +2436,7 @@ export default function ReportClient({
                 <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider block">
                   Productos Vencidos
                 </span>
-                <span className="text-2xl font-black text-rose-400 font-mono mt-1 block">
+                <span className="text-2xl font-semibold text-rose-400 font-mono mt-1 block">
                   {expiredCount}
                 </span>
                 <span className="text-[10px] text-rose-400/80">Retiro inmediato de anaquel</span>
@@ -2448,7 +2451,7 @@ export default function ReportClient({
                 <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">
                   Productos Vigentes (&gt; 3 Meses)
                 </span>
-                <span className="text-2xl font-black text-emerald-400 font-mono mt-1 block">
+                <span className="text-2xl font-semibold text-emerald-400 font-mono mt-1 block">
                   {validCount}
                 </span>
                 <span className="text-[10px] text-emerald-400/80">En regla para dispensación</span>
@@ -2657,19 +2660,19 @@ export default function ReportClient({
                           {/* Etiqueta Solicitada de Cuarentena (< 3 meses) */}
                           <td className="px-4 py-3 text-center">
                             {p.status === 'quarantine' ? (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black bg-amber-400 text-slate-950 border border-amber-300 shadow-md shadow-amber-400/20 animate-pulse">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20">
                                 <AlertTriangle className="w-3.5 h-3.5" />
-                                ⚠️ PRÓXIMO A VENCER (&lt; 3 MESES) - MARCAR PARA CUSTODIA O CUARENTENA
+                                Próximo a vencer (&lt; 3 meses) — Custodia
                               </span>
                             ) : p.status === 'expired' ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-rose-500/10 text-rose-300 border border-rose-500/20">
                                 <AlertOctagon className="w-3.5 h-3.5" />
-                                🔴 PRODUCTO VENCIDO
+                                Producto Vencido
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                                 <CheckCircle2 className="w-3.5 h-3.5" />
-                                🟢 VIGENTE
+                                Vigente
                               </span>
                             )}
                           </td>
@@ -2718,7 +2721,7 @@ export default function ReportClient({
                   <span className="text-[9px] font-bold tracking-widest uppercase text-slate-500 block">
                     StockSync Pro • Rótulo de Bodega
                   </span>
-                  <div className="font-mono text-sm font-black text-slate-900 mt-0.5">
+                  <div className="font-mono text-sm font-semibold text-slate-900 mt-0.5">
                     SKU: {activeLabelItem.sku}
                   </div>
                   <div className="text-[10px] text-slate-600 font-mono">
@@ -2738,7 +2741,7 @@ export default function ReportClient({
               </div>
 
               <div>
-                <h3 className="font-black text-sm text-slate-900 leading-snug">
+                <h3 className="font-semibold text-sm text-slate-900 leading-snug">
                   {activeLabelItem.description}
                 </h3>
                 <div className="text-[11px] text-slate-600 mt-1 flex flex-wrap gap-2.5 font-mono">
@@ -2753,21 +2756,21 @@ export default function ReportClient({
                 const diffDays = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
                 if (diffDays <= 0) {
                   return (
-                    <div className="bg-rose-100 border border-rose-300 text-rose-800 text-[10px] font-bold px-2.5 py-1.5 rounded-lg text-center">
-                      🔴 PRODUCTO VENCIDO ({exp.toLocaleDateString('es-ES')}) - RETIRAR DE ANAQUEL
+                    <div className="bg-rose-50 border border-rose-300 text-rose-800 text-[10px] font-semibold px-2.5 py-1.5 rounded text-center">
+                      Producto vencido ({exp.toLocaleDateString('es-ES')}) — Retirar de anaquel
                     </div>
                   );
                 }
                 if (diffDays <= 90) {
                   return (
-                    <div className="bg-amber-100 border-2 border-amber-400 text-amber-900 text-[10px] font-black px-2.5 py-1.5 rounded-lg text-center animate-pulse">
-                      ⚠️ CUSTODIA / CUARENTENA (&lt; 3 MESES - Vence: {exp.toLocaleDateString('es-ES')})
+                    <div className="bg-amber-50 border border-amber-300 text-amber-900 text-[10px] font-semibold px-2.5 py-1.5 rounded text-center">
+                      Custodia / Cuarentena (&lt; 3 meses — Vence: {exp.toLocaleDateString('es-ES')})
                     </div>
                   );
                 }
                 return (
-                  <div className="bg-emerald-100 border border-emerald-300 text-emerald-800 text-[10px] font-bold px-2.5 py-1.5 rounded-lg text-center">
-                    🟢 CONFORME (Vence: {exp.toLocaleDateString('es-ES')})
+                  <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 text-[10px] font-semibold px-2.5 py-1.5 rounded text-center">
+                    Conforme (Vence: {exp.toLocaleDateString('es-ES')})
                   </div>
                 );
               })() : (
@@ -2959,7 +2962,7 @@ export default function ReportClient({
                     window.print();
                   }, 250);
                 }}
-                className="py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/30 cursor-pointer transition-all"
+                className="py-2.5 px-4 rounded-lg bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
                 <span>Generar PDF con Link</span>
@@ -2975,7 +2978,7 @@ export default function ReportClient({
       {reportView !== 'quick_a6' && novelties && novelties.length > 0 && (
         <div className="print-only mt-8 page-break">
           <div className="border-b-2 border-slate-900 pb-1 mb-3">
-            <h2 className="text-sm font-black uppercase text-slate-900">
+            <h2 className="text-sm font-semibold uppercase text-slate-900">
               DETALLE DE NOVEDADES E INCIDENCIAS FÍSICAS REPORTADAS ({novelties.length})
             </h2>
             <p className="text-[10px] text-slate-600">

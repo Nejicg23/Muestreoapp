@@ -45,72 +45,71 @@ export default function ReportesIndexClient({ sessions }: { sessions: SessionIte
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Encabezado */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-cyan-950/60 p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Encabezado Industrial */}
+      <div className="bg-[#141416] p-5 sm:p-7 rounded-2xl border border-white/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-cyan-600/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
-              <FileText className="w-5 h-5" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-white/[0.05] text-white flex items-center justify-center border border-white/[0.08]">
+              <FileText className="w-4 h-4 text-[#A1A1AA]" />
             </div>
-            <h1 className="text-2xl font-black text-white tracking-tight">Centro de Reportes de Inventario</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Centro de Reportes de Inventario</h1>
           </div>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
-            Visualiza informes consolidados, imprime actas oficiales de inventario y exporta datos a Excel
-            (completo o filtrado por novedades).
+          <p className="text-xs sm:text-sm text-[#A1A1AA] mt-1 max-w-2xl">
+            Visualiza informes consolidados, imprime actas oficiales y exporta datos a Excel.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <Link
             href="/importar"
-            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 flex items-center gap-2 transition-all"
+            className="px-3.5 py-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-xs font-medium text-white border border-white/[0.08] flex items-center gap-2 transition-colors"
           >
-            <FileSpreadsheet className="w-4 h-4 text-cyan-400" />
+            <FileSpreadsheet className="w-4 h-4 text-[#A1A1AA]" />
             <span>Nueva Importación</span>
           </Link>
         </div>
       </div>
 
       {/* Barra de Filtros y Búsqueda */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
-        <div className="relative w-full sm:w-96">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#141416] p-3 rounded-xl border border-white/[0.08]">
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#71717A] pointer-events-none" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar reporte por título o auditor..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            placeholder="Buscar por título o auditor..."
+            className="w-full pl-9 pr-3 py-1.5 bg-[#111113] border border-white/[0.08] rounded-lg text-xs text-white placeholder-[#71717A] focus:outline-none focus:border-white/20 transition-colors"
           />
         </div>
 
         <div className="flex items-center gap-1.5 w-full sm:w-auto">
           <button
             onClick={() => setFilter('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
               filter === 'all'
-                ? 'bg-cyan-600 text-white shadow-sm'
-                : 'bg-slate-800 text-slate-400 hover:text-white'
+                ? 'bg-white/10 text-white font-semibold'
+                : 'text-[#71717A] hover:text-white'
             }`}
           >
             Todas ({sessions.length})
           </button>
           <button
             onClick={() => setFilter('closed')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
               filter === 'closed'
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'bg-slate-800 text-slate-400 hover:text-white'
+                ? 'bg-white/10 text-white font-semibold'
+                : 'text-[#71717A] hover:text-white'
             }`}
           >
-            Cerradas / Selladas ({sessions.filter((s) => s.status === 'closed').length})
+            Selladas ({sessions.filter((s) => s.status === 'closed').length})
           </button>
           <button
             onClick={() => setFilter('in_progress')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
               filter === 'in_progress'
-                ? 'bg-amber-600 text-white shadow-sm'
-                : 'bg-slate-800 text-slate-400 hover:text-white'
+                ? 'bg-white/10 text-white font-semibold'
+                : 'text-[#71717A] hover:text-white'
             }`}
           >
             En Curso ({sessions.filter((s) => s.status === 'in_progress').length})
@@ -120,41 +119,41 @@ export default function ReportesIndexClient({ sessions }: { sessions: SessionIte
 
       {/* Grid de Reportes de Sesión */}
       {filteredSessions.length === 0 ? (
-        <div className="p-12 text-center bg-slate-900 border border-slate-800 rounded-3xl space-y-3">
-          <FileText className="w-12 h-12 text-slate-400 mx-auto" />
-          <h3 className="text-base font-bold text-white">No se encontraron sesiones de reporte</h3>
-          <p className="text-xs text-slate-400">Intenta cambiar los términos de búsqueda o filtros.</p>
+        <div className="p-10 text-center bg-[#141416] border border-white/[0.08] rounded-xl space-y-3">
+          <FileText className="w-10 h-10 text-[#71717A] mx-auto" />
+          <h3 className="text-sm font-semibold text-white">No se encontraron sesiones de reporte</h3>
+          <p className="text-xs text-[#71717A]">Intenta cambiar los términos de búsqueda o filtros.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredSessions.map((session) => (
             <div
               key={session.id}
-              className="bg-slate-900 border border-slate-800 hover:border-cyan-500/50 rounded-2xl p-5 transition-all shadow-lg flex flex-col justify-between group"
+              className="bg-[#141416] border border-white/[0.08] hover:border-white/20 rounded-xl p-5 transition-colors flex flex-col justify-between"
             >
               <div className="space-y-3">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-bold text-white text-base group-hover:text-cyan-400 transition-colors">
+                  <h3 className="font-semibold text-white text-sm leading-snug">
                     {session.title}
                   </h3>
                   <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 border ${
+                    className={`px-2 py-0.5 rounded text-[10px] font-medium shrink-0 border ${
                       session.status === 'closed'
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                        : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        : 'bg-sky-500/10 text-sky-400 border-sky-500/20'
                     }`}
                   >
                     {session.status === 'closed' ? 'Sellada' : 'En Curso'}
                   </span>
                 </div>
 
-                <div className="space-y-1.5 text-xs text-slate-400">
+                <div className="space-y-1.5 text-xs text-[#71717A]">
                   <div className="flex items-center gap-2">
-                    <User className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Auditor: <strong className="text-slate-300">{session.createdBy}</strong></span>
+                    <User className="w-3.5 h-3.5 text-[#71717A]" />
+                    <span>Auditor: <strong className="text-[#D4D4D8] font-medium">{session.createdBy}</strong></span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                    <Calendar className="w-3.5 h-3.5 text-[#71717A]" />
                     <span>
                       Fecha:{' '}
                       {new Date(session.createdAt).toLocaleDateString('es-ES', {
@@ -163,7 +162,7 @@ export default function ReportesIndexClient({ sessions }: { sessions: SessionIte
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Layers className="w-3.5 h-3.5 text-cyan-400" />
+                    <Layers className="w-3.5 h-3.5 text-[#A1A1AA]" />
                     <span>
                       Ítems:{' '}
                       <strong className="text-white font-mono">{session.itemsCount}</strong> productos
@@ -172,22 +171,22 @@ export default function ReportesIndexClient({ sessions }: { sessions: SessionIte
                 </div>
 
                 {session.closedHash && (
-                  <div className="p-2 rounded-xl bg-slate-950 border border-emerald-500/20 font-mono text-[10px] text-emerald-400 truncate flex items-center gap-1.5">
+                  <div className="p-2 rounded-lg bg-[#111113] border border-white/[0.08] font-mono text-[10px] text-emerald-400 truncate flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
                     <span className="truncate">SHA-256: {session.closedHash}</span>
                   </div>
                 )}
               </div>
 
-              <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
-                <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                  <Printer className="w-3.5 h-3.5 text-slate-400" />
-                  Impresión y Excel
+              <div className="pt-3 mt-4 border-t border-white/[0.06] flex items-center justify-between">
+                <span className="text-[11px] text-[#71717A] flex items-center gap-1">
+                  <Printer className="w-3.5 h-3.5 text-[#71717A]" />
+                  PDF / Excel
                 </span>
 
                 <Link
                   href={`/sesion/${session.id}/reporte`}
-                  className="px-3.5 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-cyan-600/20"
+                  className="px-3 py-1.5 rounded-lg bg-white text-[#0C0C0E] hover:bg-[#E4E4E7] text-xs font-semibold flex items-center gap-1.5 transition-colors"
                 >
                   <span>Abrir Reporte</span>
                   <ArrowRight className="w-3.5 h-3.5" />

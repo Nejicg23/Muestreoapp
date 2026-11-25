@@ -374,22 +374,20 @@ export default function OnboardingClient({ currentUser, existingUsers }: Props) 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20">
       {/* Encabezado del Asistente */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950/70 to-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-
+      <div className="bg-[#141416] p-5 sm:p-7 rounded-2xl border border-white/[0.08] relative">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-600 via-indigo-600 to-amber-500 flex items-center justify-center text-white shadow-xl shadow-cyan-600/25 shrink-0">
-              <Sparkles className="w-7 h-7" />
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white shrink-0">
+              <ShieldCheck className="w-5 h-5 text-[#A1A1AA]" />
             </div>
             <div>
-              <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider bg-white/[0.05] text-[#D4D4D8] border border-white/[0.08]">
                 Asistente de Inicialización
               </span>
-              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight mt-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mt-1">
                 Comenzar Nuevo Inventario
               </h1>
-              <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
+              <p className="text-xs text-[#71717A] mt-0.5">
                 Configura los roles de tu equipo y elige el tipo de base de datos para comenzar.
               </p>
             </div>
@@ -451,7 +449,7 @@ export default function OnboardingClient({ currentUser, existingUsers }: Props) 
       {/* ========================================================================= */}
       {step === 1 && (
         <div className="space-y-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-6">
+          <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-6 space-y-6">
             <div>
               <h2 className="text-lg font-bold text-white">1. Arquitectura de Roles y Responsabilidades</h2>
               <p className="text-xs text-slate-400 mt-1">
@@ -664,7 +662,7 @@ export default function OnboardingClient({ currentUser, existingUsers }: Props) 
       {/* ========================================================================= */}
       {step === 2 && (
         <div className="space-y-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-6">
+          <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-6 space-y-6">
             <div>
               <h2 className="text-lg font-bold text-white">2. Elección de la Base de Datos</h2>
               <p className="text-xs text-slate-400 mt-1">
@@ -889,7 +887,7 @@ export default function OnboardingClient({ currentUser, existingUsers }: Props) 
       {/* ========================================================================= */}
       {step === 3 && (
         <div className="space-y-6">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-6">
+          <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-6 space-y-6">
             <div>
               <h2 className="text-lg font-bold text-white">3. Modalidad de Arranque & Confirmación</h2>
               <p className="text-xs text-slate-400 mt-1">
@@ -1007,7 +1005,7 @@ export default function OnboardingClient({ currentUser, existingUsers }: Props) 
               type="button"
               disabled={isSubmitting}
               onClick={handleFinishOnboarding}
-              className="px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-black text-sm flex items-center gap-2 shadow-xl shadow-emerald-600/25 transition-all disabled:opacity-50 cursor-pointer"
+              className="px-6 py-2.5 rounded-lg bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] font-semibold text-xs flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? (
                 <>
@@ -1016,8 +1014,8 @@ export default function OnboardingClient({ currentUser, existingUsers }: Props) 
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-5 h-5" />
-                  <span>Inicializar Sistema y Comenzar Inventario</span>
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Inicializar Sistema y Comenzar</span>
                 </>
               )}
             </button>
@@ -1030,7 +1028,7 @@ export default function OnboardingClient({ currentUser, existingUsers }: Props) 
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <form
             onSubmit={handleCreateQuickUser}
-            className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl relative"
+            className="bg-[#17171A] border border-white/[0.08] rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl relative"
           >
             <div className="flex items-center justify-between">
               <h2 className="text-base font-bold text-white">Agregar Cuenta al Equipo</h2>

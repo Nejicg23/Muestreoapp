@@ -435,41 +435,41 @@ export default function ImportClient({ existingSessions }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Encabezado */}
-      <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Encabezado Industrial */}
+      <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link
             href="/"
-            className="p-2.5 rounded-xl bg-slate-700/60 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+            className="p-2.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-[#A1A1AA] hover:text-white transition-colors"
             title="Volver"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <FileSpreadsheet className="w-6 h-6 text-cyan-400" />
+              <FileSpreadsheet className="w-5 h-5 text-[#A1A1AA]" />
               <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                Importador Inteligente de Inventarios
+                Importador de Inventarios
               </h1>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Interpreta automáticamente formatos de stock (ej: <span className="font-mono text-cyan-300">2u5f</span> = 2 Unidades y 5 Fracciones) y extrae factores (ej: <span className="font-mono text-cyan-300">...Mgx28</span> = 28 fracciones por unidad).
+            <p className="text-xs text-[#71717A] mt-0.5">
+              Interpreta formatos de stock (ej: <span className="font-mono text-[#D4D4D8]">2u5f</span> = 2 Unidades y 5 Fracciones) y detecta factores por caja.
             </p>
           </div>
         </div>
 
         <button
           onClick={handleLoadSample}
-          className="px-4 py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white transition-all shadow-lg shadow-cyan-600/25 flex items-center gap-2"
+          className="px-4 py-2 rounded-lg text-xs font-semibold bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] transition-colors flex items-center gap-2 cursor-pointer"
         >
-          <Sparkles className="w-4 h-4" />
-          <span>Cargar Datos de Ejemplo (161 Productos)</span>
+          <Database className="w-4 h-4" />
+          <span>Cargar Datos de Ejemplo</span>
         </button>
       </div>
 
       {/* Zona de Carga de Datos (Si aún no se han procesado ítems) */}
       {items.length === 0 ? (
-        <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-6 shadow-xl space-y-6">
+        <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-6 space-y-6">
           <div className="flex items-center gap-2 border-b border-slate-700/80 pb-4">
             <button
               onClick={() => setInputTab('upload')}
@@ -718,7 +718,7 @@ export default function ImportClient({ existingSessions }: Props) {
                             : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-white'
                         }`}
                       >
-                        ⚡ Inventario Rápido (Móvil & Muestreo)
+                        Inventario Rápido (Móvil & Muestreo)
                       </button>
                     </div>
                   </div>
@@ -1039,12 +1039,12 @@ export default function ImportClient({ existingSessions }: Props) {
           </div>
 
           {/* Botón de Confirmación e Importación */}
-          <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+          <div className="bg-[#141416] border border-white/[0.08] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
-              <span className="text-white font-bold text-sm block">
+              <span className="text-white font-semibold text-sm block">
                 ¿Todo listo para cargar los datos en PostgreSQL?
               </span>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-[#71717A] mt-0.5">
                 Se insertarán {items.length} artículos en la sesión "{targetMode === 'new' ? newTitle : 'existente'}".
               </p>
             </div>
@@ -1052,7 +1052,7 @@ export default function ImportClient({ existingSessions }: Props) {
             <button
               onClick={handleCommitImport}
               disabled={isImporting || items.length === 0}
-              className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-sm shadow-xl shadow-cyan-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] font-semibold text-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {isImporting ? (
                 <>
@@ -1062,7 +1062,7 @@ export default function ImportClient({ existingSessions }: Props) {
               ) : (
                 <>
                   <Check className="w-4 h-4" />
-                  <span>CONFIRMAR E IMPORTAR {items.length} ARTÍCULOS</span>
+                  <span>Confirmar e Importar {items.length} Artículos</span>
                 </>
               )}
             </button>

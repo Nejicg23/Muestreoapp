@@ -104,49 +104,49 @@ export default function ServerTestClient({
 
   return (
     <div className="space-y-6">
-      {/* Encabezado */}
-      <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Encabezado Industrial */}
+      <div className="bg-[#141416] border border-white/[0.08] rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <Server className="w-5 h-5" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white">
+              <Server className="w-5 h-5 text-[#A1A1AA]" />
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-              Diagnóstico y Prueba con los Servidores
+              Diagnóstico de Servidores
             </h1>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
-            Monitoreo en vivo de conectividad con PostgreSQL, latencia de base de datos y persistencia offline.
+          <p className="text-xs text-[#71717A] mt-1">
+            Monitoreo en vivo de conectividad con PostgreSQL, latencia de red y almacenamiento local.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={handleRunDiagnostics}
             disabled={isRunning}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md shadow-emerald-600/25 flex items-center gap-2 disabled:opacity-50"
+            className="px-3.5 py-2 rounded-lg text-xs font-semibold bg-white hover:bg-[#E4E4E7] text-[#0C0C0E] transition-colors flex items-center gap-2 disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRunning ? 'animate-spin' : ''}`} />
-            <span>{isRunning ? 'Ejecutando pruebas...' : 'Volver a Probar Servidores'}</span>
+            <span>{isRunning ? 'Ejecutando pruebas...' : 'Volver a Probar'}</span>
           </button>
 
           <button
             onClick={handleQuickTestSession}
             disabled={isCreatingSession}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition-all shadow-md shadow-cyan-600/25 flex items-center gap-2 disabled:opacity-50"
+            className="px-3.5 py-2 rounded-lg text-xs font-medium bg-white/[0.06] hover:bg-white/[0.1] text-white border border-white/[0.08] transition-colors flex items-center gap-2 disabled:opacity-50 cursor-pointer"
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{isCreatingSession ? 'Creando sesión...' : 'Crear Sesión de Prueba'}</span>
+            <Play className="w-3.5 h-3.5 text-[#A1A1AA]" />
+            <span>{isCreatingSession ? 'Creando sesión...' : 'Sesión de Prueba'}</span>
           </button>
         </div>
       </div>
 
       {/* Tarjeta de Estado General */}
       <div
-        className={`border rounded-2xl p-5 sm:p-6 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+        className={`border rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#141416] ${
           diagnostics.success
-            ? 'bg-gradient-to-r from-emerald-950/40 to-slate-900 border-emerald-700/60'
-            : 'bg-gradient-to-r from-rose-950/40 to-slate-900 border-rose-700/60'
+            ? 'border-emerald-500/20'
+            : 'border-rose-500/20'
         }`}
       >
         <div className="flex items-center gap-4">
