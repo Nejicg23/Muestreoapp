@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Shield,
+  ShieldCheck,
   UserCheck,
   Smartphone,
   Database,
